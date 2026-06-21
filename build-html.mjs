@@ -486,6 +486,15 @@ const APP_JS = String.raw`
   var nameByCode = {}, eloByCode = {};
   TEAMS.forEach(function(t){ nameByCode[t.code]=t.name; eloByCode[t.code]=t.elo; });
 
+  // code -> group letter (A..L), from the embedded groups data (each group's
+  // teams[].code). Used by R32 seed labels to highlight which group a projected
+  // third-place occupant comes from.
+  var groupLetterByCode = {};
+  DATA.groups.forEach(function(g){
+    var mm=/Group\s+([A-L])/i.exec(g.name); var L=mm?mm[1].toUpperCase():g.name.slice(-1);
+    (g.teams||[]).forEach(function(t){ groupLetterByCode[t.code]=L; });
+  });
+
   // deterministic-ish color accent per team code (subtle, no flags)
   function accentFor(code){
     if(!code) return '#6b7280';
@@ -956,11 +965,46 @@ const APP_JS = String.raw`
     return g;
   }
 
+  // R32-ONLY seed/group designation built from the bracket.json slot definition.
+  // winner G -> "G1"; runnerup G -> "G2"; third [list] -> "3rd a/b/e/f/i" with the
+  // single candidate letter the projected occupant comes from highlighted.
+  // Returns 0 for non-R32 rounds or unrecognized slot types.
+  // Renders into g starting at chipX; returns the x-offset (px) the code/name
+  // text should start at (so a third-place label can push them further right).
+  function renderSeedLabel(g, round, slotDef, occupantCode, chipX, midY){
+    if(round!=='R32' || !slotDef) return 0;
+    var fs=FS(9.5);
+    if(slotDef.type==='winner' || slotDef.type==='runnerup'){
+      var lab=(slotDef.group||'?')+(slotDef.type==='winner'?'1':'2');
+      g.appendChild(svgText(chipX, midY, lab,
+        { fill:'#6b7280','font-size':String(fs),'font-weight':'700' }));
+      // fixed-width reservation for a 2-char chip
+      return Math.round(20*_PS);
+    }
+    if(slotDef.type==='third' && Array.isArray(slotDef.from)){
+      var occLetter = occupantCode ? (groupLetterByCode[occupantCode]||null) : null;
+      var t=svgEl('text',{ x:chipX, y:midY, 'font-size':String(fs) });
+      // "3rd " prefix
+      var pre=svgEl('tspan',{ fill:'#6b7280' }); pre.textContent='3rd '; t.appendChild(pre);
+      slotDef.from.forEach(function(L,i){
+        if(i>0){ var sep=svgEl('tspan',{ fill:'#3a3f4a' }); sep.textContent='/'; t.appendChild(sep); }
+        var hot = occLetter && L.toUpperCase()===occLetter;
+        var ts=svgEl('tspan',{ fill: hot?'#4ea1ff':'#6b7280', 'font-weight': hot?'700':'400' });
+        ts.textContent=L.toLowerCase(); t.appendChild(ts);
+      });
+      g.appendChild(t);
+      // "3rd " + N letters + (N-1) separators, ~ per-char width
+      var chars = 4 + slotDef.from.length + (slotDef.from.length-1);
+      return Math.round((chars*5.3+6)*_PS);
+    }
+    return 0;
+  }
+
   function slotGroup(round, m, side, si, x, sy){
     var g=svgEl('g',{ 'class':'slot-hit' });
     var code=si.code;
     var midY=sy+SLOT_H/2+Math.round(4*_PS);
-    var codeX=x+Math.round(13*_PS), nameX=x+Math.round(44*_PS), pad=Math.round(7*_PS);
+    var pad=Math.round(7*_PS);
     // transparent hit/hover bg
     g.appendChild(svgEl('rect',{ 'class':'slot-bg', x:x, y:sy, width:COL_W, height:SLOT_H,
       fill:'transparent' }));
@@ -972,15 +1016,33 @@ const APP_JS = String.raw`
     // accent bar
     g.appendChild(svgEl('rect',{ x:x+Math.round(3*_PS), y:sy+Math.round(4*_PS), width:Math.round(3*_PS), height:SLOT_H-Math.round(8*_PS), rx:1.5*_PS,
       fill: code? accentFor(code) : '#6b7280' }));
+
+    // R32-ONLY: seed/group designation chip BEFORE the team code.
+    var seedW=renderSeedLabel(g, round, (round==='R32'? m[side] : null), code, x+Math.round(11*_PS), midY);
+    var codeX=x+Math.round(13*_PS)+seedW, nameX=x+Math.round(44*_PS)+seedW;
+
+    // CLINCHED (projected, p≈100%): pop the team (bold + accent + glow) and DROP %.
+    var clinched = state.mode==='projected' && code && si.p>=0.9995;
+
     // code
-    g.appendChild(svgText(codeX, midY, code||'—',
-      { fill: code? '#e7eaf0':'#6b7280', 'font-size':String(FS(12)),'font-weight':'700' }));
+    if(clinched){
+      var glow=svgText(codeX, midY, code,
+        { fill:'#4ea1ff','font-size':String(FS(12.5)),'font-weight':'800',
+          stroke:'#4ea1ff','stroke-width':String(0.6*_PS),'opacity':'0.35' });
+      g.appendChild(glow);
+      g.appendChild(svgText(codeX, midY, code,
+        { fill:'#7fc0ff','font-size':String(FS(12.5)),'font-weight':'800' }));
+    } else {
+      g.appendChild(svgText(codeX, midY, code||'—',
+        { fill: code? '#e7eaf0':'#6b7280', 'font-size':String(FS(12)),'font-weight':'700' }));
+    }
     // name (clipped via truncation)
     var nm=code?(nameByCode[code]||''):'TBD';
-    g.appendChild(svgText(nameX, midY, truncName(nm, COL_W-(nameX-x)-Math.round(40*_PS)),
-      { fill:'#9aa3b2','font-size':String(FS(10)) }));
-    // probability (projected) at right
-    if(state.mode==='projected' && code){
+    var nameMaxW=COL_W-(nameX-x)-(clinched?Math.round(10*_PS):Math.round(40*_PS));
+    g.appendChild(svgText(nameX, midY, truncName(nm, nameMaxW),
+      { fill: clinched?'#cfe6ff':'#9aa3b2','font-size':String(FS(10)),'font-weight': clinched?'600':'400' }));
+    // probability (projected) at right — clinched slots show no %.
+    if(state.mode==='projected' && code && !clinched){
       g.appendChild(svgText(x+COL_W-pad, midY, pct(si.p),
         { fill:'#4ea1ff','font-size':String(FS(11)),'text-anchor':'end' }));
     }
