@@ -52,10 +52,18 @@ hand-noted M74/M79/M81 mapping). Authoritative version → bracket.json.
 Which group each of USA/Mexico/Germany actually won comes from the openfootball
 data + standings, NOT from memory.
 
-## FIFA tiebreakers (group stage), in order
-points → goal difference → goals scored → head-to-head (pts, GD, GF among tied)
-→ fair-play (disciplinary) → drawing of lots.
-Third-place ranking: points → GD → GF → disciplinary → lots.
+## FIFA 2026 tiebreakers (group stage) — CHANGED for 2026, get this right
+For 2026 FIFA moved head-to-head AHEAD of overall goal difference (UEFA-style)
+and ABOLISHED drawing of lots. Order for teams level on points:
+(1) H2H points → (2) H2H GD → (3) H2H GF → [re-apply 1-3 to any still-tied
+subset] → (4) overall GD → (5) overall GF → (6) fair-play (cards) →
+(7) FIFA World Ranking.
+Third-place ranking (different groups, so NO H2H step):
+points → overall GD → overall GF → fair-play → FIFA World Ranking.
+⚠️ Engine currently PROXIES (7) FIFA World Ranking with Elo (higher = better);
+swap in real FIFA ranking via team.worldRank when available. This was the
+source of a real bug (old GD-first order put Türkiye 3rd over Paraguay despite
+Paraguay's H2H win) — fixed 2026-06-21; regression test in engine.test.js.
 
 ## OPEN / NEXT
 - [x] Data source resolved → openfootball (see above). No signup needed.

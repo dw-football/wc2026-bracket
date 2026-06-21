@@ -48,31 +48,17 @@ h2{font-size:16px;margin:18px 0 8px;font-weight:650}
 .section{display:none}
 .section.active{display:block}
 
-/* bracket */
+/* bracket — now rendered as inline SVG (single source of truth on-screen) */
 .bracket-wrap{overflow-x:auto;overflow-y:hidden;-webkit-overflow-scrolling:touch;
   border:1px solid var(--line);border-radius:10px;background:var(--panel);padding:10px}
-.bracket{display:flex;gap:18px;min-width:1040px;align-items:stretch}
-.col{display:flex;flex-direction:column;justify-content:space-around;min-width:150px}
-.col h3{font-size:12px;text-transform:uppercase;letter-spacing:.05em;color:var(--dim);
-  margin:0 0 6px;text-align:center}
-.col.final-col{justify-content:center}
-.match{background:var(--panel2);border:1px solid var(--line);border-radius:8px;
-  margin:6px 0;overflow:hidden}
-.match .mhdr{font-size:10px;color:var(--dim2);padding:2px 7px;border-bottom:1px solid var(--line)}
-.slot{display:flex;align-items:center;gap:6px;padding:6px 8px;cursor:pointer;
-  border-bottom:1px solid var(--line);position:relative}
-.slot:last-child{border-bottom:0}
-.slot:hover{background:#232836}
-.slot .accent{width:3px;align-self:stretch;border-radius:2px;background:var(--dim2);
-  position:absolute;left:0;top:0;bottom:0}
-.slot .code{font-weight:700;font-size:13px;min-width:34px;padding-left:6px}
-.slot .nm{color:var(--dim);font-size:11px;flex:1;white-space:nowrap;overflow:hidden;
-  text-overflow:ellipsis}
-.slot .p{font-size:12px;color:var(--accent);font-variant-numeric:tabular-nums}
-.slot.known .p{color:var(--good)}
-.slot.picked{background:#15294a}
-.slot.winner-row{box-shadow:inset 0 0 0 1px var(--qualline)}
-.slot.empty .code{color:var(--dim2)}
+.bracket-wrap svg.bracket-svg{display:block}
+/* SVG slot interactivity (geometry/colors are inline attrs so it serializes standalone) */
+.bracket-svg .slot-hit{cursor:pointer}
+.bracket-svg .slot-hit:hover .slot-bg{fill:#232836}
+
+/* export controls */
+.export-bar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:8px 0 4px}
+.export-bar .lbl{color:var(--dim);font-size:12px;margin-right:2px}
 
 /* candidate popover */
 .pop{position:fixed;z-index:50;background:var(--panel2);border:1px solid var(--accent);
@@ -150,6 +136,28 @@ details.about p{font-size:12.5px;color:var(--dim);margin:8px 0}
   h1{font-size:18px}
 }
 
+/* ---- print / Save-as-PDF: lay the full bracket out un-scrolled, landscape ---- */
+@media print{
+  @page{ size:landscape; margin:8mm; }
+  html,body{ background:#0f1115 !important; -webkit-print-color-adjust:exact; print-color-adjust:exact; }
+  #app{ max-width:none; padding:0; }
+  /* hide everything that isn't the bracket export region (SVG carries its own title) */
+  .export-bar, .tabbar, .seg, .row, details.about, .callout, .simstate, .app-header{ display:none !important; }
+  /* show only the bracket section; let the SVG scale to the page width */
+  .section{ display:none !important; }
+  .section.print-bracket{ display:block !important; }
+  .bracket-wrap{ overflow:visible !important; border:0 !important; padding:0 !important; }
+  .bracket-svg{ width:100% !important; height:auto !important; }
+}
+
+/* ---- poster mode (?poster=1): full natural width, no scroll clip, for hi-res capture ---- */
+body.poster{ overflow:visible; }
+body.poster #app{ max-width:none; padding:18px 20px; width:max-content; }
+body.poster .export-bar, body.poster .tabbar, body.poster .seg, body.poster .row,
+body.poster details.about, body.poster .callout, body.poster .simstate,
+body.poster .app-header{ display:none !important; }
+body.poster .bracket-wrap{ overflow:visible !important; border:0; background:transparent; padding:0; }
+
 </style>
 </head>
 <body>
@@ -164,8 +172,8 @@ var __ALLOCATION__ = {"EFGHIJKL":{"1A":"E","1B":"J","1D":"I","1E":"F","1G":"H","
 var __APP_DATA__ = {
   teams: [{"name":"Spain","code":"ESP","elo":2129},{"name":"Argentina","code":"ARG","elo":2128},{"name":"France","code":"FRA","elo":2084},{"name":"England","code":"ENG","elo":2055},{"name":"Colombia","code":"COL","elo":1998},{"name":"Brazil","code":"BRA","elo":1986},{"name":"Netherlands","code":"NED","elo":1972},{"name":"Portugal","code":"POR","elo":1967},{"name":"Germany","code":"GER","elo":1954},{"name":"Norway","code":"NOR","elo":1929},{"name":"Japan","code":"JPN","elo":1925},{"name":"Mexico","code":"MEX","elo":1896},{"name":"Switzerland","code":"SUI","elo":1885},{"name":"Croatia","code":"CRO","elo":1881},{"name":"Belgium","code":"BEL","elo":1879},{"name":"Uruguay","code":"URU","elo":1870},{"name":"Morocco","code":"MAR","elo":1866},{"name":"Ecuador","code":"ECU","elo":1864},{"name":"Austria","code":"AUT","elo":1857},{"name":"Senegal","code":"SEN","elo":1839},{"name":"USA","code":"USA","elo":1820},{"name":"Paraguay","code":"PAR","elo":1816},{"name":"Turkey","code":"TUR","elo":1813},{"name":"Australia","code":"AUS","elo":1799},{"name":"Canada","code":"CAN","elo":1777},{"name":"South Korea","code":"KOR","elo":1771},{"name":"Scotland","code":"SCO","elo":1768},{"name":"Algeria","code":"ALG","elo":1759},{"name":"Iran","code":"IRN","elo":1756},{"name":"Ivory Coast","code":"CIV","elo":1728},{"name":"Sweden","code":"SWE","elo":1727},{"name":"Egypt","code":"EGY","elo":1711},{"name":"Uzbekistan","code":"UZB","elo":1698},{"name":"Czech Republic","code":"CZE","elo":1696},{"name":"Panama","code":"PAN","elo":1683},{"name":"DR Congo","code":"COD","elo":1674},{"name":"Jordan","code":"JOR","elo":1653},{"name":"Cape Verde","code":"CPV","elo":1606},{"name":"Saudi Arabia","code":"KSA","elo":1598},{"name":"Bosnia & Herzegovina","code":"BIH","elo":1596},{"name":"Iraq","code":"IRQ","elo":1592},{"name":"New Zealand","code":"NZL","elo":1578},{"name":"Tunisia","code":"TUN","elo":1570},{"name":"Ghana","code":"GHA","elo":1557},{"name":"Haiti","code":"HAI","elo":1528},{"name":"South Africa","code":"RSA","elo":1527},{"name":"Curaçao","code":"CUW","elo":1453},{"name":"Qatar","code":"QAT","elo":1437}],
   bracket: {"source":"R32 + Annex C: Wikipedia raw wikitext, INDEPENDENTLY CONFIRMED against FIFA official regulations PDF + openfootball + ESPN/CBS/Fox (R32 byte-identical; allocation 495/495 exact). R16 matches 91-94 CORRECTED 2026-06-21: Wikipedia had them transposed (M91/M93 and M92/M94 swapped), which misrouted R16 winners into the wrong SF half; fixed to openfootball/ESPN/CBS/Fox venue-anchored order (M91=W76/W78, M92=W79/W80, M93=W83/W84, M94=W81/W82).","thirdPlaceSlotLabels":["1A","1B","1D","1E","1G","1I","1K","1L"],"rounds":{"R32":[{"match":73,"home":{"type":"runnerup","group":"A"},"away":{"type":"runnerup","group":"B"}},{"match":74,"home":{"type":"winner","group":"E"},"away":{"type":"third","from":["A","B","C","D","F"]}},{"match":75,"home":{"type":"winner","group":"F"},"away":{"type":"runnerup","group":"C"}},{"match":76,"home":{"type":"winner","group":"C"},"away":{"type":"runnerup","group":"F"}},{"match":77,"home":{"type":"winner","group":"I"},"away":{"type":"third","from":["C","D","F","G","H"]}},{"match":78,"home":{"type":"runnerup","group":"E"},"away":{"type":"runnerup","group":"I"}},{"match":79,"home":{"type":"winner","group":"A"},"away":{"type":"third","from":["C","E","F","H","I"]}},{"match":80,"home":{"type":"winner","group":"L"},"away":{"type":"third","from":["E","H","I","J","K"]}},{"match":81,"home":{"type":"winner","group":"D"},"away":{"type":"third","from":["B","E","F","I","J"]}},{"match":82,"home":{"type":"winner","group":"G"},"away":{"type":"third","from":["A","E","H","I","J"]}},{"match":83,"home":{"type":"runnerup","group":"K"},"away":{"type":"runnerup","group":"L"}},{"match":84,"home":{"type":"winner","group":"H"},"away":{"type":"runnerup","group":"J"}},{"match":85,"home":{"type":"winner","group":"B"},"away":{"type":"third","from":["E","F","G","I","J"]}},{"match":86,"home":{"type":"winner","group":"J"},"away":{"type":"runnerup","group":"H"}},{"match":87,"home":{"type":"winner","group":"K"},"away":{"type":"third","from":["D","E","I","J","L"]}},{"match":88,"home":{"type":"runnerup","group":"D"},"away":{"type":"runnerup","group":"G"}}],"R16":[{"match":89,"home":{"type":"winnerOf","match":74},"away":{"type":"winnerOf","match":77}},{"match":90,"home":{"type":"winnerOf","match":73},"away":{"type":"winnerOf","match":75}},{"match":91,"home":{"type":"winnerOf","match":76},"away":{"type":"winnerOf","match":78}},{"match":92,"home":{"type":"winnerOf","match":79},"away":{"type":"winnerOf","match":80}},{"match":93,"home":{"type":"winnerOf","match":83},"away":{"type":"winnerOf","match":84}},{"match":94,"home":{"type":"winnerOf","match":81},"away":{"type":"winnerOf","match":82}},{"match":95,"home":{"type":"winnerOf","match":86},"away":{"type":"winnerOf","match":88}},{"match":96,"home":{"type":"winnerOf","match":85},"away":{"type":"winnerOf","match":87}}],"QF":[{"match":97,"home":{"type":"winnerOf","match":89},"away":{"type":"winnerOf","match":90}},{"match":98,"home":{"type":"winnerOf","match":93},"away":{"type":"winnerOf","match":94}},{"match":99,"home":{"type":"winnerOf","match":91},"away":{"type":"winnerOf","match":92}},{"match":100,"home":{"type":"winnerOf","match":95},"away":{"type":"winnerOf","match":96}}],"SF":[{"match":101,"home":{"type":"winnerOf","match":97},"away":{"type":"winnerOf","match":98}},{"match":102,"home":{"type":"winnerOf","match":99},"away":{"type":"winnerOf","match":100}}],"ThirdPlace":[{"match":103,"home":{"type":"loserOf","match":101},"away":{"type":"loserOf","match":102}}],"Final":[{"match":104,"home":{"type":"winnerOf","match":101},"away":{"type":"winnerOf","match":102}}]}},
-  groups: [{"name":"Group A","teams":[{"code":"CZE","name":"Czech Republic","elo":1696},{"code":"KOR","name":"South Korea","elo":1771},{"code":"MEX","name":"Mexico","elo":1896},{"code":"RSA","name":"South Africa","elo":1527}],"matches":[{"home":"MEX","away":"RSA","homeGoals":2,"awayGoals":0,"played":true},{"home":"KOR","away":"CZE","homeGoals":2,"awayGoals":1,"played":true},{"home":"CZE","away":"RSA","homeGoals":1,"awayGoals":1,"played":true},{"home":"MEX","away":"KOR","homeGoals":1,"awayGoals":0,"played":true},{"home":"CZE","away":"MEX","homeGoals":null,"awayGoals":null,"played":false},{"home":"RSA","away":"KOR","homeGoals":null,"awayGoals":null,"played":false}]},{"name":"Group B","teams":[{"code":"BIH","name":"Bosnia & Herzegovina","elo":1596},{"code":"CAN","name":"Canada","elo":1777},{"code":"QAT","name":"Qatar","elo":1437},{"code":"SUI","name":"Switzerland","elo":1885}],"matches":[{"home":"CAN","away":"BIH","homeGoals":1,"awayGoals":1,"played":true},{"home":"QAT","away":"SUI","homeGoals":1,"awayGoals":1,"played":true},{"home":"SUI","away":"BIH","homeGoals":4,"awayGoals":1,"played":true},{"home":"CAN","away":"QAT","homeGoals":6,"awayGoals":0,"played":true},{"home":"SUI","away":"CAN","homeGoals":null,"awayGoals":null,"played":false},{"home":"BIH","away":"QAT","homeGoals":null,"awayGoals":null,"played":false}]},{"name":"Group C","teams":[{"code":"BRA","name":"Brazil","elo":1986},{"code":"HAI","name":"Haiti","elo":1528},{"code":"MAR","name":"Morocco","elo":1866},{"code":"SCO","name":"Scotland","elo":1768}],"matches":[{"home":"BRA","away":"MAR","homeGoals":1,"awayGoals":1,"played":true},{"home":"HAI","away":"SCO","homeGoals":0,"awayGoals":1,"played":true},{"home":"SCO","away":"MAR","homeGoals":0,"awayGoals":1,"played":true},{"home":"BRA","away":"HAI","homeGoals":3,"awayGoals":0,"played":true},{"home":"SCO","away":"BRA","homeGoals":null,"awayGoals":null,"played":false},{"home":"MAR","away":"HAI","homeGoals":null,"awayGoals":null,"played":false}]},{"name":"Group D","teams":[{"code":"AUS","name":"Australia","elo":1799},{"code":"PAR","name":"Paraguay","elo":1816},{"code":"TUR","name":"Turkey","elo":1813},{"code":"USA","name":"USA","elo":1820}],"matches":[{"home":"USA","away":"PAR","homeGoals":4,"awayGoals":1,"played":true},{"home":"AUS","away":"TUR","homeGoals":2,"awayGoals":0,"played":true},{"home":"USA","away":"AUS","homeGoals":2,"awayGoals":0,"played":true},{"home":"TUR","away":"PAR","homeGoals":0,"awayGoals":1,"played":true},{"home":"TUR","away":"USA","homeGoals":null,"awayGoals":null,"played":false},{"home":"PAR","away":"AUS","homeGoals":null,"awayGoals":null,"played":false}]},{"name":"Group E","teams":[{"code":"CIV","name":"Ivory Coast","elo":1728},{"code":"CUW","name":"Curaçao","elo":1453},{"code":"ECU","name":"Ecuador","elo":1864},{"code":"GER","name":"Germany","elo":1954}],"matches":[{"home":"GER","away":"CUW","homeGoals":7,"awayGoals":1,"played":true},{"home":"CIV","away":"ECU","homeGoals":1,"awayGoals":0,"played":true},{"home":"GER","away":"CIV","homeGoals":2,"awayGoals":1,"played":true},{"home":"ECU","away":"CUW","homeGoals":0,"awayGoals":0,"played":true},{"home":"CUW","away":"CIV","homeGoals":null,"awayGoals":null,"played":false},{"home":"ECU","away":"GER","homeGoals":null,"awayGoals":null,"played":false}]},{"name":"Group F","teams":[{"code":"JPN","name":"Japan","elo":1925},{"code":"NED","name":"Netherlands","elo":1972},{"code":"SWE","name":"Sweden","elo":1727},{"code":"TUN","name":"Tunisia","elo":1570}],"matches":[{"home":"NED","away":"JPN","homeGoals":2,"awayGoals":2,"played":true},{"home":"SWE","away":"TUN","homeGoals":5,"awayGoals":1,"played":true},{"home":"NED","away":"SWE","homeGoals":5,"awayGoals":1,"played":true},{"home":"TUN","away":"JPN","homeGoals":0,"awayGoals":4,"played":true},{"home":"JPN","away":"SWE","homeGoals":null,"awayGoals":null,"played":false},{"home":"TUN","away":"NED","homeGoals":null,"awayGoals":null,"played":false}]},{"name":"Group G","teams":[{"code":"BEL","name":"Belgium","elo":1879},{"code":"EGY","name":"Egypt","elo":1711},{"code":"IRN","name":"Iran","elo":1756},{"code":"NZL","name":"New Zealand","elo":1578}],"matches":[{"home":"BEL","away":"EGY","homeGoals":1,"awayGoals":1,"played":true},{"home":"IRN","away":"NZL","homeGoals":2,"awayGoals":2,"played":true},{"home":"BEL","away":"IRN","homeGoals":null,"awayGoals":null,"played":false},{"home":"NZL","away":"EGY","homeGoals":null,"awayGoals":null,"played":false},{"home":"EGY","away":"IRN","homeGoals":null,"awayGoals":null,"played":false},{"home":"NZL","away":"BEL","homeGoals":null,"awayGoals":null,"played":false}]},{"name":"Group H","teams":[{"code":"CPV","name":"Cape Verde","elo":1606},{"code":"ESP","name":"Spain","elo":2129},{"code":"KSA","name":"Saudi Arabia","elo":1598},{"code":"URU","name":"Uruguay","elo":1870}],"matches":[{"home":"ESP","away":"CPV","homeGoals":0,"awayGoals":0,"played":true},{"home":"KSA","away":"URU","homeGoals":1,"awayGoals":1,"played":true},{"home":"ESP","away":"KSA","homeGoals":4,"awayGoals":0,"played":true},{"home":"URU","away":"CPV","homeGoals":null,"awayGoals":null,"played":false},{"home":"CPV","away":"KSA","homeGoals":null,"awayGoals":null,"played":false},{"home":"URU","away":"ESP","homeGoals":null,"awayGoals":null,"played":false}]},{"name":"Group I","teams":[{"code":"FRA","name":"France","elo":2084},{"code":"IRQ","name":"Iraq","elo":1592},{"code":"NOR","name":"Norway","elo":1929},{"code":"SEN","name":"Senegal","elo":1839}],"matches":[{"home":"FRA","away":"SEN","homeGoals":3,"awayGoals":1,"played":true},{"home":"IRQ","away":"NOR","homeGoals":1,"awayGoals":4,"played":true},{"home":"FRA","away":"IRQ","homeGoals":null,"awayGoals":null,"played":false},{"home":"NOR","away":"SEN","homeGoals":null,"awayGoals":null,"played":false},{"home":"NOR","away":"FRA","homeGoals":null,"awayGoals":null,"played":false},{"home":"SEN","away":"IRQ","homeGoals":null,"awayGoals":null,"played":false}]},{"name":"Group J","teams":[{"code":"ALG","name":"Algeria","elo":1759},{"code":"ARG","name":"Argentina","elo":2128},{"code":"AUT","name":"Austria","elo":1857},{"code":"JOR","name":"Jordan","elo":1653}],"matches":[{"home":"ARG","away":"ALG","homeGoals":3,"awayGoals":0,"played":true},{"home":"AUT","away":"JOR","homeGoals":3,"awayGoals":1,"played":true},{"home":"ARG","away":"AUT","homeGoals":null,"awayGoals":null,"played":false},{"home":"JOR","away":"ALG","homeGoals":null,"awayGoals":null,"played":false},{"home":"ALG","away":"AUT","homeGoals":null,"awayGoals":null,"played":false},{"home":"JOR","away":"ARG","homeGoals":null,"awayGoals":null,"played":false}]},{"name":"Group K","teams":[{"code":"COD","name":"DR Congo","elo":1674},{"code":"COL","name":"Colombia","elo":1998},{"code":"POR","name":"Portugal","elo":1967},{"code":"UZB","name":"Uzbekistan","elo":1698}],"matches":[{"home":"POR","away":"COD","homeGoals":1,"awayGoals":1,"played":true},{"home":"UZB","away":"COL","homeGoals":1,"awayGoals":3,"played":true},{"home":"POR","away":"UZB","homeGoals":null,"awayGoals":null,"played":false},{"home":"COL","away":"COD","homeGoals":null,"awayGoals":null,"played":false},{"home":"COL","away":"POR","homeGoals":null,"awayGoals":null,"played":false},{"home":"COD","away":"UZB","homeGoals":null,"awayGoals":null,"played":false}]},{"name":"Group L","teams":[{"code":"CRO","name":"Croatia","elo":1881},{"code":"ENG","name":"England","elo":2055},{"code":"GHA","name":"Ghana","elo":1557},{"code":"PAN","name":"Panama","elo":1683}],"matches":[{"home":"ENG","away":"CRO","homeGoals":4,"awayGoals":2,"played":true},{"home":"GHA","away":"PAN","homeGoals":1,"awayGoals":0,"played":true},{"home":"ENG","away":"GHA","homeGoals":null,"awayGoals":null,"played":false},{"home":"PAN","away":"CRO","homeGoals":null,"awayGoals":null,"played":false},{"home":"PAN","away":"ENG","homeGoals":null,"awayGoals":null,"played":false},{"home":"CRO","away":"GHA","homeGoals":null,"awayGoals":null,"played":false}]}],
-  freshness: {"dataThrough":"Spain 4-0 Saudi Arabia","lastDate":"2026-06-21","playedCount":37,"totalCount":104,"builtAtISO":"2026-06-21T20:44:17.883Z"}
+  groups: [{"name":"Group A","teams":[{"code":"CZE","name":"Czech Republic","elo":1696},{"code":"KOR","name":"South Korea","elo":1771},{"code":"MEX","name":"Mexico","elo":1896},{"code":"RSA","name":"South Africa","elo":1527}],"matches":[{"home":"MEX","away":"RSA","homeGoals":2,"awayGoals":0,"played":true},{"home":"KOR","away":"CZE","homeGoals":2,"awayGoals":1,"played":true},{"home":"CZE","away":"RSA","homeGoals":1,"awayGoals":1,"played":true},{"home":"MEX","away":"KOR","homeGoals":1,"awayGoals":0,"played":true},{"home":"CZE","away":"MEX","homeGoals":null,"awayGoals":null,"played":false},{"home":"RSA","away":"KOR","homeGoals":null,"awayGoals":null,"played":false}]},{"name":"Group B","teams":[{"code":"BIH","name":"Bosnia & Herzegovina","elo":1596},{"code":"CAN","name":"Canada","elo":1777},{"code":"QAT","name":"Qatar","elo":1437},{"code":"SUI","name":"Switzerland","elo":1885}],"matches":[{"home":"CAN","away":"BIH","homeGoals":1,"awayGoals":1,"played":true},{"home":"QAT","away":"SUI","homeGoals":1,"awayGoals":1,"played":true},{"home":"SUI","away":"BIH","homeGoals":4,"awayGoals":1,"played":true},{"home":"CAN","away":"QAT","homeGoals":6,"awayGoals":0,"played":true},{"home":"SUI","away":"CAN","homeGoals":null,"awayGoals":null,"played":false},{"home":"BIH","away":"QAT","homeGoals":null,"awayGoals":null,"played":false}]},{"name":"Group C","teams":[{"code":"BRA","name":"Brazil","elo":1986},{"code":"HAI","name":"Haiti","elo":1528},{"code":"MAR","name":"Morocco","elo":1866},{"code":"SCO","name":"Scotland","elo":1768}],"matches":[{"home":"BRA","away":"MAR","homeGoals":1,"awayGoals":1,"played":true},{"home":"HAI","away":"SCO","homeGoals":0,"awayGoals":1,"played":true},{"home":"SCO","away":"MAR","homeGoals":0,"awayGoals":1,"played":true},{"home":"BRA","away":"HAI","homeGoals":3,"awayGoals":0,"played":true},{"home":"SCO","away":"BRA","homeGoals":null,"awayGoals":null,"played":false},{"home":"MAR","away":"HAI","homeGoals":null,"awayGoals":null,"played":false}]},{"name":"Group D","teams":[{"code":"AUS","name":"Australia","elo":1799},{"code":"PAR","name":"Paraguay","elo":1816},{"code":"TUR","name":"Turkey","elo":1813},{"code":"USA","name":"USA","elo":1820}],"matches":[{"home":"USA","away":"PAR","homeGoals":4,"awayGoals":1,"played":true},{"home":"AUS","away":"TUR","homeGoals":2,"awayGoals":0,"played":true},{"home":"USA","away":"AUS","homeGoals":2,"awayGoals":0,"played":true},{"home":"TUR","away":"PAR","homeGoals":0,"awayGoals":1,"played":true},{"home":"TUR","away":"USA","homeGoals":null,"awayGoals":null,"played":false},{"home":"PAR","away":"AUS","homeGoals":null,"awayGoals":null,"played":false}]},{"name":"Group E","teams":[{"code":"CIV","name":"Ivory Coast","elo":1728},{"code":"CUW","name":"Curaçao","elo":1453},{"code":"ECU","name":"Ecuador","elo":1864},{"code":"GER","name":"Germany","elo":1954}],"matches":[{"home":"GER","away":"CUW","homeGoals":7,"awayGoals":1,"played":true},{"home":"CIV","away":"ECU","homeGoals":1,"awayGoals":0,"played":true},{"home":"GER","away":"CIV","homeGoals":2,"awayGoals":1,"played":true},{"home":"ECU","away":"CUW","homeGoals":0,"awayGoals":0,"played":true},{"home":"CUW","away":"CIV","homeGoals":null,"awayGoals":null,"played":false},{"home":"ECU","away":"GER","homeGoals":null,"awayGoals":null,"played":false}]},{"name":"Group F","teams":[{"code":"JPN","name":"Japan","elo":1925},{"code":"NED","name":"Netherlands","elo":1972},{"code":"SWE","name":"Sweden","elo":1727},{"code":"TUN","name":"Tunisia","elo":1570}],"matches":[{"home":"NED","away":"JPN","homeGoals":2,"awayGoals":2,"played":true},{"home":"SWE","away":"TUN","homeGoals":5,"awayGoals":1,"played":true},{"home":"NED","away":"SWE","homeGoals":5,"awayGoals":1,"played":true},{"home":"TUN","away":"JPN","homeGoals":0,"awayGoals":4,"played":true},{"home":"JPN","away":"SWE","homeGoals":null,"awayGoals":null,"played":false},{"home":"TUN","away":"NED","homeGoals":null,"awayGoals":null,"played":false}]},{"name":"Group G","teams":[{"code":"BEL","name":"Belgium","elo":1879},{"code":"EGY","name":"Egypt","elo":1711},{"code":"IRN","name":"Iran","elo":1756},{"code":"NZL","name":"New Zealand","elo":1578}],"matches":[{"home":"BEL","away":"EGY","homeGoals":1,"awayGoals":1,"played":true},{"home":"IRN","away":"NZL","homeGoals":2,"awayGoals":2,"played":true},{"home":"BEL","away":"IRN","homeGoals":0,"awayGoals":0,"played":true},{"home":"NZL","away":"EGY","homeGoals":null,"awayGoals":null,"played":false},{"home":"EGY","away":"IRN","homeGoals":null,"awayGoals":null,"played":false},{"home":"NZL","away":"BEL","homeGoals":null,"awayGoals":null,"played":false}]},{"name":"Group H","teams":[{"code":"CPV","name":"Cape Verde","elo":1606},{"code":"ESP","name":"Spain","elo":2129},{"code":"KSA","name":"Saudi Arabia","elo":1598},{"code":"URU","name":"Uruguay","elo":1870}],"matches":[{"home":"ESP","away":"CPV","homeGoals":0,"awayGoals":0,"played":true},{"home":"KSA","away":"URU","homeGoals":1,"awayGoals":1,"played":true},{"home":"ESP","away":"KSA","homeGoals":4,"awayGoals":0,"played":true},{"home":"URU","away":"CPV","homeGoals":null,"awayGoals":null,"played":false},{"home":"CPV","away":"KSA","homeGoals":null,"awayGoals":null,"played":false},{"home":"URU","away":"ESP","homeGoals":null,"awayGoals":null,"played":false}]},{"name":"Group I","teams":[{"code":"FRA","name":"France","elo":2084},{"code":"IRQ","name":"Iraq","elo":1592},{"code":"NOR","name":"Norway","elo":1929},{"code":"SEN","name":"Senegal","elo":1839}],"matches":[{"home":"FRA","away":"SEN","homeGoals":3,"awayGoals":1,"played":true},{"home":"IRQ","away":"NOR","homeGoals":1,"awayGoals":4,"played":true},{"home":"FRA","away":"IRQ","homeGoals":null,"awayGoals":null,"played":false},{"home":"NOR","away":"SEN","homeGoals":null,"awayGoals":null,"played":false},{"home":"NOR","away":"FRA","homeGoals":null,"awayGoals":null,"played":false},{"home":"SEN","away":"IRQ","homeGoals":null,"awayGoals":null,"played":false}]},{"name":"Group J","teams":[{"code":"ALG","name":"Algeria","elo":1759},{"code":"ARG","name":"Argentina","elo":2128},{"code":"AUT","name":"Austria","elo":1857},{"code":"JOR","name":"Jordan","elo":1653}],"matches":[{"home":"ARG","away":"ALG","homeGoals":3,"awayGoals":0,"played":true},{"home":"AUT","away":"JOR","homeGoals":3,"awayGoals":1,"played":true},{"home":"ARG","away":"AUT","homeGoals":null,"awayGoals":null,"played":false},{"home":"JOR","away":"ALG","homeGoals":null,"awayGoals":null,"played":false},{"home":"ALG","away":"AUT","homeGoals":null,"awayGoals":null,"played":false},{"home":"JOR","away":"ARG","homeGoals":null,"awayGoals":null,"played":false}]},{"name":"Group K","teams":[{"code":"COD","name":"DR Congo","elo":1674},{"code":"COL","name":"Colombia","elo":1998},{"code":"POR","name":"Portugal","elo":1967},{"code":"UZB","name":"Uzbekistan","elo":1698}],"matches":[{"home":"POR","away":"COD","homeGoals":1,"awayGoals":1,"played":true},{"home":"UZB","away":"COL","homeGoals":1,"awayGoals":3,"played":true},{"home":"POR","away":"UZB","homeGoals":null,"awayGoals":null,"played":false},{"home":"COL","away":"COD","homeGoals":null,"awayGoals":null,"played":false},{"home":"COL","away":"POR","homeGoals":null,"awayGoals":null,"played":false},{"home":"COD","away":"UZB","homeGoals":null,"awayGoals":null,"played":false}]},{"name":"Group L","teams":[{"code":"CRO","name":"Croatia","elo":1881},{"code":"ENG","name":"England","elo":2055},{"code":"GHA","name":"Ghana","elo":1557},{"code":"PAN","name":"Panama","elo":1683}],"matches":[{"home":"ENG","away":"CRO","homeGoals":4,"awayGoals":2,"played":true},{"home":"GHA","away":"PAN","homeGoals":1,"awayGoals":0,"played":true},{"home":"ENG","away":"GHA","homeGoals":null,"awayGoals":null,"played":false},{"home":"PAN","away":"CRO","homeGoals":null,"awayGoals":null,"played":false},{"home":"PAN","away":"ENG","homeGoals":null,"awayGoals":null,"played":false},{"home":"CRO","away":"GHA","homeGoals":null,"awayGoals":null,"played":false}]}],
+  freshness: {"dataThrough":"Belgium 0-0 Iran","lastDate":"2026-06-21","playedCount":38,"totalCount":104,"builtAtISO":"2026-06-21T21:15:44.309Z"}
 };
 
 /* ============================================================================
@@ -210,6 +218,8 @@ function blankStats(team) {
     code: team.code,
     name: team.name,
     fairPlay: Number.isFinite(team.fairPlay) ? team.fairPlay : 0,
+    elo: Number.isFinite(team.elo) ? team.elo : 0,
+    worldRank: Number.isFinite(team.worldRank) ? team.worldRank : null,
     played: 0,
     won: 0,
     drawn: 0,
@@ -287,9 +297,19 @@ function cmpFairPlay(x, y) {
   return x.fairPlay - y.fairPlay;
 }
 
-/** Alphabetical-by-code comparator (the deterministic "drawing of lots"). */
-function cmpAlpha(x, y) {
-  return x.code < y.code ? -1 : x.code > y.code ? 1 : 0;
+/** Points-only comparator (more points first) — FIFA's first ranking criterion. */
+function cmpPoints(x, y) {
+  return y.points - x.points;
+}
+
+/**
+ * FIFA World Ranking tiebreaker (criterion 7 for 2026; drawing of lots was
+ * abolished). We do not yet carry the official FIFA ranking, so we PROXY it
+ * with Elo (higher Elo = better rank). Swap in real ranks via team.worldRank.
+ */
+function cmpWorldRank(x, y) {
+  if (x.worldRank != null && y.worldRank != null) return x.worldRank - y.worldRank;
+  return (y.elo || 0) - (x.elo || 0);
 }
 
 // ----------------------------------------------------------------------------
@@ -361,7 +381,7 @@ function resolveTiedGroup(tied, allMatches) {
   // If h2h fully kept them together (a single bucket of the same size), h2h has
   // failed to separate -> go to fair-play / lots for the whole set.
   if (buckets.length === 1 && buckets[0].length === tied.length) {
-    return resolveByFairPlayThenLots(tied);
+    return resolveByOverallThenDiscipline(tied);
   }
 
   // h2h produced >=2 buckets (a partial or full split). Resolve each bucket:
@@ -388,7 +408,7 @@ function resolveTiedGroup(tied, allMatches) {
 function resolveStillTiedSubset(subset, allMatches) {
   const buckets = headToHeadSplit(subset, allMatches);
   if (buckets.length === 1 && buckets[0].length === subset.length) {
-    return resolveByFairPlayThenLots(subset);
+    return resolveByOverallThenDiscipline(subset);
   }
   const result = [];
   for (const bucket of buckets) {
@@ -399,24 +419,21 @@ function resolveStillTiedSubset(subset, allMatches) {
 }
 
 /**
- * Resolve a still-tied set by (g) fair-play then (h) lots/alphabetical.
- * Teams that remain level after fair-play (i.e. decided purely by lots) get
- * `tiedByLots:true`.
+ * Resolve a set that head-to-head (criteria 1-3) could NOT separate, using the
+ * FIFA 2026 fallback criteria in order:
+ *   (4) overall goal difference, (5) overall goals scored,
+ *   (6) fair-play/disciplinary points, (7) FIFA World Ranking.
+ * Drawing of lots was abolished for 2026, and World Ranking is unique per team,
+ * so this always produces a strict order.
  */
-function resolveByFairPlayThenLots(tied) {
-  const ordered = [...tied].sort((a, b) => {
+function resolveByOverallThenDiscipline(tied) {
+  return [...tied].sort((a, b) => {
+    const ov = cmpOverall(a, b); // points are equal here, so this is GD then GF
+    if (ov !== 0) return ov;
     const fp = cmpFairPlay(a, b);
     if (fp !== 0) return fp;
-    return cmpAlpha(a, b);
+    return cmpWorldRank(a, b);
   });
-  // Flag any teams that are level on fair-play with a neighbor (lots decided).
-  for (let i = 0; i < ordered.length; i++) {
-    const t = ordered[i];
-    const prevLevel = i > 0 && cmpFairPlay(ordered[i - 1], t) === 0;
-    const nextLevel = i < ordered.length - 1 && cmpFairPlay(t, ordered[i + 1]) === 0;
-    if (prevLevel || nextLevel) t.tiedByLots = true;
-  }
-  return ordered;
 }
 
 // ----------------------------------------------------------------------------
@@ -434,16 +451,17 @@ function computeGroupStanding(group) {
   const stats = aggregate(group.teams, group.matches);
   const all = [...stats.values()];
 
-  // 1. Primary sort on overall criteria (a,b,c).
-  all.sort(cmpOverall);
+  // FIFA 2026: teams are first ordered by POINTS. Any set level on points is
+  // resolved by the head-to-head cascade (criteria 1-3) and, only if that cannot
+  // separate them, by overall GD -> overall GF -> fair-play -> FIFA World Ranking.
+  // (For 2026, head-to-head OUTRANKS overall goal difference, and lots are gone.)
+  all.sort(cmpPoints);
 
-  // 2. Walk groups of teams that are level on (a,b,c) and resolve each with the
-  //    head-to-head -> fair-play -> lots cascade.
   const ranked = [];
   let i = 0;
   while (i < all.length) {
     let j = i + 1;
-    while (j < all.length && cmpOverall(all[i], all[j]) === 0) j++;
+    while (j < all.length && all[j].points === all[i].points) j++;
     const tiedSlice = all.slice(i, j);
     if (tiedSlice.length === 1) {
       ranked.push(tiedSlice[0]);
@@ -464,8 +482,9 @@ function computeGroupStanding(group) {
     ga: s.ga,
     gd: s.gd,
     points: s.points,
+    fairPlay: s.fairPlay,
+    elo: s.elo,
     rank: idx + 1,
-    ...(s.tiedByLots ? { tiedByLots: true } : {}),
   }));
 }
 
@@ -492,21 +511,16 @@ function rankThirdPlaceTeams(groups) {
   // Sort with the full cascade. Note: there is no head-to-head among
   // third-place teams (they're from different groups), so the sequence is
   // overall -> fair-play -> lots.
+  // Third-place teams come from different groups and never met, so there is no
+  // head-to-head step. FIFA 2026 order: points -> overall GD -> overall GF ->
+  // fair play -> FIFA World Ranking (drawing of lots abolished).
   thirds.sort((a, b) => {
-    const o = cmpOverall(a, b);
+    const o = cmpOverall(a, b); // points -> GD -> GF
     if (o !== 0) return o;
     const fp = cmpFairPlay(a, b);
     if (fp !== 0) return fp;
-    return cmpAlpha(a, b);
+    return cmpWorldRank(a, b);
   });
-
-  // Flag lots: teams level on overall AND fair-play with a neighbor.
-  const levelWith = (x, y) => cmpOverall(x, y) === 0 && cmpFairPlay(x, y) === 0;
-  for (let i = 0; i < thirds.length; i++) {
-    const prevLevel = i > 0 && levelWith(thirds[i - 1], thirds[i]);
-    const nextLevel = i < thirds.length - 1 && levelWith(thirds[i], thirds[i + 1]);
-    if (prevLevel || nextLevel) thirds[i].tiedByLots = true;
-  }
 
   return thirds.map((t, idx) => ({
     ...t,
@@ -1265,7 +1279,8 @@ function cloneGroupsForSim(groups) {
  *   qualifiedAs: Record<string,'winner'|'runnerup'|'third'|null>,
  *   r32: Array<{match:number, home:string, away:string}>,
  *   reached: Record<string,number>,
- *   champion: string
+ *   champion: string,
+ *   knockout: Array<{match:number, round:string, home:string, away:string, winner:string}>
  * }}
  */
 function simulateTournament(groups, bracket, rng, opts = {}) {
@@ -1356,6 +1371,10 @@ function simulateTournament(groups, bracket, rng, opts = {}) {
   const loserByMatch = {};
   const reached = {};
 
+  // Collect EVERY knockout match's resolved occupants + winner for this sim,
+  // so the aggregator can build true per-round occupancy frequencies.
+  const knockout = []; // [{match, round, home, away, winner}]
+
   // Seed "reached" for everyone who made the R32.
   for (const fx of r32) {
     reached[fx.home] = ROUND_INDEX.R32;
@@ -1392,10 +1411,11 @@ function simulateTournament(groups, bracket, rng, opts = {}) {
     winnerByMatch[fx.match] = winner;
     loserByMatch[fx.match] = loser;
     bump(winner, ROUND_INDEX.R16); // winning R32 => reached R16
+    knockout.push({ match: fx.match, round: 'R32', home: fx.home, away: fx.away, winner });
   }
 
   // Helper to run a round whose sides are winnerOf references.
-  const runRound = (roundMatches, advanceRoundIdx) => {
+  const runRound = (roundMatches, roundName, advanceRoundIdx) => {
     for (const m of roundMatches) {
       const homeCode = sideCode(m.home);
       const awayCode = sideCode(m.away);
@@ -1403,12 +1423,13 @@ function simulateTournament(groups, bracket, rng, opts = {}) {
       winnerByMatch[m.match] = winner;
       loserByMatch[m.match] = loser;
       bump(winner, advanceRoundIdx);
+      knockout.push({ match: m.match, round: roundName, home: homeCode, away: awayCode, winner });
     }
   };
 
-  runRound(bracket.rounds.R16, ROUND_INDEX.QF);   // win R16 => reached QF
-  runRound(bracket.rounds.QF, ROUND_INDEX.SF);    // win QF  => reached SF
-  runRound(bracket.rounds.SF, ROUND_INDEX.Final); // win SF  => reached Final
+  runRound(bracket.rounds.R16, 'R16', ROUND_INDEX.QF);   // win R16 => reached QF
+  runRound(bracket.rounds.QF, 'QF', ROUND_INDEX.SF);     // win QF  => reached SF
+  runRound(bracket.rounds.SF, 'SF', ROUND_INDEX.Final);  // win SF  => reached Final
 
   // Final.
   const finalM = bracket.rounds.Final[0];
@@ -1417,6 +1438,7 @@ function simulateTournament(groups, bracket, rng, opts = {}) {
   const { winner: champion } = playKnockout(fHome, fAway);
   winnerByMatch[finalM.match] = champion;
   bump(champion, ROUND_INDEX.Champion);
+  knockout.push({ match: finalM.match, round: 'Final', home: fHome, away: fAway, winner: champion });
 
   // Third-place playoff is simulated for completeness (does not affect `reached`
   // beyond the SF appearance the two losers already have).
@@ -1427,10 +1449,11 @@ function simulateTournament(groups, bracket, rng, opts = {}) {
     if (a && b) {
       const { winner } = playKnockout(a, b);
       winnerByMatch[tpM.match] = winner;
+      knockout.push({ match: tpM.match, round: 'ThirdPlace', home: a, away: b, winner });
     }
   }
 
-  return { groupRank, qualifiedAs, r32, reached, champion };
+  return { groupRank, qualifiedAs, r32, reached, champion, knockout };
 }
 
 // ----------------------------------------------------------------------------
@@ -1448,7 +1471,9 @@ function simulateTournament(groups, bracket, rng, opts = {}) {
  *   n:number,
  *   perTeam: Array<object>,             // sorted by pWinCup desc
  *   perR32Slot: Array<{match,home:[{code,p}],away:[{code,p}]}>,
- *   modalBracket: Array<{match, home:{code,p}, away:{code,p}}>
+ *   modalBracket: Array<{match, home:{code,p}, away:{code,p}}>,
+ *   perSlot: Array<{match,round,home:[{code,p}],away:[{code,p}]}>,   // ALL ko rounds, true freqs
+ *   modalKnockout: Array<{match,round,home:{code,p},away:{code,p}}>  // argmax each side
  * }}
  */
 function monteCarlo(groups, bracket, opts = {}) {
@@ -1481,6 +1506,18 @@ function monteCarlo(groups, bracket, opts = {}) {
   for (const mNo of r32Matches) slotTally[mNo] = { home: new Map(), away: new Map() };
   const inc = (map, code) => map.set(code, (map.get(code) || 0) + 1);
 
+  // per-knockout-match occupancy tallies for ALL rounds (R32/R16/QF/SF/Final/ThirdPlace).
+  // Keyed by match number; each holds the round name and home/away occupant counts.
+  const koOrder = ['R32', 'R16', 'QF', 'SF', 'ThirdPlace', 'Final'];
+  const koTally = {}; // matchNo -> {round, home: Map<code,count>, away: Map<code,count>}
+  const koMatchOrder = []; // preserve a stable, round-then-match ordering for output
+  for (const rd of koOrder) {
+    for (const m of bracket.rounds[rd] || []) {
+      koTally[m.match] = { round: rd, home: new Map(), away: new Map() };
+      koMatchOrder.push(m.match);
+    }
+  }
+
   const simOpts = { ...opts };
 
   for (let i = 0; i < n; i++) {
@@ -1504,10 +1541,18 @@ function monteCarlo(groups, bracket, opts = {}) {
     }
     C[r.champion].winCup++;
 
-    // R32 slot occupancy
+    // R32 slot occupancy (legacy tallies, kept for perR32Slot/modalBracket)
     for (const fx of r.r32) {
       inc(slotTally[fx.match].home, fx.home);
       inc(slotTally[fx.match].away, fx.away);
+    }
+
+    // ALL knockout matches: true per-round occupancy for each side.
+    for (const k of r.knockout) {
+      const t = koTally[k.match];
+      if (!t) continue;
+      if (k.home) inc(t.home, k.home);
+      if (k.away) inc(t.away, k.away);
     }
   }
 
@@ -1550,7 +1595,33 @@ function monteCarlo(groups, bracket, opts = {}) {
     };
   });
 
-  return { n, perTeam, perR32Slot, modalBracket };
+  // ---- TRUE per-round occupancy across ALL knockout matches ----------------
+  // p = count/n is the unconditional probability the team occupies that exact
+  // slot in that round (i.e. reaches and fills it). home/away counts each sum
+  // to n (every match has two occupants every sim).
+  const perSlot = koMatchOrder.map((mNo) => {
+    const t = koTally[mNo];
+    return {
+      match: mNo,
+      round: t.round,
+      home: topOf(t.home).slice(0, TOP),
+      away: topOf(t.away).slice(0, TOP),
+    };
+  });
+
+  const modalKnockout = koMatchOrder.map((mNo) => {
+    const t = koTally[mNo];
+    const home = topOf(t.home);
+    const away = topOf(t.away);
+    return {
+      match: mNo,
+      round: t.round,
+      home: home[0] ?? { code: null, p: 0 },
+      away: away[0] ?? { code: null, p: 0 },
+    };
+  });
+
+  return { n, perTeam, perR32Slot, modalBracket, perSlot, modalKnockout };
 }
 
 
@@ -1597,6 +1668,8 @@ function blankStats(team) {
     code: team.code,
     name: team.name,
     fairPlay: Number.isFinite(team.fairPlay) ? team.fairPlay : 0,
+    elo: Number.isFinite(team.elo) ? team.elo : 0,
+    worldRank: Number.isFinite(team.worldRank) ? team.worldRank : null,
     played: 0,
     won: 0,
     drawn: 0,
@@ -1674,9 +1747,19 @@ function cmpFairPlay(x, y) {
   return x.fairPlay - y.fairPlay;
 }
 
-/** Alphabetical-by-code comparator (the deterministic "drawing of lots"). */
-function cmpAlpha(x, y) {
-  return x.code < y.code ? -1 : x.code > y.code ? 1 : 0;
+/** Points-only comparator (more points first) — FIFA's first ranking criterion. */
+function cmpPoints(x, y) {
+  return y.points - x.points;
+}
+
+/**
+ * FIFA World Ranking tiebreaker (criterion 7 for 2026; drawing of lots was
+ * abolished). We do not yet carry the official FIFA ranking, so we PROXY it
+ * with Elo (higher Elo = better rank). Swap in real ranks via team.worldRank.
+ */
+function cmpWorldRank(x, y) {
+  if (x.worldRank != null && y.worldRank != null) return x.worldRank - y.worldRank;
+  return (y.elo || 0) - (x.elo || 0);
 }
 
 // ----------------------------------------------------------------------------
@@ -1748,7 +1831,7 @@ function resolveTiedGroup(tied, allMatches) {
   // If h2h fully kept them together (a single bucket of the same size), h2h has
   // failed to separate -> go to fair-play / lots for the whole set.
   if (buckets.length === 1 && buckets[0].length === tied.length) {
-    return resolveByFairPlayThenLots(tied);
+    return resolveByOverallThenDiscipline(tied);
   }
 
   // h2h produced >=2 buckets (a partial or full split). Resolve each bucket:
@@ -1775,7 +1858,7 @@ function resolveTiedGroup(tied, allMatches) {
 function resolveStillTiedSubset(subset, allMatches) {
   const buckets = headToHeadSplit(subset, allMatches);
   if (buckets.length === 1 && buckets[0].length === subset.length) {
-    return resolveByFairPlayThenLots(subset);
+    return resolveByOverallThenDiscipline(subset);
   }
   const result = [];
   for (const bucket of buckets) {
@@ -1786,24 +1869,21 @@ function resolveStillTiedSubset(subset, allMatches) {
 }
 
 /**
- * Resolve a still-tied set by (g) fair-play then (h) lots/alphabetical.
- * Teams that remain level after fair-play (i.e. decided purely by lots) get
- * \`tiedByLots:true\`.
+ * Resolve a set that head-to-head (criteria 1-3) could NOT separate, using the
+ * FIFA 2026 fallback criteria in order:
+ *   (4) overall goal difference, (5) overall goals scored,
+ *   (6) fair-play/disciplinary points, (7) FIFA World Ranking.
+ * Drawing of lots was abolished for 2026, and World Ranking is unique per team,
+ * so this always produces a strict order.
  */
-function resolveByFairPlayThenLots(tied) {
-  const ordered = [...tied].sort((a, b) => {
+function resolveByOverallThenDiscipline(tied) {
+  return [...tied].sort((a, b) => {
+    const ov = cmpOverall(a, b); // points are equal here, so this is GD then GF
+    if (ov !== 0) return ov;
     const fp = cmpFairPlay(a, b);
     if (fp !== 0) return fp;
-    return cmpAlpha(a, b);
+    return cmpWorldRank(a, b);
   });
-  // Flag any teams that are level on fair-play with a neighbor (lots decided).
-  for (let i = 0; i < ordered.length; i++) {
-    const t = ordered[i];
-    const prevLevel = i > 0 && cmpFairPlay(ordered[i - 1], t) === 0;
-    const nextLevel = i < ordered.length - 1 && cmpFairPlay(t, ordered[i + 1]) === 0;
-    if (prevLevel || nextLevel) t.tiedByLots = true;
-  }
-  return ordered;
 }
 
 // ----------------------------------------------------------------------------
@@ -1821,16 +1901,17 @@ function computeGroupStanding(group) {
   const stats = aggregate(group.teams, group.matches);
   const all = [...stats.values()];
 
-  // 1. Primary sort on overall criteria (a,b,c).
-  all.sort(cmpOverall);
+  // FIFA 2026: teams are first ordered by POINTS. Any set level on points is
+  // resolved by the head-to-head cascade (criteria 1-3) and, only if that cannot
+  // separate them, by overall GD -> overall GF -> fair-play -> FIFA World Ranking.
+  // (For 2026, head-to-head OUTRANKS overall goal difference, and lots are gone.)
+  all.sort(cmpPoints);
 
-  // 2. Walk groups of teams that are level on (a,b,c) and resolve each with the
-  //    head-to-head -> fair-play -> lots cascade.
   const ranked = [];
   let i = 0;
   while (i < all.length) {
     let j = i + 1;
-    while (j < all.length && cmpOverall(all[i], all[j]) === 0) j++;
+    while (j < all.length && all[j].points === all[i].points) j++;
     const tiedSlice = all.slice(i, j);
     if (tiedSlice.length === 1) {
       ranked.push(tiedSlice[0]);
@@ -1851,8 +1932,9 @@ function computeGroupStanding(group) {
     ga: s.ga,
     gd: s.gd,
     points: s.points,
+    fairPlay: s.fairPlay,
+    elo: s.elo,
     rank: idx + 1,
-    ...(s.tiedByLots ? { tiedByLots: true } : {}),
   }));
 }
 
@@ -1879,21 +1961,16 @@ function rankThirdPlaceTeams(groups) {
   // Sort with the full cascade. Note: there is no head-to-head among
   // third-place teams (they're from different groups), so the sequence is
   // overall -> fair-play -> lots.
+  // Third-place teams come from different groups and never met, so there is no
+  // head-to-head step. FIFA 2026 order: points -> overall GD -> overall GF ->
+  // fair play -> FIFA World Ranking (drawing of lots abolished).
   thirds.sort((a, b) => {
-    const o = cmpOverall(a, b);
+    const o = cmpOverall(a, b); // points -> GD -> GF
     if (o !== 0) return o;
     const fp = cmpFairPlay(a, b);
     if (fp !== 0) return fp;
-    return cmpAlpha(a, b);
+    return cmpWorldRank(a, b);
   });
-
-  // Flag lots: teams level on overall AND fair-play with a neighbor.
-  const levelWith = (x, y) => cmpOverall(x, y) === 0 && cmpFairPlay(x, y) === 0;
-  for (let i = 0; i < thirds.length; i++) {
-    const prevLevel = i > 0 && levelWith(thirds[i - 1], thirds[i]);
-    const nextLevel = i < thirds.length - 1 && levelWith(thirds[i], thirds[i + 1]);
-    if (prevLevel || nextLevel) thirds[i].tiedByLots = true;
-  }
 
   return thirds.map((t, idx) => ({
     ...t,
@@ -2652,7 +2729,8 @@ function cloneGroupsForSim(groups) {
  *   qualifiedAs: Record<string,'winner'|'runnerup'|'third'|null>,
  *   r32: Array<{match:number, home:string, away:string}>,
  *   reached: Record<string,number>,
- *   champion: string
+ *   champion: string,
+ *   knockout: Array<{match:number, round:string, home:string, away:string, winner:string}>
  * }}
  */
 function simulateTournament(groups, bracket, rng, opts = {}) {
@@ -2743,6 +2821,10 @@ function simulateTournament(groups, bracket, rng, opts = {}) {
   const loserByMatch = {};
   const reached = {};
 
+  // Collect EVERY knockout match's resolved occupants + winner for this sim,
+  // so the aggregator can build true per-round occupancy frequencies.
+  const knockout = []; // [{match, round, home, away, winner}]
+
   // Seed "reached" for everyone who made the R32.
   for (const fx of r32) {
     reached[fx.home] = ROUND_INDEX.R32;
@@ -2779,10 +2861,11 @@ function simulateTournament(groups, bracket, rng, opts = {}) {
     winnerByMatch[fx.match] = winner;
     loserByMatch[fx.match] = loser;
     bump(winner, ROUND_INDEX.R16); // winning R32 => reached R16
+    knockout.push({ match: fx.match, round: 'R32', home: fx.home, away: fx.away, winner });
   }
 
   // Helper to run a round whose sides are winnerOf references.
-  const runRound = (roundMatches, advanceRoundIdx) => {
+  const runRound = (roundMatches, roundName, advanceRoundIdx) => {
     for (const m of roundMatches) {
       const homeCode = sideCode(m.home);
       const awayCode = sideCode(m.away);
@@ -2790,12 +2873,13 @@ function simulateTournament(groups, bracket, rng, opts = {}) {
       winnerByMatch[m.match] = winner;
       loserByMatch[m.match] = loser;
       bump(winner, advanceRoundIdx);
+      knockout.push({ match: m.match, round: roundName, home: homeCode, away: awayCode, winner });
     }
   };
 
-  runRound(bracket.rounds.R16, ROUND_INDEX.QF);   // win R16 => reached QF
-  runRound(bracket.rounds.QF, ROUND_INDEX.SF);    // win QF  => reached SF
-  runRound(bracket.rounds.SF, ROUND_INDEX.Final); // win SF  => reached Final
+  runRound(bracket.rounds.R16, 'R16', ROUND_INDEX.QF);   // win R16 => reached QF
+  runRound(bracket.rounds.QF, 'QF', ROUND_INDEX.SF);     // win QF  => reached SF
+  runRound(bracket.rounds.SF, 'SF', ROUND_INDEX.Final);  // win SF  => reached Final
 
   // Final.
   const finalM = bracket.rounds.Final[0];
@@ -2804,6 +2888,7 @@ function simulateTournament(groups, bracket, rng, opts = {}) {
   const { winner: champion } = playKnockout(fHome, fAway);
   winnerByMatch[finalM.match] = champion;
   bump(champion, ROUND_INDEX.Champion);
+  knockout.push({ match: finalM.match, round: 'Final', home: fHome, away: fAway, winner: champion });
 
   // Third-place playoff is simulated for completeness (does not affect \`reached\`
   // beyond the SF appearance the two losers already have).
@@ -2814,10 +2899,11 @@ function simulateTournament(groups, bracket, rng, opts = {}) {
     if (a && b) {
       const { winner } = playKnockout(a, b);
       winnerByMatch[tpM.match] = winner;
+      knockout.push({ match: tpM.match, round: 'ThirdPlace', home: a, away: b, winner });
     }
   }
 
-  return { groupRank, qualifiedAs, r32, reached, champion };
+  return { groupRank, qualifiedAs, r32, reached, champion, knockout };
 }
 
 // ----------------------------------------------------------------------------
@@ -2835,7 +2921,9 @@ function simulateTournament(groups, bracket, rng, opts = {}) {
  *   n:number,
  *   perTeam: Array<object>,             // sorted by pWinCup desc
  *   perR32Slot: Array<{match,home:[{code,p}],away:[{code,p}]}>,
- *   modalBracket: Array<{match, home:{code,p}, away:{code,p}}>
+ *   modalBracket: Array<{match, home:{code,p}, away:{code,p}}>,
+ *   perSlot: Array<{match,round,home:[{code,p}],away:[{code,p}]}>,   // ALL ko rounds, true freqs
+ *   modalKnockout: Array<{match,round,home:{code,p},away:{code,p}}>  // argmax each side
  * }}
  */
 function monteCarlo(groups, bracket, opts = {}) {
@@ -2868,6 +2956,18 @@ function monteCarlo(groups, bracket, opts = {}) {
   for (const mNo of r32Matches) slotTally[mNo] = { home: new Map(), away: new Map() };
   const inc = (map, code) => map.set(code, (map.get(code) || 0) + 1);
 
+  // per-knockout-match occupancy tallies for ALL rounds (R32/R16/QF/SF/Final/ThirdPlace).
+  // Keyed by match number; each holds the round name and home/away occupant counts.
+  const koOrder = ['R32', 'R16', 'QF', 'SF', 'ThirdPlace', 'Final'];
+  const koTally = {}; // matchNo -> {round, home: Map<code,count>, away: Map<code,count>}
+  const koMatchOrder = []; // preserve a stable, round-then-match ordering for output
+  for (const rd of koOrder) {
+    for (const m of bracket.rounds[rd] || []) {
+      koTally[m.match] = { round: rd, home: new Map(), away: new Map() };
+      koMatchOrder.push(m.match);
+    }
+  }
+
   const simOpts = { ...opts };
 
   for (let i = 0; i < n; i++) {
@@ -2891,10 +2991,18 @@ function monteCarlo(groups, bracket, opts = {}) {
     }
     C[r.champion].winCup++;
 
-    // R32 slot occupancy
+    // R32 slot occupancy (legacy tallies, kept for perR32Slot/modalBracket)
     for (const fx of r.r32) {
       inc(slotTally[fx.match].home, fx.home);
       inc(slotTally[fx.match].away, fx.away);
+    }
+
+    // ALL knockout matches: true per-round occupancy for each side.
+    for (const k of r.knockout) {
+      const t = koTally[k.match];
+      if (!t) continue;
+      if (k.home) inc(t.home, k.home);
+      if (k.away) inc(t.away, k.away);
     }
   }
 
@@ -2937,7 +3045,33 @@ function monteCarlo(groups, bracket, opts = {}) {
     };
   });
 
-  return { n, perTeam, perR32Slot, modalBracket };
+  // ---- TRUE per-round occupancy across ALL knockout matches ----------------
+  // p = count/n is the unconditional probability the team occupies that exact
+  // slot in that round (i.e. reaches and fills it). home/away counts each sum
+  // to n (every match has two occupants every sim).
+  const perSlot = koMatchOrder.map((mNo) => {
+    const t = koTally[mNo];
+    return {
+      match: mNo,
+      round: t.round,
+      home: topOf(t.home).slice(0, TOP),
+      away: topOf(t.away).slice(0, TOP),
+    };
+  });
+
+  const modalKnockout = koMatchOrder.map((mNo) => {
+    const t = koTally[mNo];
+    const home = topOf(t.home);
+    const away = topOf(t.away);
+    return {
+      match: mNo,
+      round: t.round,
+      home: home[0] ?? { code: null, p: 0 },
+      away: away[0] ?? { code: null, p: 0 },
+    };
+  });
+
+  return { n, perTeam, perR32Slot, modalBracket, perSlot, modalKnockout };
 }
 
 
@@ -2997,6 +3131,11 @@ self.onmessage = function (e) {
   }
   var baseGroups = DATA.groups;            // pristine (feed)
   var workGroups = cloneGroups(baseGroups);// editable in My Picks
+
+  // ?poster=1 → hi-res capture layout: full natural width, no scroll clip,
+  // bracket-only, projected mode. Honored by export-image.mjs.
+  var POSTER = /[?&]poster=1\b/.test(location.search);
+  if(POSTER){ document.body.classList.add('poster'); }
 
   var state = {
     mode:'projected',          // 'projected' | 'picks'
@@ -3138,14 +3277,15 @@ self.onmessage = function (e) {
     root.appendChild(s);
     root.appendChild(about());
 
-    // kick a projection if needed
-    if(state.mode==='projected' && state.tab!=='scenario' && !state.mc && !state.simming){
+    // kick a projection if needed (poster mode computes synchronously up front,
+    // so we never schedule the async worker there — capture must see a full bracket)
+    if(!POSTER && state.mode==='projected' && state.tab!=='scenario' && !state.mc && !state.simming){
       runProjection();
     }
   }
 
   function header(){
-    var d=document.createElement('div');
+    var d=document.createElement('div'); d.className='app-header';
     var note = 'Very-recently-finished or in-progress games may not yet be in the feed — switch to My Picks to enter a just-final result by hand.';
     d.innerHTML =
       '<h1>2026 World Cup &mdash; Bracket Projector</h1>'+
@@ -3185,150 +3325,303 @@ self.onmessage = function (e) {
     return wrap;
   }
 
-  // ---------------- BRACKET ----------------
+  // ---------------- BRACKET (inline SVG) ----------------
   function renderBracket(){
-    var sec=document.createElement('div'); sec.className='section active';
+    var sec=document.createElement('div'); sec.className='section active print-bracket';
     if(state.mode==='projected'){
       var bar=document.createElement('div'); bar.className='row tiny muted';
       if(state.simming){ bar.innerHTML='<span class="simstate"><span class="spinner"></span> simulating '+SIM_N.toLocaleString()+' tournaments&hellip;</span>'; }
-      else { bar.innerHTML='<span>Each slot shows the most-likely team and the share of sims it appears there. Tap a slot for the top candidates.</span>'; }
+      else { bar.innerHTML='<span>Each slot shows the most-likely team and the true share of sims in which that team reaches and occupies that exact slot. Tap a slot for the top candidates.</span>'; }
       sec.appendChild(bar);
+      sec.appendChild(exportBar());
       if(!state.mc){ if(!state.simming){ var p=document.createElement('div'); p.className='muted'; p.textContent='Preparing simulation…'; sec.appendChild(p);} sec.appendChild(bracketShell(null)); return sec; }
       sec.appendChild(bracketShell(state.mc));
     } else {
       var info=document.createElement('div'); info.className='callout';
       info.innerHTML='<b>My Picks.</b> Group results below feed the R32; tap any knockout slot to choose who advances. Edit group scores in the Group stage tab. Empty slots stay blank until the groups (or your picks) decide them.';
       sec.appendChild(info);
+      sec.appendChild(exportBar());
       sec.appendChild(bracketShell(null));
     }
     return sec;
   }
 
-  function bracketShell(mc){
-    // build per-match modal occupant maps from mc (projected) or deterministic (picks)
-    var det = state.mode==='picks'? deterministicBracket() : null;
-    var slotMap={};   // R32 matchNo -> {home:[cands], away:[cands]}
-    _winPoolCache={};
-    if(mc){
-      mc.perR32Slot.forEach(function(s){ slotMap[s.match]={ home:s.home, away:s.away }; });
-    }
-
-    var wrap=document.createElement('div'); wrap.className='bracket-wrap';
-    var br=document.createElement('div'); br.className='bracket';
-
-    var rounds=[['R32','Round of 32'],['R16','Round of 16'],['QF','Quarter-finals'],['SF','Semi-finals'],['Final','Final']];
-    rounds.forEach(function(rd){
-      var col=document.createElement('div'); col.className='col'+(rd[0]==='Final'?' final-col':'');
-      var h=document.createElement('h3'); h.textContent=rd[1]; col.appendChild(h);
-      (BRACKET.rounds[rd[0]]||[]).forEach(function(m){
-        col.appendChild(matchCard(rd[0], m, mc, slotMap, det));
+  // Resolve, for every knockout match + side, the {code,p,cands} to display, in
+  // BOTH modes. Projected: true Monte-Carlo per-slot frequencies (mc.perSlot).
+  // Picks: deterministic occupant (p=0, no candidates), user override aware.
+  function buildSlotInfo(mc, det){
+    var info={}; // matchNo -> {home:{code,p,cands,known,picked}, away:{...}}
+    var rounds=['R32','R16','QF','SF','Final'];
+    if(state.mode==='projected' && mc){
+      var byMatch={}; mc.perSlot.forEach(function(s){ byMatch[s.match]=s; });
+      rounds.forEach(function(rd){
+        (BRACKET.rounds[rd]||[]).forEach(function(m){
+          var s=byMatch[m.match]||{home:[],away:[]};
+          info[m.match]={
+            home:{ code:(s.home[0]||{}).code||null, p:(s.home[0]||{}).p||0, cands:s.home },
+            away:{ code:(s.away[0]||{}).code||null, p:(s.away[0]||{}).p||0, cands:s.away }
+          };
+        });
       });
-      br.appendChild(col);
-    });
-    wrap.appendChild(br);
+    } else {
+      rounds.forEach(function(rd){
+        (BRACKET.rounds[rd]||[]).forEach(function(m){
+          var d=(det&&det.slotByMatch[m.match])||{};
+          var picked=det? det.winnerOf[m.match] : null;
+          info[m.match]={
+            home:{ code:d.home||null, p:0, cands:[], known:!!d.home, picked:picked===d.home && !!d.home },
+            away:{ code:d.away||null, p:0, cands:[], known:!!d.away, picked:picked===d.away && !!d.away }
+          };
+        });
+      });
+    }
+    return info;
+  }
+
+  function bracketShell(mc){
+    var det = state.mode==='picks'? deterministicBracket() : null;
+    var slotInfo = buildSlotInfo(mc, det);
+    var wrap=document.createElement('div'); wrap.className='bracket-wrap';
+    wrap.appendChild(bracketSVG(slotInfo));
+    // stash the latest slotInfo for the export functions (current view state)
+    _lastSlotInfo=slotInfo;
     return wrap;
   }
 
-  function matchCard(round, m, mc, slotMap, det){
-    var card=document.createElement('div'); card.className='match';
-    var hdr=document.createElement('div'); hdr.className='mhdr'; hdr.textContent='M'+m.match;
-    card.appendChild(hdr);
+  // ---- SVG geometry ----
+  // Poster mode scales the whole drawing up so the natural SVG is ~2600px wide
+  // (a generous, un-clipped poster master); on-screen uses the base scale.
+  // Built from parts so no literal resource-ref substring lands in the output
+  // file (this is an XML namespace identifier, never fetched).
+  var SVG_NS=['http','://www.w3.org/2000/svg'].join('');
+  var _PS = POSTER ? 2.45 : 1;   // poster scale
+  var SLOT_H=Math.round(22*_PS), MATCH_GAP=Math.round(10*_PS), MATCH_H=2*SLOT_H, HDR_H=Math.round(13*_PS);
+  var COL_W=Math.round(176*_PS), COL_GAP=Math.round(34*_PS), PAD_X=Math.round(14*_PS), PAD_Y=Math.round(14*_PS), TITLE_H=Math.round(46*_PS);
+  var FS=function(px){ return Math.round(px*_PS); }; // scaled font size helper
+  var FONT='-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Helvetica,Arial,sans-serif';
+  var ROUNDS=[['R32','Round of 32'],['R16','Round of 16'],['QF','Quarter-finals'],['SF','Semi-finals'],['Final','Final']];
 
-    // determine the two slots
-    var homeInfo, awayInfo;
-    if(state.mode==='projected' && mc){
-      if(round==='R32'){
-        var sm=slotMap[m.match];
-        homeInfo=projSlot(sm?sm.home:null);
-        awayInfo=projSlot(sm?sm.away:null);
-      } else {
-        // R16+ : aggregate the candidate pool feeding each side, normalized.
-        homeInfo=projWinnerOf(m.home, slotMap);
-        awayInfo=projWinnerOf(m.away, slotMap);
-      }
-    } else if(state.mode==='picks'){
-      var d=det.slotByMatch[m.match]||{};
-      homeInfo=pickSlot(d.home, m.match, round, 'home', m);
-      awayInfo=pickSlot(d.away, m.match, round, 'away', m);
-    } else {
-      homeInfo={code:null,p:0}; awayInfo={code:null,p:0};
+  function svgEl(name, attrs){
+    var e=document.createElementNS(SVG_NS,name);
+    if(attrs) for(var k in attrs){ e.setAttribute(k, attrs[k]); }
+    return e;
+  }
+  function svgText(x,y,str,attrs){
+    var t=svgEl('text',attrs||{}); t.setAttribute('x',x); t.setAttribute('y',y);
+    t.textContent=str==null?'':String(str); return t;
+  }
+
+  // Compute the vertical center of each match. R32 are evenly stacked; each later
+  // round's match centers on the midpoint of its two feeder matches.
+  function computeLayout(){
+    var cy={}; // matchNo -> center y (within drawing area, before TITLE offset)
+    var unit=MATCH_H+MATCH_GAP;
+    var r32=BRACKET.rounds.R32;
+    r32.forEach(function(m,i){ cy[m.match]=PAD_Y + i*unit + MATCH_H/2; });
+    function feeders(side){ return side.type==='winnerOf'? side.match : null; }
+    ['R16','QF','SF','Final'].forEach(function(rd){
+      (BRACKET.rounds[rd]||[]).forEach(function(m){
+        var a=feeders(m.home), b=feeders(m.away);
+        var ya=cy[a], yb=cy[b];
+        if(ya!=null && yb!=null) cy[m.match]=(ya+yb)/2;
+        else cy[m.match]=PAD_Y + MATCH_H/2;
+      });
+    });
+    var totalH=PAD_Y + r32.length*unit - MATCH_GAP + PAD_Y;
+    return { cy:cy, totalH:totalH };
+  }
+
+  function colX(ci){ return PAD_X + ci*(COL_W+COL_GAP); }
+
+  function bracketSVG(slotInfo){
+    var lay=computeLayout();
+    var width=PAD_X*2 + ROUNDS.length*COL_W + (ROUNDS.length-1)*COL_GAP;
+    var height=TITLE_H + lay.totalH;
+    var svg=svgEl('svg',{ 'class':'bracket-svg',
+      viewBox:'0 0 '+width+' '+height,
+      width:String(width), height:String(height),
+      preserveAspectRatio:'xMinYMin meet',
+      xmlns:SVG_NS, 'font-family':FONT });
+
+    // solid background (so PNG/SVG render standalone, no transparency surprise)
+    svg.appendChild(svgEl('rect',{ x:0,y:0,width:width,height:height,fill:'#0f1115' }));
+
+    // title + freshness stamp (baked into the exported image)
+    var t1=svgText(PAD_X, Math.round(22*_PS), '2026 World Cup — '+(state.mode==='picks'?'My-Picks bracket':'projected bracket'),
+      { fill:'#e7eaf0','font-size':String(FS(17)),'font-weight':'700' });
+    svg.appendChild(t1);
+    var stamp='data through '+FRESH.dataThrough+' · '+FRESH.playedCount+'/'+FRESH.totalCount+' played · built '+localBuilt(FRESH.builtAtISO);
+    svg.appendChild(svgText(PAD_X, Math.round(39*_PS), stamp, { fill:'#9aa3b2','font-size':String(FS(11)) }));
+
+    // round headers
+    ROUNDS.forEach(function(rd,ci){
+      svg.appendChild(svgText(colX(ci)+COL_W/2, TITLE_H-Math.round(4*_PS), rd[1].toUpperCase(),
+        { fill:'#9aa3b2','font-size':String(FS(10)),'letter-spacing':'1','text-anchor':'middle' }));
+    });
+
+    // connectors first (under boxes): from each feeder's right edge to child's left edge
+    ROUNDS.forEach(function(rd,ci){
+      if(rd[0]==='R32') return;
+      (BRACKET.rounds[rd[0]]||[]).forEach(function(m){
+        [m.home,m.away].forEach(function(side){
+          if(side.type!=='winnerOf') return;
+          var fy=lay.cy[side.match]; var ty=lay.cy[m.match];
+          if(fy==null||ty==null) return;
+          var x1=colX(ci-1)+COL_W, x2=colX(ci), xm=(x1+x2)/2;
+          var y1=TITLE_H+fy, y2=TITLE_H+ty;
+          var p=svgEl('path',{ d:'M'+x1+','+y1+' H'+xm+' V'+y2+' H'+x2,
+            fill:'none', stroke:'#2a2f3a', 'stroke-width':'1.5' });
+          svg.appendChild(p);
+        });
+      });
+    });
+
+    // match boxes
+    ROUNDS.forEach(function(rd,ci){
+      (BRACKET.rounds[rd[0]]||[]).forEach(function(m){
+        var cyv=lay.cy[m.match]; if(cyv==null) return;
+        var x=colX(ci), top=TITLE_H+cyv-MATCH_H/2;
+        svg.appendChild(matchGroup(rd[0], m, x, top, slotInfo[m.match]||{}));
+      });
+    });
+
+    return svg;
+  }
+
+  function matchGroup(round, m, x, top, info){
+    var g=svgEl('g',{});
+    // header (match number) above the box
+    g.appendChild(svgText(x+Math.round(4*_PS), top-Math.round(3*_PS), 'M'+m.match, { fill:'#6b7280','font-size':String(FS(9)) }));
+    // outer box
+    g.appendChild(svgEl('rect',{ x:x, y:top, width:COL_W, height:MATCH_H, rx:Math.round(6*_PS),
+      fill:'#1d212b', stroke:'#2a2f3a','stroke-width':String(_PS) }));
+    // divider between the two slots
+    g.appendChild(svgEl('line',{ x1:x, y1:top+SLOT_H, x2:x+COL_W, y2:top+SLOT_H,
+      stroke:'#2a2f3a','stroke-width':'1' }));
+    g.appendChild(slotGroup(round, m, 'home', info.home||{code:null,p:0}, x, top));
+    g.appendChild(slotGroup(round, m, 'away', info.away||{code:null,p:0}, x, top+SLOT_H));
+    return g;
+  }
+
+  function slotGroup(round, m, side, si, x, sy){
+    var g=svgEl('g',{ 'class':'slot-hit' });
+    var code=si.code;
+    var midY=sy+SLOT_H/2+Math.round(4*_PS);
+    var codeX=x+Math.round(13*_PS), nameX=x+Math.round(44*_PS), pad=Math.round(7*_PS);
+    // transparent hit/hover bg
+    g.appendChild(svgEl('rect',{ 'class':'slot-bg', x:x, y:sy, width:COL_W, height:SLOT_H,
+      fill:'transparent' }));
+    // pick highlight (My Picks: this side is the chosen winner)
+    if(state.mode==='picks' && si.picked){
+      g.appendChild(svgEl('rect',{ x:x+1, y:sy+1, width:COL_W-2, height:SLOT_H-2, rx:Math.round(4*_PS),
+        fill:'none', stroke:'#1f6b3a','stroke-width':String(1.5*_PS) }));
     }
-
-    card.appendChild(slotEl(homeInfo, round, m, 'home'));
-    card.appendChild(slotEl(awayInfo, round, m, 'away'));
-    return card;
-  }
-
-  // cache: aggregated candidate pool for the WINNER of a given match number.
-  var _winPoolCache={};
-  function projSlot(info){
-    if(!info||!info.length) return {code:null,p:0,cands:[]};
-    var top=info[0]||{};
-    return {code:top.code||null, p:top.p||0, cands:info};
-  }
-
-  // R16+ projected: the winner of a feeding match comes from the union of the
-  // R32 occupants beneath it. We aggregate each candidate's R32-appearance
-  // probability, then RENORMALIZE within the pool to express "given this slot is
-  // reached, which team is most likely here." This is a glanceable approximation
-  // (it ignores match-by-match win probability), surfaced honestly in About.
-  function projWinnerOf(side, slotMap){
-    var pool=winnerPool(side, slotMap);
-    if(!pool.length) return {code:null,p:0,cands:[]};
-    var tot=0; pool.forEach(function(c){tot+=c.p;});
-    var norm=pool.map(function(c){return {code:c.code,p:tot>0?c.p/tot:0};})
-      .sort(function(a,b){return b.p-a.p;});
-    return {code:norm[0].code,p:norm[0].p,cands:norm.slice(0,6)};
-  }
-  function winnerPool(side, slotMap){
-    if(side.type!=='winnerOf') return [];
-    if(_winPoolCache[side.match]) return _winPoolCache[side.match];
-    var fm=findMatch(side.match);
-    var pool;
-    if(isR32(side.match)){
-      // leaf: combine this match's two R32 candidate slots
-      var sm=slotMap[side.match]||{home:[],away:[]};
-      pool=mergeCands((sm.home||[]),(sm.away||[]));
-    } else {
-      pool=mergeCands(winnerPool(fm.home, slotMap), winnerPool(fm.away, slotMap));
+    // accent bar
+    g.appendChild(svgEl('rect',{ x:x+Math.round(3*_PS), y:sy+Math.round(4*_PS), width:Math.round(3*_PS), height:SLOT_H-Math.round(8*_PS), rx:1.5*_PS,
+      fill: code? accentFor(code) : '#6b7280' }));
+    // code
+    g.appendChild(svgText(codeX, midY, code||'—',
+      { fill: code? '#e7eaf0':'#6b7280', 'font-size':String(FS(12)),'font-weight':'700' }));
+    // name (clipped via truncation)
+    var nm=code?(nameByCode[code]||''):'TBD';
+    g.appendChild(svgText(nameX, midY, truncName(nm, COL_W-(nameX-x)-Math.round(40*_PS)),
+      { fill:'#9aa3b2','font-size':String(FS(10)) }));
+    // probability (projected) at right
+    if(state.mode==='projected' && code){
+      g.appendChild(svgText(x+COL_W-pad, midY, pct(si.p),
+        { fill:'#4ea1ff','font-size':String(FS(11)),'text-anchor':'end' }));
     }
-    _winPoolCache[side.match]=pool;
-    return pool;
-  }
-  function mergeCands(a,b){
-    var m={}; [a,b].forEach(function(arr){ (arr||[]).forEach(function(c){ if(c&&c.code) m[c.code]=(m[c.code]||0)+(c.p||0); }); });
-    return Object.keys(m).map(function(k){return {code:k,p:m[k]};});
-  }
-  function isR32(no){ return BRACKET.rounds.R32.some(function(x){return x.match===no;}); }
-  function findMatch(no){
-    var all=[].concat(BRACKET.rounds.R32,BRACKET.rounds.R16,BRACKET.rounds.QF,BRACKET.rounds.SF,BRACKET.rounds.Final);
-    return all.filter(function(x){return x.match===no;})[0];
-  }
-
-  function pickSlot(code, matchNo, round, side, m){
-    return {code:code||null, p:0, known:!!code};
-  }
-
-  function slotEl(info, round, m, side){
-    var el=document.createElement('div'); el.className='slot'+(info.code?'':' empty');
-    if(state.mode==='picks' && state.picks[m.match] && state.picks[m.match]===info.code){ el.className+=' winner-row'; }
-    var code=info.code;
-    var acc=document.createElement('div'); acc.className='accent'; acc.style.background=accentFor(code);
-    el.appendChild(acc);
-    var c=document.createElement('div'); c.className='code'; c.textContent=code||'—'; el.appendChild(c);
-    var nm=document.createElement('div'); nm.className='nm'; nm.textContent=code?(nameByCode[code]||''):'TBD'; el.appendChild(nm);
-    var pe=document.createElement('div'); pe.className='p';
-    if(state.mode==='projected' && code){ pe.textContent=pct(info.p); }
-    el.appendChild(pe);
-
+    // interaction
     if(state.mode==='projected'){
-      el.onclick=function(ev){ if(info.cands&&info.cands.length) showCandidates(ev, info.cands, m.match, side); };
+      g.addEventListener('click', function(ev){
+        if(si.cands && si.cands.length) showCandidates(ev, si.cands, m.match, side);
+      });
     } else {
-      // My Picks: clicking a slot picks that team to advance from this match
-      el.onclick=function(){ if(code){ state.picks[m.match]=code; render(); } };
-      if(code){ el.title='Click to advance '+(nameByCode[code]||code); }
+      g.addEventListener('click', function(){ if(code){ state.picks[m.match]=code; render(); } });
+      if(code){ var ttl=svgEl('title',{}); ttl.textContent='Click to advance '+(nameByCode[code]||code); g.appendChild(ttl); }
     }
-    return el;
+    return g;
+  }
+
+  // crude SVG text truncation by estimated glyph width (~5.6px @ 10px font)
+  function truncName(s, maxW){
+    if(!s) return '';
+    var per=5.6*_PS, max=Math.max(2, Math.floor(maxW/per));
+    if(s.length<=max) return s;
+    return s.slice(0, Math.max(1,max-1))+'…';
+  }
+
+  // ================= EXPORT =================
+  // The live bracket <svg> is the single source of truth, so all three exports
+  // serialize/rasterize/print exactly the current on-screen view (mode + picks).
+  var _lastSlotInfo=null;
+
+  function liveSVG(){ return document.querySelector('.bracket-svg'); }
+
+  // Serialize the live SVG into a standalone document string. Geometry + colors
+  // are inline attributes already; we only need to ensure width/height + font.
+  function serializeSVG(){
+    var src=liveSVG(); if(!src) return null;
+    var clone=src.cloneNode(true);
+    clone.setAttribute('xmlns', SVG_NS);
+    clone.setAttribute('font-family', FONT);
+    // make sure explicit pixel width/height are present for standalone renderers
+    var vb=(src.getAttribute('viewBox')||'').split(/\s+/);
+    if(vb.length===4){ clone.setAttribute('width', vb[2]); clone.setAttribute('height', vb[3]); }
+    var xml=new XMLSerializer().serializeToString(clone);
+    return '<?xml version="1.0" encoding="UTF-8"?>\n'+xml;
+  }
+
+  function downloadBlob(blob, filename){
+    var url=URL.createObjectURL(blob);
+    var a=document.createElement('a'); a.href=url; a.download=filename;
+    document.body.appendChild(a); a.click();
+    setTimeout(function(){ document.body.removeChild(a); URL.revokeObjectURL(url); }, 0);
+  }
+
+  function exportSVG(){
+    var xml=serializeSVG(); if(!xml){ alert('Bracket not ready yet.'); return; }
+    downloadBlob(new Blob([xml],{type:'image/svg+xml;charset=utf-8'}), 'wc2026-bracket.svg');
+  }
+
+  function exportPNG(){
+    var src=liveSVG(); if(!src){ alert('Bracket not ready yet.'); return; }
+    var vb=(src.getAttribute('viewBox')||'').split(/\s+/);
+    var w=+vb[2]||src.clientWidth, h=+vb[3]||src.clientHeight;
+    var scale=2; // device scale -> crisp raster
+    var xml=serializeSVG();
+    var img=new Image();
+    var svgBlob=new Blob([xml],{type:'image/svg+xml;charset=utf-8'});
+    var url=URL.createObjectURL(svgBlob);
+    img.onload=function(){
+      var canvas=document.createElement('canvas');
+      canvas.width=Math.round(w*scale); canvas.height=Math.round(h*scale);
+      var ctx=canvas.getContext('2d');
+      ctx.fillStyle='#0f1115'; ctx.fillRect(0,0,canvas.width,canvas.height); // solid bg
+      ctx.setTransform(scale,0,0,scale,0,0);
+      ctx.drawImage(img,0,0,w,h);
+      URL.revokeObjectURL(url);
+      canvas.toBlob(function(blob){ if(blob) downloadBlob(blob,'wc2026-bracket.png'); }, 'image/png');
+    };
+    img.onerror=function(){ URL.revokeObjectURL(url); alert('PNG export failed to rasterize the SVG.'); };
+    img.src=url;
+  }
+
+  function exportPDF(){
+    // The print stylesheet (@media print) lays the bracket out un-scrolled in
+    // landscape; the browser's print dialog offers "Save as PDF".
+    window.print();
+  }
+
+  function exportBar(){
+    var bar=document.createElement('div'); bar.className='export-bar';
+    var lbl=document.createElement('span'); lbl.className='lbl'; lbl.textContent='Export:';
+    bar.appendChild(lbl);
+    [['Download SVG',exportSVG],['Download PNG',exportPNG],['Save as PDF',exportPDF]].forEach(function(b){
+      var btn=document.createElement('button'); btn.className='btn'; btn.textContent=b[0];
+      btn.onclick=b[1]; bar.appendChild(btn);
+    });
+    return bar;
   }
 
   function showCandidates(ev, cands, matchNo, side){
@@ -3534,6 +3827,9 @@ self.onmessage = function (e) {
         'standings use the full FIFA tiebreaker cascade (points → GD → GF → head-to-head → fair-play → drawing of lots). '+
         'The best 8 third-place teams are mapped into the Round of 32 by FIFA’s Annex C table. '+
         'Knockout ties go to an Elo-weighted shootout coin.</p>'+
+      '<p><b>Per-round percentages are TRUE Monte-Carlo frequencies.</b> Every knockout slot — Round of 32 through the Final — '+
+        'shows the most-likely team and the exact share of simulated tournaments in which that team <i>reaches and occupies that exact slot</i> '+
+        '(an unconditional probability, tallied directly from the sims; deeper rounds are not renormalized approximations). Tap a slot to see the top candidates with their true probabilities.</p>'+
       '<p><b>Coin-flips are real:</b> a ⚖ marks teams a standing could separate only by drawing of lots — a genuine random draw, '+
         'which we render deterministically (alphabetical) but flag honestly.</p>'+
       '<p><b>Data:</b> openfootball/worldcup.json (public domain). '+FRESH.playedCount+' of 104 matches in the build. '+
@@ -3543,6 +3839,12 @@ self.onmessage = function (e) {
   }
 
   // first paint
+  if(POSTER){
+    // hi-res capture path: run the sim synchronously so the bracket is fully
+    // populated on the very first paint (no async worker for the screenshotter).
+    try{ state.mc=syncMonte(groupsForCompute()); }catch(e){ /* leave bracket empty */ }
+    state.simming=false;
+  }
   render();
 })();
 

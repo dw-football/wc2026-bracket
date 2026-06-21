@@ -24,23 +24,59 @@ const execFileAsync = promisify(execFile);
 const SOURCE_URL =
   'https://raw.githubusercontent.com/openfootball/worldcup.json/master/2026/worldcup.json';
 const CACHE_PATH = 'data/raw/worldcup.json';
+const MANUAL_PATH = 'manual-results.json';
 
 /**
  * Fetch the openfootball World Cup object. Prefers the local cache so it works
- * offline; otherwise curls the source and writes the cache.
+ * offline; otherwise curls the source and writes the cache. In both cases any
+ * locally-entered results in manual-results.json are merged on top (in memory).
  * @param {{ refresh?: boolean }} [opts] refresh:true forces a re-download.
  */
 export async function fetchRaw(opts = {}) {
+  let parsed;
   if (!opts.refresh && existsSync(CACHE_PATH)) {
-    return JSON.parse(await readFile(CACHE_PATH, 'utf8'));
+    parsed = JSON.parse(await readFile(CACHE_PATH, 'utf8'));
+  } else {
+    const { stdout } = await execFileAsync('curl', ['-sL', SOURCE_URL], {
+      maxBuffer: 32 * 1024 * 1024,
+    });
+    parsed = JSON.parse(stdout);
+    await mkdir('data/raw', { recursive: true });
+    await writeFile(CACHE_PATH, JSON.stringify(parsed, null, 2) + '\n');
   }
-  const { stdout } = await execFileAsync('curl', ['-sL', SOURCE_URL], {
-    maxBuffer: 32 * 1024 * 1024,
-  });
-  const parsed = JSON.parse(stdout);
-  await mkdir('data/raw', { recursive: true });
-  await writeFile(CACHE_PATH, JSON.stringify(parsed, null, 2) + '\n');
-  return parsed;
+  return applyManualResults(parsed);
+}
+
+/**
+ * Merge locally-entered final scores (manual-results.json) onto the feed, for
+ * games that have finished but openfootball hasn't published yet. In-memory
+ * only — never written to the cache. Once the feed publishes a match, the feed
+ * value wins and the matching manual entry is ignored (we skip already-played
+ * matches). Orientation is normalized: the manual entry's score is swapped if
+ * the feed lists the two teams in the opposite order.
+ */
+async function applyManualResults(raw) {
+  if (!existsSync(MANUAL_PATH)) return raw;
+  let entries;
+  try {
+    entries = JSON.parse(await readFile(MANUAL_PATH, 'utf8'));
+  } catch {
+    return raw;
+  }
+  if (!Array.isArray(entries)) return raw;
+  for (const e of entries) {
+    const m = raw.matches.find(
+      (mm) =>
+        mm.group === e.group &&
+        ((mm.team1 === e.team1 && mm.team2 === e.team2) ||
+          (mm.team1 === e.team2 && mm.team2 === e.team1))
+    );
+    if (!m) continue;
+    if (m.score && Array.isArray(m.score.ft)) continue; // feed already has it
+    const reversed = m.team1 === e.team2;
+    m.score = { ft: reversed ? [e.ft[1], e.ft[0]] : [e.ft[0], e.ft[1]], manual: true };
+  }
+  return raw;
 }
 
 /**

@@ -306,31 +306,17 @@ h2{font-size:16px;margin:18px 0 8px;font-weight:650}
 .section{display:none}
 .section.active{display:block}
 
-/* bracket */
+/* bracket — now rendered as inline SVG (single source of truth on-screen) */
 .bracket-wrap{overflow-x:auto;overflow-y:hidden;-webkit-overflow-scrolling:touch;
   border:1px solid var(--line);border-radius:10px;background:var(--panel);padding:10px}
-.bracket{display:flex;gap:18px;min-width:1040px;align-items:stretch}
-.col{display:flex;flex-direction:column;justify-content:space-around;min-width:150px}
-.col h3{font-size:12px;text-transform:uppercase;letter-spacing:.05em;color:var(--dim);
-  margin:0 0 6px;text-align:center}
-.col.final-col{justify-content:center}
-.match{background:var(--panel2);border:1px solid var(--line);border-radius:8px;
-  margin:6px 0;overflow:hidden}
-.match .mhdr{font-size:10px;color:var(--dim2);padding:2px 7px;border-bottom:1px solid var(--line)}
-.slot{display:flex;align-items:center;gap:6px;padding:6px 8px;cursor:pointer;
-  border-bottom:1px solid var(--line);position:relative}
-.slot:last-child{border-bottom:0}
-.slot:hover{background:#232836}
-.slot .accent{width:3px;align-self:stretch;border-radius:2px;background:var(--dim2);
-  position:absolute;left:0;top:0;bottom:0}
-.slot .code{font-weight:700;font-size:13px;min-width:34px;padding-left:6px}
-.slot .nm{color:var(--dim);font-size:11px;flex:1;white-space:nowrap;overflow:hidden;
-  text-overflow:ellipsis}
-.slot .p{font-size:12px;color:var(--accent);font-variant-numeric:tabular-nums}
-.slot.known .p{color:var(--good)}
-.slot.picked{background:#15294a}
-.slot.winner-row{box-shadow:inset 0 0 0 1px var(--qualline)}
-.slot.empty .code{color:var(--dim2)}
+.bracket-wrap svg.bracket-svg{display:block}
+/* SVG slot interactivity (geometry/colors are inline attrs so it serializes standalone) */
+.bracket-svg .slot-hit{cursor:pointer}
+.bracket-svg .slot-hit:hover .slot-bg{fill:#232836}
+
+/* export controls */
+.export-bar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:8px 0 4px}
+.export-bar .lbl{color:var(--dim);font-size:12px;margin-right:2px}
 
 /* candidate popover */
 .pop{position:fixed;z-index:50;background:var(--panel2);border:1px solid var(--accent);
@@ -407,6 +393,28 @@ details.about p{font-size:12.5px;color:var(--dim);margin:8px 0}
   .groups-grid{grid-template-columns:1fr}
   h1{font-size:18px}
 }
+
+/* ---- print / Save-as-PDF: lay the full bracket out un-scrolled, landscape ---- */
+@media print{
+  @page{ size:landscape; margin:8mm; }
+  html,body{ background:#0f1115 !important; -webkit-print-color-adjust:exact; print-color-adjust:exact; }
+  #app{ max-width:none; padding:0; }
+  /* hide everything that isn't the bracket export region (SVG carries its own title) */
+  .export-bar, .tabbar, .seg, .row, details.about, .callout, .simstate, .app-header{ display:none !important; }
+  /* show only the bracket section; let the SVG scale to the page width */
+  .section{ display:none !important; }
+  .section.print-bracket{ display:block !important; }
+  .bracket-wrap{ overflow:visible !important; border:0 !important; padding:0 !important; }
+  .bracket-svg{ width:100% !important; height:auto !important; }
+}
+
+/* ---- poster mode (?poster=1): full natural width, no scroll clip, for hi-res capture ---- */
+body.poster{ overflow:visible; }
+body.poster #app{ max-width:none; padding:18px 20px; width:max-content; }
+body.poster .export-bar, body.poster .tabbar, body.poster .seg, body.poster .row,
+body.poster details.about, body.poster .callout, body.poster .simstate,
+body.poster .app-header{ display:none !important; }
+body.poster .bracket-wrap{ overflow:visible !important; border:0; background:transparent; padding:0; }
 `;
 
 // ---- inline app JS ---------------------------------------------------------
@@ -444,6 +452,11 @@ const APP_JS = String.raw`
   }
   var baseGroups = DATA.groups;            // pristine (feed)
   var workGroups = cloneGroups(baseGroups);// editable in My Picks
+
+  // ?poster=1 → hi-res capture layout: full natural width, no scroll clip,
+  // bracket-only, projected mode. Honored by export-image.mjs.
+  var POSTER = /[?&]poster=1\b/.test(location.search);
+  if(POSTER){ document.body.classList.add('poster'); }
 
   var state = {
     mode:'projected',          // 'projected' | 'picks'
@@ -585,14 +598,15 @@ const APP_JS = String.raw`
     root.appendChild(s);
     root.appendChild(about());
 
-    // kick a projection if needed
-    if(state.mode==='projected' && state.tab!=='scenario' && !state.mc && !state.simming){
+    // kick a projection if needed (poster mode computes synchronously up front,
+    // so we never schedule the async worker there — capture must see a full bracket)
+    if(!POSTER && state.mode==='projected' && state.tab!=='scenario' && !state.mc && !state.simming){
       runProjection();
     }
   }
 
   function header(){
-    var d=document.createElement('div');
+    var d=document.createElement('div'); d.className='app-header';
     var note = 'Very-recently-finished or in-progress games may not yet be in the feed — switch to My Picks to enter a just-final result by hand.';
     d.innerHTML =
       '<h1>2026 World Cup &mdash; Bracket Projector</h1>'+
@@ -632,150 +646,303 @@ const APP_JS = String.raw`
     return wrap;
   }
 
-  // ---------------- BRACKET ----------------
+  // ---------------- BRACKET (inline SVG) ----------------
   function renderBracket(){
-    var sec=document.createElement('div'); sec.className='section active';
+    var sec=document.createElement('div'); sec.className='section active print-bracket';
     if(state.mode==='projected'){
       var bar=document.createElement('div'); bar.className='row tiny muted';
       if(state.simming){ bar.innerHTML='<span class="simstate"><span class="spinner"></span> simulating '+SIM_N.toLocaleString()+' tournaments&hellip;</span>'; }
-      else { bar.innerHTML='<span>Each slot shows the most-likely team and the share of sims it appears there. Tap a slot for the top candidates.</span>'; }
+      else { bar.innerHTML='<span>Each slot shows the most-likely team and the true share of sims in which that team reaches and occupies that exact slot. Tap a slot for the top candidates.</span>'; }
       sec.appendChild(bar);
+      sec.appendChild(exportBar());
       if(!state.mc){ if(!state.simming){ var p=document.createElement('div'); p.className='muted'; p.textContent='Preparing simulation…'; sec.appendChild(p);} sec.appendChild(bracketShell(null)); return sec; }
       sec.appendChild(bracketShell(state.mc));
     } else {
       var info=document.createElement('div'); info.className='callout';
       info.innerHTML='<b>My Picks.</b> Group results below feed the R32; tap any knockout slot to choose who advances. Edit group scores in the Group stage tab. Empty slots stay blank until the groups (or your picks) decide them.';
       sec.appendChild(info);
+      sec.appendChild(exportBar());
       sec.appendChild(bracketShell(null));
     }
     return sec;
   }
 
-  function bracketShell(mc){
-    // build per-match modal occupant maps from mc (projected) or deterministic (picks)
-    var det = state.mode==='picks'? deterministicBracket() : null;
-    var slotMap={};   // R32 matchNo -> {home:[cands], away:[cands]}
-    _winPoolCache={};
-    if(mc){
-      mc.perR32Slot.forEach(function(s){ slotMap[s.match]={ home:s.home, away:s.away }; });
-    }
-
-    var wrap=document.createElement('div'); wrap.className='bracket-wrap';
-    var br=document.createElement('div'); br.className='bracket';
-
-    var rounds=[['R32','Round of 32'],['R16','Round of 16'],['QF','Quarter-finals'],['SF','Semi-finals'],['Final','Final']];
-    rounds.forEach(function(rd){
-      var col=document.createElement('div'); col.className='col'+(rd[0]==='Final'?' final-col':'');
-      var h=document.createElement('h3'); h.textContent=rd[1]; col.appendChild(h);
-      (BRACKET.rounds[rd[0]]||[]).forEach(function(m){
-        col.appendChild(matchCard(rd[0], m, mc, slotMap, det));
+  // Resolve, for every knockout match + side, the {code,p,cands} to display, in
+  // BOTH modes. Projected: true Monte-Carlo per-slot frequencies (mc.perSlot).
+  // Picks: deterministic occupant (p=0, no candidates), user override aware.
+  function buildSlotInfo(mc, det){
+    var info={}; // matchNo -> {home:{code,p,cands,known,picked}, away:{...}}
+    var rounds=['R32','R16','QF','SF','Final'];
+    if(state.mode==='projected' && mc){
+      var byMatch={}; mc.perSlot.forEach(function(s){ byMatch[s.match]=s; });
+      rounds.forEach(function(rd){
+        (BRACKET.rounds[rd]||[]).forEach(function(m){
+          var s=byMatch[m.match]||{home:[],away:[]};
+          info[m.match]={
+            home:{ code:(s.home[0]||{}).code||null, p:(s.home[0]||{}).p||0, cands:s.home },
+            away:{ code:(s.away[0]||{}).code||null, p:(s.away[0]||{}).p||0, cands:s.away }
+          };
+        });
       });
-      br.appendChild(col);
-    });
-    wrap.appendChild(br);
+    } else {
+      rounds.forEach(function(rd){
+        (BRACKET.rounds[rd]||[]).forEach(function(m){
+          var d=(det&&det.slotByMatch[m.match])||{};
+          var picked=det? det.winnerOf[m.match] : null;
+          info[m.match]={
+            home:{ code:d.home||null, p:0, cands:[], known:!!d.home, picked:picked===d.home && !!d.home },
+            away:{ code:d.away||null, p:0, cands:[], known:!!d.away, picked:picked===d.away && !!d.away }
+          };
+        });
+      });
+    }
+    return info;
+  }
+
+  function bracketShell(mc){
+    var det = state.mode==='picks'? deterministicBracket() : null;
+    var slotInfo = buildSlotInfo(mc, det);
+    var wrap=document.createElement('div'); wrap.className='bracket-wrap';
+    wrap.appendChild(bracketSVG(slotInfo));
+    // stash the latest slotInfo for the export functions (current view state)
+    _lastSlotInfo=slotInfo;
     return wrap;
   }
 
-  function matchCard(round, m, mc, slotMap, det){
-    var card=document.createElement('div'); card.className='match';
-    var hdr=document.createElement('div'); hdr.className='mhdr'; hdr.textContent='M'+m.match;
-    card.appendChild(hdr);
+  // ---- SVG geometry ----
+  // Poster mode scales the whole drawing up so the natural SVG is ~2600px wide
+  // (a generous, un-clipped poster master); on-screen uses the base scale.
+  // Built from parts so no literal resource-ref substring lands in the output
+  // file (this is an XML namespace identifier, never fetched).
+  var SVG_NS=['http','://www.w3.org/2000/svg'].join('');
+  var _PS = POSTER ? 2.45 : 1;   // poster scale
+  var SLOT_H=Math.round(22*_PS), MATCH_GAP=Math.round(10*_PS), MATCH_H=2*SLOT_H, HDR_H=Math.round(13*_PS);
+  var COL_W=Math.round(176*_PS), COL_GAP=Math.round(34*_PS), PAD_X=Math.round(14*_PS), PAD_Y=Math.round(14*_PS), TITLE_H=Math.round(46*_PS);
+  var FS=function(px){ return Math.round(px*_PS); }; // scaled font size helper
+  var FONT='-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Helvetica,Arial,sans-serif';
+  var ROUNDS=[['R32','Round of 32'],['R16','Round of 16'],['QF','Quarter-finals'],['SF','Semi-finals'],['Final','Final']];
 
-    // determine the two slots
-    var homeInfo, awayInfo;
-    if(state.mode==='projected' && mc){
-      if(round==='R32'){
-        var sm=slotMap[m.match];
-        homeInfo=projSlot(sm?sm.home:null);
-        awayInfo=projSlot(sm?sm.away:null);
-      } else {
-        // R16+ : aggregate the candidate pool feeding each side, normalized.
-        homeInfo=projWinnerOf(m.home, slotMap);
-        awayInfo=projWinnerOf(m.away, slotMap);
-      }
-    } else if(state.mode==='picks'){
-      var d=det.slotByMatch[m.match]||{};
-      homeInfo=pickSlot(d.home, m.match, round, 'home', m);
-      awayInfo=pickSlot(d.away, m.match, round, 'away', m);
-    } else {
-      homeInfo={code:null,p:0}; awayInfo={code:null,p:0};
+  function svgEl(name, attrs){
+    var e=document.createElementNS(SVG_NS,name);
+    if(attrs) for(var k in attrs){ e.setAttribute(k, attrs[k]); }
+    return e;
+  }
+  function svgText(x,y,str,attrs){
+    var t=svgEl('text',attrs||{}); t.setAttribute('x',x); t.setAttribute('y',y);
+    t.textContent=str==null?'':String(str); return t;
+  }
+
+  // Compute the vertical center of each match. R32 are evenly stacked; each later
+  // round's match centers on the midpoint of its two feeder matches.
+  function computeLayout(){
+    var cy={}; // matchNo -> center y (within drawing area, before TITLE offset)
+    var unit=MATCH_H+MATCH_GAP;
+    var r32=BRACKET.rounds.R32;
+    r32.forEach(function(m,i){ cy[m.match]=PAD_Y + i*unit + MATCH_H/2; });
+    function feeders(side){ return side.type==='winnerOf'? side.match : null; }
+    ['R16','QF','SF','Final'].forEach(function(rd){
+      (BRACKET.rounds[rd]||[]).forEach(function(m){
+        var a=feeders(m.home), b=feeders(m.away);
+        var ya=cy[a], yb=cy[b];
+        if(ya!=null && yb!=null) cy[m.match]=(ya+yb)/2;
+        else cy[m.match]=PAD_Y + MATCH_H/2;
+      });
+    });
+    var totalH=PAD_Y + r32.length*unit - MATCH_GAP + PAD_Y;
+    return { cy:cy, totalH:totalH };
+  }
+
+  function colX(ci){ return PAD_X + ci*(COL_W+COL_GAP); }
+
+  function bracketSVG(slotInfo){
+    var lay=computeLayout();
+    var width=PAD_X*2 + ROUNDS.length*COL_W + (ROUNDS.length-1)*COL_GAP;
+    var height=TITLE_H + lay.totalH;
+    var svg=svgEl('svg',{ 'class':'bracket-svg',
+      viewBox:'0 0 '+width+' '+height,
+      width:String(width), height:String(height),
+      preserveAspectRatio:'xMinYMin meet',
+      xmlns:SVG_NS, 'font-family':FONT });
+
+    // solid background (so PNG/SVG render standalone, no transparency surprise)
+    svg.appendChild(svgEl('rect',{ x:0,y:0,width:width,height:height,fill:'#0f1115' }));
+
+    // title + freshness stamp (baked into the exported image)
+    var t1=svgText(PAD_X, Math.round(22*_PS), '2026 World Cup — '+(state.mode==='picks'?'My-Picks bracket':'projected bracket'),
+      { fill:'#e7eaf0','font-size':String(FS(17)),'font-weight':'700' });
+    svg.appendChild(t1);
+    var stamp='data through '+FRESH.dataThrough+' · '+FRESH.playedCount+'/'+FRESH.totalCount+' played · built '+localBuilt(FRESH.builtAtISO);
+    svg.appendChild(svgText(PAD_X, Math.round(39*_PS), stamp, { fill:'#9aa3b2','font-size':String(FS(11)) }));
+
+    // round headers
+    ROUNDS.forEach(function(rd,ci){
+      svg.appendChild(svgText(colX(ci)+COL_W/2, TITLE_H-Math.round(4*_PS), rd[1].toUpperCase(),
+        { fill:'#9aa3b2','font-size':String(FS(10)),'letter-spacing':'1','text-anchor':'middle' }));
+    });
+
+    // connectors first (under boxes): from each feeder's right edge to child's left edge
+    ROUNDS.forEach(function(rd,ci){
+      if(rd[0]==='R32') return;
+      (BRACKET.rounds[rd[0]]||[]).forEach(function(m){
+        [m.home,m.away].forEach(function(side){
+          if(side.type!=='winnerOf') return;
+          var fy=lay.cy[side.match]; var ty=lay.cy[m.match];
+          if(fy==null||ty==null) return;
+          var x1=colX(ci-1)+COL_W, x2=colX(ci), xm=(x1+x2)/2;
+          var y1=TITLE_H+fy, y2=TITLE_H+ty;
+          var p=svgEl('path',{ d:'M'+x1+','+y1+' H'+xm+' V'+y2+' H'+x2,
+            fill:'none', stroke:'#2a2f3a', 'stroke-width':'1.5' });
+          svg.appendChild(p);
+        });
+      });
+    });
+
+    // match boxes
+    ROUNDS.forEach(function(rd,ci){
+      (BRACKET.rounds[rd[0]]||[]).forEach(function(m){
+        var cyv=lay.cy[m.match]; if(cyv==null) return;
+        var x=colX(ci), top=TITLE_H+cyv-MATCH_H/2;
+        svg.appendChild(matchGroup(rd[0], m, x, top, slotInfo[m.match]||{}));
+      });
+    });
+
+    return svg;
+  }
+
+  function matchGroup(round, m, x, top, info){
+    var g=svgEl('g',{});
+    // header (match number) above the box
+    g.appendChild(svgText(x+Math.round(4*_PS), top-Math.round(3*_PS), 'M'+m.match, { fill:'#6b7280','font-size':String(FS(9)) }));
+    // outer box
+    g.appendChild(svgEl('rect',{ x:x, y:top, width:COL_W, height:MATCH_H, rx:Math.round(6*_PS),
+      fill:'#1d212b', stroke:'#2a2f3a','stroke-width':String(_PS) }));
+    // divider between the two slots
+    g.appendChild(svgEl('line',{ x1:x, y1:top+SLOT_H, x2:x+COL_W, y2:top+SLOT_H,
+      stroke:'#2a2f3a','stroke-width':'1' }));
+    g.appendChild(slotGroup(round, m, 'home', info.home||{code:null,p:0}, x, top));
+    g.appendChild(slotGroup(round, m, 'away', info.away||{code:null,p:0}, x, top+SLOT_H));
+    return g;
+  }
+
+  function slotGroup(round, m, side, si, x, sy){
+    var g=svgEl('g',{ 'class':'slot-hit' });
+    var code=si.code;
+    var midY=sy+SLOT_H/2+Math.round(4*_PS);
+    var codeX=x+Math.round(13*_PS), nameX=x+Math.round(44*_PS), pad=Math.round(7*_PS);
+    // transparent hit/hover bg
+    g.appendChild(svgEl('rect',{ 'class':'slot-bg', x:x, y:sy, width:COL_W, height:SLOT_H,
+      fill:'transparent' }));
+    // pick highlight (My Picks: this side is the chosen winner)
+    if(state.mode==='picks' && si.picked){
+      g.appendChild(svgEl('rect',{ x:x+1, y:sy+1, width:COL_W-2, height:SLOT_H-2, rx:Math.round(4*_PS),
+        fill:'none', stroke:'#1f6b3a','stroke-width':String(1.5*_PS) }));
     }
-
-    card.appendChild(slotEl(homeInfo, round, m, 'home'));
-    card.appendChild(slotEl(awayInfo, round, m, 'away'));
-    return card;
-  }
-
-  // cache: aggregated candidate pool for the WINNER of a given match number.
-  var _winPoolCache={};
-  function projSlot(info){
-    if(!info||!info.length) return {code:null,p:0,cands:[]};
-    var top=info[0]||{};
-    return {code:top.code||null, p:top.p||0, cands:info};
-  }
-
-  // R16+ projected: the winner of a feeding match comes from the union of the
-  // R32 occupants beneath it. We aggregate each candidate's R32-appearance
-  // probability, then RENORMALIZE within the pool to express "given this slot is
-  // reached, which team is most likely here." This is a glanceable approximation
-  // (it ignores match-by-match win probability), surfaced honestly in About.
-  function projWinnerOf(side, slotMap){
-    var pool=winnerPool(side, slotMap);
-    if(!pool.length) return {code:null,p:0,cands:[]};
-    var tot=0; pool.forEach(function(c){tot+=c.p;});
-    var norm=pool.map(function(c){return {code:c.code,p:tot>0?c.p/tot:0};})
-      .sort(function(a,b){return b.p-a.p;});
-    return {code:norm[0].code,p:norm[0].p,cands:norm.slice(0,6)};
-  }
-  function winnerPool(side, slotMap){
-    if(side.type!=='winnerOf') return [];
-    if(_winPoolCache[side.match]) return _winPoolCache[side.match];
-    var fm=findMatch(side.match);
-    var pool;
-    if(isR32(side.match)){
-      // leaf: combine this match's two R32 candidate slots
-      var sm=slotMap[side.match]||{home:[],away:[]};
-      pool=mergeCands((sm.home||[]),(sm.away||[]));
-    } else {
-      pool=mergeCands(winnerPool(fm.home, slotMap), winnerPool(fm.away, slotMap));
+    // accent bar
+    g.appendChild(svgEl('rect',{ x:x+Math.round(3*_PS), y:sy+Math.round(4*_PS), width:Math.round(3*_PS), height:SLOT_H-Math.round(8*_PS), rx:1.5*_PS,
+      fill: code? accentFor(code) : '#6b7280' }));
+    // code
+    g.appendChild(svgText(codeX, midY, code||'—',
+      { fill: code? '#e7eaf0':'#6b7280', 'font-size':String(FS(12)),'font-weight':'700' }));
+    // name (clipped via truncation)
+    var nm=code?(nameByCode[code]||''):'TBD';
+    g.appendChild(svgText(nameX, midY, truncName(nm, COL_W-(nameX-x)-Math.round(40*_PS)),
+      { fill:'#9aa3b2','font-size':String(FS(10)) }));
+    // probability (projected) at right
+    if(state.mode==='projected' && code){
+      g.appendChild(svgText(x+COL_W-pad, midY, pct(si.p),
+        { fill:'#4ea1ff','font-size':String(FS(11)),'text-anchor':'end' }));
     }
-    _winPoolCache[side.match]=pool;
-    return pool;
-  }
-  function mergeCands(a,b){
-    var m={}; [a,b].forEach(function(arr){ (arr||[]).forEach(function(c){ if(c&&c.code) m[c.code]=(m[c.code]||0)+(c.p||0); }); });
-    return Object.keys(m).map(function(k){return {code:k,p:m[k]};});
-  }
-  function isR32(no){ return BRACKET.rounds.R32.some(function(x){return x.match===no;}); }
-  function findMatch(no){
-    var all=[].concat(BRACKET.rounds.R32,BRACKET.rounds.R16,BRACKET.rounds.QF,BRACKET.rounds.SF,BRACKET.rounds.Final);
-    return all.filter(function(x){return x.match===no;})[0];
-  }
-
-  function pickSlot(code, matchNo, round, side, m){
-    return {code:code||null, p:0, known:!!code};
-  }
-
-  function slotEl(info, round, m, side){
-    var el=document.createElement('div'); el.className='slot'+(info.code?'':' empty');
-    if(state.mode==='picks' && state.picks[m.match] && state.picks[m.match]===info.code){ el.className+=' winner-row'; }
-    var code=info.code;
-    var acc=document.createElement('div'); acc.className='accent'; acc.style.background=accentFor(code);
-    el.appendChild(acc);
-    var c=document.createElement('div'); c.className='code'; c.textContent=code||'—'; el.appendChild(c);
-    var nm=document.createElement('div'); nm.className='nm'; nm.textContent=code?(nameByCode[code]||''):'TBD'; el.appendChild(nm);
-    var pe=document.createElement('div'); pe.className='p';
-    if(state.mode==='projected' && code){ pe.textContent=pct(info.p); }
-    el.appendChild(pe);
-
+    // interaction
     if(state.mode==='projected'){
-      el.onclick=function(ev){ if(info.cands&&info.cands.length) showCandidates(ev, info.cands, m.match, side); };
+      g.addEventListener('click', function(ev){
+        if(si.cands && si.cands.length) showCandidates(ev, si.cands, m.match, side);
+      });
     } else {
-      // My Picks: clicking a slot picks that team to advance from this match
-      el.onclick=function(){ if(code){ state.picks[m.match]=code; render(); } };
-      if(code){ el.title='Click to advance '+(nameByCode[code]||code); }
+      g.addEventListener('click', function(){ if(code){ state.picks[m.match]=code; render(); } });
+      if(code){ var ttl=svgEl('title',{}); ttl.textContent='Click to advance '+(nameByCode[code]||code); g.appendChild(ttl); }
     }
-    return el;
+    return g;
+  }
+
+  // crude SVG text truncation by estimated glyph width (~5.6px @ 10px font)
+  function truncName(s, maxW){
+    if(!s) return '';
+    var per=5.6*_PS, max=Math.max(2, Math.floor(maxW/per));
+    if(s.length<=max) return s;
+    return s.slice(0, Math.max(1,max-1))+'…';
+  }
+
+  // ================= EXPORT =================
+  // The live bracket <svg> is the single source of truth, so all three exports
+  // serialize/rasterize/print exactly the current on-screen view (mode + picks).
+  var _lastSlotInfo=null;
+
+  function liveSVG(){ return document.querySelector('.bracket-svg'); }
+
+  // Serialize the live SVG into a standalone document string. Geometry + colors
+  // are inline attributes already; we only need to ensure width/height + font.
+  function serializeSVG(){
+    var src=liveSVG(); if(!src) return null;
+    var clone=src.cloneNode(true);
+    clone.setAttribute('xmlns', SVG_NS);
+    clone.setAttribute('font-family', FONT);
+    // make sure explicit pixel width/height are present for standalone renderers
+    var vb=(src.getAttribute('viewBox')||'').split(/\s+/);
+    if(vb.length===4){ clone.setAttribute('width', vb[2]); clone.setAttribute('height', vb[3]); }
+    var xml=new XMLSerializer().serializeToString(clone);
+    return '<?xml version="1.0" encoding="UTF-8"?>\n'+xml;
+  }
+
+  function downloadBlob(blob, filename){
+    var url=URL.createObjectURL(blob);
+    var a=document.createElement('a'); a.href=url; a.download=filename;
+    document.body.appendChild(a); a.click();
+    setTimeout(function(){ document.body.removeChild(a); URL.revokeObjectURL(url); }, 0);
+  }
+
+  function exportSVG(){
+    var xml=serializeSVG(); if(!xml){ alert('Bracket not ready yet.'); return; }
+    downloadBlob(new Blob([xml],{type:'image/svg+xml;charset=utf-8'}), 'wc2026-bracket.svg');
+  }
+
+  function exportPNG(){
+    var src=liveSVG(); if(!src){ alert('Bracket not ready yet.'); return; }
+    var vb=(src.getAttribute('viewBox')||'').split(/\s+/);
+    var w=+vb[2]||src.clientWidth, h=+vb[3]||src.clientHeight;
+    var scale=2; // device scale -> crisp raster
+    var xml=serializeSVG();
+    var img=new Image();
+    var svgBlob=new Blob([xml],{type:'image/svg+xml;charset=utf-8'});
+    var url=URL.createObjectURL(svgBlob);
+    img.onload=function(){
+      var canvas=document.createElement('canvas');
+      canvas.width=Math.round(w*scale); canvas.height=Math.round(h*scale);
+      var ctx=canvas.getContext('2d');
+      ctx.fillStyle='#0f1115'; ctx.fillRect(0,0,canvas.width,canvas.height); // solid bg
+      ctx.setTransform(scale,0,0,scale,0,0);
+      ctx.drawImage(img,0,0,w,h);
+      URL.revokeObjectURL(url);
+      canvas.toBlob(function(blob){ if(blob) downloadBlob(blob,'wc2026-bracket.png'); }, 'image/png');
+    };
+    img.onerror=function(){ URL.revokeObjectURL(url); alert('PNG export failed to rasterize the SVG.'); };
+    img.src=url;
+  }
+
+  function exportPDF(){
+    // The print stylesheet (@media print) lays the bracket out un-scrolled in
+    // landscape; the browser's print dialog offers "Save as PDF".
+    window.print();
+  }
+
+  function exportBar(){
+    var bar=document.createElement('div'); bar.className='export-bar';
+    var lbl=document.createElement('span'); lbl.className='lbl'; lbl.textContent='Export:';
+    bar.appendChild(lbl);
+    [['Download SVG',exportSVG],['Download PNG',exportPNG],['Save as PDF',exportPDF]].forEach(function(b){
+      var btn=document.createElement('button'); btn.className='btn'; btn.textContent=b[0];
+      btn.onclick=b[1]; bar.appendChild(btn);
+    });
+    return bar;
   }
 
   function showCandidates(ev, cands, matchNo, side){
@@ -981,6 +1148,9 @@ const APP_JS = String.raw`
         'standings use the full FIFA tiebreaker cascade (points → GD → GF → head-to-head → fair-play → drawing of lots). '+
         'The best 8 third-place teams are mapped into the Round of 32 by FIFA’s Annex C table. '+
         'Knockout ties go to an Elo-weighted shootout coin.</p>'+
+      '<p><b>Per-round percentages are TRUE Monte-Carlo frequencies.</b> Every knockout slot — Round of 32 through the Final — '+
+        'shows the most-likely team and the exact share of simulated tournaments in which that team <i>reaches and occupies that exact slot</i> '+
+        '(an unconditional probability, tallied directly from the sims; deeper rounds are not renormalized approximations). Tap a slot to see the top candidates with their true probabilities.</p>'+
       '<p><b>Coin-flips are real:</b> a ⚖ marks teams a standing could separate only by drawing of lots — a genuine random draw, '+
         'which we render deterministically (alphabetical) but flag honestly.</p>'+
       '<p><b>Data:</b> openfootball/worldcup.json (public domain). '+FRESH.playedCount+' of 104 matches in the build. '+
@@ -990,6 +1160,12 @@ const APP_JS = String.raw`
   }
 
   // first paint
+  if(POSTER){
+    // hi-res capture path: run the sim synchronously so the bracket is fully
+    // populated on the very first paint (no async worker for the screenshotter).
+    try{ state.mc=syncMonte(groupsForCompute()); }catch(e){ /* leave bracket empty */ }
+    state.simming=false;
+  }
   render();
 })();
 `;

@@ -7,4 +7,5 @@ node_modules/
 
 # Build artifacts / cached API pulls
 data/raw/
+dist/exports/
 *.log

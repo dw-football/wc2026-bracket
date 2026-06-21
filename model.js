@@ -206,7 +206,8 @@ function cloneGroupsForSim(groups) {
  *   qualifiedAs: Record<string,'winner'|'runnerup'|'third'|null>,
  *   r32: Array<{match:number, home:string, away:string}>,
  *   reached: Record<string,number>,
- *   champion: string
+ *   champion: string,
+ *   knockout: Array<{match:number, round:string, home:string, away:string, winner:string}>
  * }}
  */
 export function simulateTournament(groups, bracket, rng, opts = {}) {
@@ -297,6 +298,10 @@ export function simulateTournament(groups, bracket, rng, opts = {}) {
   const loserByMatch = {};
   const reached = {};
 
+  // Collect EVERY knockout match's resolved occupants + winner for this sim,
+  // so the aggregator can build true per-round occupancy frequencies.
+  const knockout = []; // [{match, round, home, away, winner}]
+
   // Seed "reached" for everyone who made the R32.
   for (const fx of r32) {
     reached[fx.home] = ROUND_INDEX.R32;
@@ -333,10 +338,11 @@ export function simulateTournament(groups, bracket, rng, opts = {}) {
     winnerByMatch[fx.match] = winner;
     loserByMatch[fx.match] = loser;
     bump(winner, ROUND_INDEX.R16); // winning R32 => reached R16
+    knockout.push({ match: fx.match, round: 'R32', home: fx.home, away: fx.away, winner });
   }
 
   // Helper to run a round whose sides are winnerOf references.
-  const runRound = (roundMatches, advanceRoundIdx) => {
+  const runRound = (roundMatches, roundName, advanceRoundIdx) => {
     for (const m of roundMatches) {
       const homeCode = sideCode(m.home);
       const awayCode = sideCode(m.away);
@@ -344,12 +350,13 @@ export function simulateTournament(groups, bracket, rng, opts = {}) {
       winnerByMatch[m.match] = winner;
       loserByMatch[m.match] = loser;
       bump(winner, advanceRoundIdx);
+      knockout.push({ match: m.match, round: roundName, home: homeCode, away: awayCode, winner });
     }
   };
 
-  runRound(bracket.rounds.R16, ROUND_INDEX.QF);   // win R16 => reached QF
-  runRound(bracket.rounds.QF, ROUND_INDEX.SF);    // win QF  => reached SF
-  runRound(bracket.rounds.SF, ROUND_INDEX.Final); // win SF  => reached Final
+  runRound(bracket.rounds.R16, 'R16', ROUND_INDEX.QF);   // win R16 => reached QF
+  runRound(bracket.rounds.QF, 'QF', ROUND_INDEX.SF);     // win QF  => reached SF
+  runRound(bracket.rounds.SF, 'SF', ROUND_INDEX.Final);  // win SF  => reached Final
 
   // Final.
   const finalM = bracket.rounds.Final[0];
@@ -358,6 +365,7 @@ export function simulateTournament(groups, bracket, rng, opts = {}) {
   const { winner: champion } = playKnockout(fHome, fAway);
   winnerByMatch[finalM.match] = champion;
   bump(champion, ROUND_INDEX.Champion);
+  knockout.push({ match: finalM.match, round: 'Final', home: fHome, away: fAway, winner: champion });
 
   // Third-place playoff is simulated for completeness (does not affect `reached`
   // beyond the SF appearance the two losers already have).
@@ -368,10 +376,11 @@ export function simulateTournament(groups, bracket, rng, opts = {}) {
     if (a && b) {
       const { winner } = playKnockout(a, b);
       winnerByMatch[tpM.match] = winner;
+      knockout.push({ match: tpM.match, round: 'ThirdPlace', home: a, away: b, winner });
     }
   }
 
-  return { groupRank, qualifiedAs, r32, reached, champion };
+  return { groupRank, qualifiedAs, r32, reached, champion, knockout };
 }
 
 // ----------------------------------------------------------------------------
@@ -389,7 +398,9 @@ export function simulateTournament(groups, bracket, rng, opts = {}) {
  *   n:number,
  *   perTeam: Array<object>,             // sorted by pWinCup desc
  *   perR32Slot: Array<{match,home:[{code,p}],away:[{code,p}]}>,
- *   modalBracket: Array<{match, home:{code,p}, away:{code,p}}>
+ *   modalBracket: Array<{match, home:{code,p}, away:{code,p}}>,
+ *   perSlot: Array<{match,round,home:[{code,p}],away:[{code,p}]}>,   // ALL ko rounds, true freqs
+ *   modalKnockout: Array<{match,round,home:{code,p},away:{code,p}}>  // argmax each side
  * }}
  */
 export function monteCarlo(groups, bracket, opts = {}) {
@@ -422,6 +433,18 @@ export function monteCarlo(groups, bracket, opts = {}) {
   for (const mNo of r32Matches) slotTally[mNo] = { home: new Map(), away: new Map() };
   const inc = (map, code) => map.set(code, (map.get(code) || 0) + 1);
 
+  // per-knockout-match occupancy tallies for ALL rounds (R32/R16/QF/SF/Final/ThirdPlace).
+  // Keyed by match number; each holds the round name and home/away occupant counts.
+  const koOrder = ['R32', 'R16', 'QF', 'SF', 'ThirdPlace', 'Final'];
+  const koTally = {}; // matchNo -> {round, home: Map<code,count>, away: Map<code,count>}
+  const koMatchOrder = []; // preserve a stable, round-then-match ordering for output
+  for (const rd of koOrder) {
+    for (const m of bracket.rounds[rd] || []) {
+      koTally[m.match] = { round: rd, home: new Map(), away: new Map() };
+      koMatchOrder.push(m.match);
+    }
+  }
+
   const simOpts = { ...opts };
 
   for (let i = 0; i < n; i++) {
@@ -445,10 +468,18 @@ export function monteCarlo(groups, bracket, opts = {}) {
     }
     C[r.champion].winCup++;
 
-    // R32 slot occupancy
+    // R32 slot occupancy (legacy tallies, kept for perR32Slot/modalBracket)
     for (const fx of r.r32) {
       inc(slotTally[fx.match].home, fx.home);
       inc(slotTally[fx.match].away, fx.away);
+    }
+
+    // ALL knockout matches: true per-round occupancy for each side.
+    for (const k of r.knockout) {
+      const t = koTally[k.match];
+      if (!t) continue;
+      if (k.home) inc(t.home, k.home);
+      if (k.away) inc(t.away, k.away);
     }
   }
 
@@ -491,5 +522,31 @@ export function monteCarlo(groups, bracket, opts = {}) {
     };
   });
 
-  return { n, perTeam, perR32Slot, modalBracket };
+  // ---- TRUE per-round occupancy across ALL knockout matches ----------------
+  // p = count/n is the unconditional probability the team occupies that exact
+  // slot in that round (i.e. reaches and fills it). home/away counts each sum
+  // to n (every match has two occupants every sim).
+  const perSlot = koMatchOrder.map((mNo) => {
+    const t = koTally[mNo];
+    return {
+      match: mNo,
+      round: t.round,
+      home: topOf(t.home).slice(0, TOP),
+      away: topOf(t.away).slice(0, TOP),
+    };
+  });
+
+  const modalKnockout = koMatchOrder.map((mNo) => {
+    const t = koTally[mNo];
+    const home = topOf(t.home);
+    const away = topOf(t.away);
+    return {
+      match: mNo,
+      round: t.round,
+      home: home[0] ?? { code: null, p: 0 },
+      away: away[0] ?? { code: null, p: 0 },
+    };
+  });
+
+  return { n, perTeam, perR32Slot, modalBracket, perSlot, modalKnockout };
 }

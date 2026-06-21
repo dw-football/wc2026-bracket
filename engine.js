@@ -34,6 +34,8 @@ function blankStats(team) {
     code: team.code,
     name: team.name,
     fairPlay: Number.isFinite(team.fairPlay) ? team.fairPlay : 0,
+    elo: Number.isFinite(team.elo) ? team.elo : 0,
+    worldRank: Number.isFinite(team.worldRank) ? team.worldRank : null,
     played: 0,
     won: 0,
     drawn: 0,
@@ -111,9 +113,19 @@ function cmpFairPlay(x, y) {
   return x.fairPlay - y.fairPlay;
 }
 
-/** Alphabetical-by-code comparator (the deterministic "drawing of lots"). */
-function cmpAlpha(x, y) {
-  return x.code < y.code ? -1 : x.code > y.code ? 1 : 0;
+/** Points-only comparator (more points first) — FIFA's first ranking criterion. */
+function cmpPoints(x, y) {
+  return y.points - x.points;
+}
+
+/**
+ * FIFA World Ranking tiebreaker (criterion 7 for 2026; drawing of lots was
+ * abolished). We do not yet carry the official FIFA ranking, so we PROXY it
+ * with Elo (higher Elo = better rank). Swap in real ranks via team.worldRank.
+ */
+function cmpWorldRank(x, y) {
+  if (x.worldRank != null && y.worldRank != null) return x.worldRank - y.worldRank;
+  return (y.elo || 0) - (x.elo || 0);
 }
 
 // ----------------------------------------------------------------------------
@@ -185,7 +197,7 @@ function resolveTiedGroup(tied, allMatches) {
   // If h2h fully kept them together (a single bucket of the same size), h2h has
   // failed to separate -> go to fair-play / lots for the whole set.
   if (buckets.length === 1 && buckets[0].length === tied.length) {
-    return resolveByFairPlayThenLots(tied);
+    return resolveByOverallThenDiscipline(tied);
   }
 
   // h2h produced >=2 buckets (a partial or full split). Resolve each bucket:
@@ -212,7 +224,7 @@ function resolveTiedGroup(tied, allMatches) {
 function resolveStillTiedSubset(subset, allMatches) {
   const buckets = headToHeadSplit(subset, allMatches);
   if (buckets.length === 1 && buckets[0].length === subset.length) {
-    return resolveByFairPlayThenLots(subset);
+    return resolveByOverallThenDiscipline(subset);
   }
   const result = [];
   for (const bucket of buckets) {
@@ -223,24 +235,21 @@ function resolveStillTiedSubset(subset, allMatches) {
 }
 
 /**
- * Resolve a still-tied set by (g) fair-play then (h) lots/alphabetical.
- * Teams that remain level after fair-play (i.e. decided purely by lots) get
- * `tiedByLots:true`.
+ * Resolve a set that head-to-head (criteria 1-3) could NOT separate, using the
+ * FIFA 2026 fallback criteria in order:
+ *   (4) overall goal difference, (5) overall goals scored,
+ *   (6) fair-play/disciplinary points, (7) FIFA World Ranking.
+ * Drawing of lots was abolished for 2026, and World Ranking is unique per team,
+ * so this always produces a strict order.
  */
-function resolveByFairPlayThenLots(tied) {
-  const ordered = [...tied].sort((a, b) => {
+function resolveByOverallThenDiscipline(tied) {
+  return [...tied].sort((a, b) => {
+    const ov = cmpOverall(a, b); // points are equal here, so this is GD then GF
+    if (ov !== 0) return ov;
     const fp = cmpFairPlay(a, b);
     if (fp !== 0) return fp;
-    return cmpAlpha(a, b);
+    return cmpWorldRank(a, b);
   });
-  // Flag any teams that are level on fair-play with a neighbor (lots decided).
-  for (let i = 0; i < ordered.length; i++) {
-    const t = ordered[i];
-    const prevLevel = i > 0 && cmpFairPlay(ordered[i - 1], t) === 0;
-    const nextLevel = i < ordered.length - 1 && cmpFairPlay(t, ordered[i + 1]) === 0;
-    if (prevLevel || nextLevel) t.tiedByLots = true;
-  }
-  return ordered;
 }
 
 // ----------------------------------------------------------------------------
@@ -258,16 +267,17 @@ export function computeGroupStanding(group) {
   const stats = aggregate(group.teams, group.matches);
   const all = [...stats.values()];
 
-  // 1. Primary sort on overall criteria (a,b,c).
-  all.sort(cmpOverall);
+  // FIFA 2026: teams are first ordered by POINTS. Any set level on points is
+  // resolved by the head-to-head cascade (criteria 1-3) and, only if that cannot
+  // separate them, by overall GD -> overall GF -> fair-play -> FIFA World Ranking.
+  // (For 2026, head-to-head OUTRANKS overall goal difference, and lots are gone.)
+  all.sort(cmpPoints);
 
-  // 2. Walk groups of teams that are level on (a,b,c) and resolve each with the
-  //    head-to-head -> fair-play -> lots cascade.
   const ranked = [];
   let i = 0;
   while (i < all.length) {
     let j = i + 1;
-    while (j < all.length && cmpOverall(all[i], all[j]) === 0) j++;
+    while (j < all.length && all[j].points === all[i].points) j++;
     const tiedSlice = all.slice(i, j);
     if (tiedSlice.length === 1) {
       ranked.push(tiedSlice[0]);
@@ -288,8 +298,9 @@ export function computeGroupStanding(group) {
     ga: s.ga,
     gd: s.gd,
     points: s.points,
+    fairPlay: s.fairPlay,
+    elo: s.elo,
     rank: idx + 1,
-    ...(s.tiedByLots ? { tiedByLots: true } : {}),
   }));
 }
 
@@ -316,21 +327,16 @@ export function rankThirdPlaceTeams(groups) {
   // Sort with the full cascade. Note: there is no head-to-head among
   // third-place teams (they're from different groups), so the sequence is
   // overall -> fair-play -> lots.
+  // Third-place teams come from different groups and never met, so there is no
+  // head-to-head step. FIFA 2026 order: points -> overall GD -> overall GF ->
+  // fair play -> FIFA World Ranking (drawing of lots abolished).
   thirds.sort((a, b) => {
-    const o = cmpOverall(a, b);
+    const o = cmpOverall(a, b); // points -> GD -> GF
     if (o !== 0) return o;
     const fp = cmpFairPlay(a, b);
     if (fp !== 0) return fp;
-    return cmpAlpha(a, b);
+    return cmpWorldRank(a, b);
   });
-
-  // Flag lots: teams level on overall AND fair-play with a neighbor.
-  const levelWith = (x, y) => cmpOverall(x, y) === 0 && cmpFairPlay(x, y) === 0;
-  for (let i = 0; i < thirds.length; i++) {
-    const prevLevel = i > 0 && levelWith(thirds[i - 1], thirds[i]);
-    const nextLevel = i < thirds.length - 1 && levelWith(thirds[i], thirds[i + 1]);
-    if (prevLevel || nextLevel) thirds[i].tiedByLots = true;
-  }
 
   return thirds.map((t, idx) => ({
     ...t,
