@@ -1475,7 +1475,10 @@ const APP_JS = String.raw`
     } else if(nUn<=2){
       // ---- STAGE: final round (1-2 unplayed) -> summarizeGroup ----
       var sum;
-      try{ sum=summarizeGroup(g); }
+      // Pass the Monte-Carlo per-team map (code -> perTeam entry) so headlines and
+      // result-based detail are probability-aware; null until the sim returns
+      // (analyzers fall back to deterministic-only output in that window).
+      try{ sum=summarizeGroup(g, { mcByCode: dist }); }
       catch(e){ var er=document.createElement('div'); er.className='muted tiny'; er.textContent='Final-round summary unavailable: '+esc(e.message); card.appendChild(er); sec.appendChild(card); return sec; }
       var byCode={}; sum.teams.forEach(function(t){ byCode[t.code]=t; });
       orderedTeams.forEach(function(team){
@@ -1499,7 +1502,7 @@ const APP_JS = String.raw`
     } else {
       // ---- STAGE: pre-final (3+ unplayed) -> groupSituation ----
       var sit;
-      try{ sit=groupSituation(g); }
+      try{ sit=groupSituation(g, { mcByCode: dist }); }
       catch(e){ var er2=document.createElement('div'); er2.className='muted tiny'; er2.textContent='Group situation unavailable: '+esc(e.message); card.appendChild(er2); sec.appendChild(card); return sec; }
       var byC={}; sit.teams.forEach(function(t){ byC[t.code]=t; });
       orderedTeams.forEach(function(team){

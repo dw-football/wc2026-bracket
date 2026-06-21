@@ -329,6 +329,29 @@ test('(c) synthetic: contention team with hand-computed magic number', () => {
   assert.ok(typeof A.eliminationThreshold === 'number');
   assert.ok(A.eliminationThreshold <= A.magicNumber);
 
-  // needLine should mention the magic number.
-  assert.match(A.needLine, /5 pts/);
+  // needLine is now RESULT-BASED (magic=5 from 3 pts over 2 games = two draws).
+  // The structured magicNumber still carries 5; the prose never says
+  // "needs N pts FROM its last games".
+  assert.match(A.needLine, /[Tt]wo draws \(or better\)/);
+  assert.doesNotMatch(A.needLine, /from its last/);
+});
+
+// ----------------------------------------------------------------------------
+// needLine language lock: no "from its last", floors phrased as results/totals
+// ----------------------------------------------------------------------------
+
+test('needLine never says "from its last" (the confusing-accumulation phrasing)', async () => {
+  const teams = JSON.parse(await readFile(new URL('./teams.json', import.meta.url), 'utf8'));
+  const raw = await fetchRaw();
+  const groups = toGroups(raw, teams);
+  for (const g of groups) {
+    const sit = groupSituation(g);
+    for (const t of sit.teams) {
+      assert.doesNotMatch(
+        t.needLine,
+        /from its last/,
+        `${g.name} ${t.code} needLine uses banned phrasing: ${t.needLine}`
+      );
+    }
+  }
 });

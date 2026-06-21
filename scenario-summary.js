@@ -44,6 +44,40 @@ const matchKey = (m) => `${m.home}-${m.away}`;
 const ordinal = (n) => (n === 1 ? '1st' : n === 2 ? '2nd' : n === 3 ? '3rd' : `${n}th`);
 
 // ---------------------------------------------------------------------------
+// Monte-Carlo probability helpers (used only when opts.mcByCode is supplied)
+// ---------------------------------------------------------------------------
+
+/** Format a probability [0..1] as a compact whole-ish percent, matching the UI. */
+function pctMC(p) {
+  if (p == null) return '';
+  if (p >= 0.995) return '99%';        // never print a bare 100% for a non-clinch
+  if (p > 0 && p <= 0.005) return '<1%';
+  const v = p * 100;
+  return (v >= 10 ? Math.round(v) : Math.round(v * 10) / 10) + '%';
+}
+
+/** Current POINTS per team code, from PLAYED matches only (3/1/0). */
+function currentPointsByCode(group) {
+  const pts = {};
+  for (const t of group.teams) pts[t.code] = 0;
+  for (const m of group.matches) {
+    if (!m.played) continue;
+    if (!(m.home in pts) || !(m.away in pts)) continue;
+    if (m.homeGoals > m.awayGoals) pts[m.home] += 3;
+    else if (m.homeGoals < m.awayGoals) pts[m.away] += 3;
+    else { pts[m.home] += 1; pts[m.away] += 1; }
+  }
+  return pts;
+}
+
+/** P(reach R32 | team finishes on exactly `finalPts`), from advanceByPoints. */
+function advGivenPoints(mc, finalPts) {
+  if (!mc || !mc.advanceByPoints) return null;
+  const b = mc.advanceByPoints[String(finalPts)];
+  return b ? b.pAdvanceGiven : null;
+}
+
+// ---------------------------------------------------------------------------
 // Enumeration
 // ---------------------------------------------------------------------------
 
@@ -1028,6 +1062,138 @@ function cap(s) {
   return s ? s.charAt(0).toUpperCase() + s.slice(1) : s;
 }
 
+// ===========================================================================
+// MONTE-CARLO-DRIVEN headlines + result-based detail (final round)
+// ===========================================================================
+
+/**
+ * Result-based headline for a NON-clinched, NON-eliminated team, driven by the
+ * Monte-Carlo per-team entry. Never claims a realistically-impossible outcome.
+ *
+ * @param {object} mc   perTeam entry (pAdvance, pGroup1, pGroup2, ...)
+ * @returns {string}
+ */
+function mcContentionHeadline(mc) {
+  const pAdv = mc.pAdvance ?? 0;
+  const pTop2 = (mc.pGroup1 ?? 0) + (mc.pGroup2 ?? 0);
+  if (pAdv >= 0.99) return `Virtually through — ${pctMC(pAdv)} to qualify`;
+  // Realistically cannot finish top-2 (the Bosnia/Qatar guard): frame around 3rd
+  // and NEVER imply a 2nd-place finish even if a ~0% goal-difference path exists.
+  if (pTop2 < 0.01) return `Realistically fighting for 3rd — ${pctMC(pAdv)} to advance`;
+  if (pAdv >= 0.85) return `In good shape — ${pctMC(pAdv)} to qualify`;
+  return `In contention — ${pctMC(pAdv)} to qualify`;
+}
+
+/**
+ * For a clinched top-2 team that can still win the group, the headline append.
+ * "Qualified for the Round of 32 — {pWinGroup%} to win the group" when 1st is
+ * still reachable; plain otherwise.
+ */
+function mcQualifiedHeadline(mc, firstReachable) {
+  const base = 'Qualified for the Round of 32';
+  if (firstReachable && mc && (mc.pWinGroup ?? 0) > 0.005) {
+    return `${base} — ${pctMC(mc.pWinGroup)} to win the group`;
+  }
+  return base;
+}
+
+/**
+ * RESULT-BASED final-round detail (team plays exactly ONE remaining match).
+ * Leads with the best result, attaches advance odds to any result that leaves
+ * the team 3rd-or-out. Results that guarantee top-2 read "through" (no odds).
+ *
+ * Returns null if the team has no single own-game mapping (caller falls back to
+ * the deterministic renderer).
+ */
+function mcFinalRoundDetail(code, group, unplayed, scenarios, mc) {
+  const ownIdx = unplayed.findIndex((m) => m.home === code || m.away === code);
+  if (ownIdx === -1) return null;
+  const ownMatch = unplayed[ownIdx];
+  const opp = nameInGroup(group, ownMatch.home === code ? ownMatch.away : ownMatch.home);
+  const curPts = currentPointsByCode(group)[code] ?? 0;
+  const nameOf = (c) => nameInGroup(group, c);
+  const otherIdx = unplayed.map((_, i) => i).filter((i) => i !== ownIdx);
+  const hasOther = otherIdx.length === 1; // final round: 0 or 1 other match
+
+  // Per own coarse result (subject perspective): rank set + per-other-outcome rank.
+  const byOwn = new Map(); // 'W'|'D'|'L' -> { ranks:Set, byOther: Map<otherCoarse,rank> }
+  for (const s of scenarios) {
+    const own = fromSubjectPerspective(s.coarse[ownIdx], ownMatch, code);
+    if (!byOwn.has(own)) byOwn.set(own, { ranks: new Set(), byOther: new Map() });
+    const slot = byOwn.get(own);
+    slot.ranks.add(s.rankByCode[code]);
+    if (hasOther) slot.byOther.set(s.coarse[otherIdx[0]], s.rankByCode[code]);
+  }
+
+  const finalPtsOf = { W: curPts + 3, D: curPts + 1, L: curPts + 0 };
+  const resultPhrase = { W: 'win', D: 'draw', L: 'loss' };
+  const ownNoun = { W: `a win over ${opp}`, D: `a draw with ${opp}`, L: `a loss to ${opp}` };
+  const order = ['W', 'D', 'L'].filter((r) => byOwn.has(r));
+  const info = order.map((res) => {
+    const slot = byOwn.get(res);
+    const worst = Math.max(...slot.ranks);
+    const best = Math.min(...slot.ranks);
+    return { res, slot, best, worst, top2: worst <= 2, finalPts: finalPtsOf[res] };
+  });
+
+  // Merge the LEADING run of top-2-safe results into one "win or draw" lead.
+  const safeLead = [];
+  let k = 0;
+  while (k < info.length && info[k].top2) { safeLead.push(info[k]); k++; }
+
+  const segs = [];
+
+  if (safeLead.length > 0) {
+    const worstAcrossLead = Math.max(...safeLead.map((x) => x.worst));
+    const bestAcrossLead = Math.min(...safeLead.map((x) => x.best));
+    // Combined own-result noun ("a win", "a win or draw").
+    const words = safeLead.map((x) => resultPhrase[x.res]);
+    let ownText;
+    if (words.length === 1) ownText = ownNoun[safeLead[0].res];
+    else ownText = `a ${words.join(' or ')} vs ${opp}`;
+    // "2nd with ..." when the safe lead pins a single position; "At least 2nd
+    // with ..." only when it spans (e.g. could be 1st or 2nd).
+    const posWord = worstAcrossLead === bestAcrossLead
+      ? ordinal(worstAcrossLead)
+      : `At least ${ordinal(worstAcrossLead)}`;
+    let lead = `${posWord} with ${ownText}`;
+    // If 1st is reachable within the safe lead, note the (cross-match) condition.
+    const oneReachable = safeLead.some((x) => x.best === 1);
+    if (oneReachable && hasOther) {
+      // Find, within a safe result that can be 1st, the other-match outcomes giving 1st.
+      const x = safeLead.find((y) => y.best === 1);
+      const firstOutcomes = new Set();
+      for (const [oc, rk] of x.slot.byOther) if (rk === 1) firstOutcomes.add(oc);
+      const cond = otherMatchPhrase(firstOutcomes, unplayed[otherIdx[0]], nameOf);
+      if (cond) lead += ` (1st if ${cond})`;
+    }
+    segs.push(lead);
+  }
+
+  // Remaining results (can leave the team 3rd-or-out): attach advance odds.
+  // "a draw → 3rd (97%)" / "a loss → 2nd or 3rd (99%)" / "a loss → out (~6%)".
+  for (let i = k; i < info.length; i++) {
+    const x = info[i];
+    const adv = advGivenPoints(mc, x.finalPts);
+    let pos;
+    if (x.best >= 4) pos = 'out';
+    else if (x.best === x.worst) pos = ordinal(x.best);
+    else pos = `${ordinal(x.best)} or ${ordinal(x.worst)}`;
+    const tail = adv == null ? '' : ` (${x.best >= 4 ? '~' : ''}${pctMC(adv)})`;
+    segs.push(`a ${resultPhrase[x.res]} → ${pos}${tail}`);
+  }
+
+  if (segs.length === 0) return null;
+  if (segs.length === 1) return segs[0] + '.';
+  return segs[0] + '; ' + segs.slice(1).join('; ') + '.';
+}
+
+/** Team name lookup within a group. */
+function nameInGroup(group, code) {
+  const t = group.teams.find((x) => x.code === code);
+  return t ? t.name : code;
+}
+
 // ---------------------------------------------------------------------------
 // Dead-rubber detection
 // ---------------------------------------------------------------------------
@@ -1114,6 +1280,8 @@ function conditionalHeadline(code, allRanks, unplayed, scenarios, relevant) {
  */
 export function summarizeGroup(group, opts = {}) {
   const maxGoals = opts.maxGoals ?? MAX_GOALS;
+  const mcByCode = opts.mcByCode || null; // code -> perTeam entry, or null
+  const mcOf = (code) => (mcByCode ? mcByCode[code] || null : null);
   const nameOf = (code) => {
     const t = group.teams.find((x) => x.code === code);
     return t ? t.name : code;
@@ -1124,23 +1292,29 @@ export function summarizeGroup(group, opts = {}) {
   // Fully-played group: every team has a fixed rank.
   if (unplayed.length === 0) {
     const standing = computeGroupStanding(group);
-    const teams = standing.map((s) => ({
-      code: s.code,
-      name: s.name,
-      status:
-        s.rank === 1 ? 'won-group' : s.rank === 4 ? 'eliminated' : s.rank === 3 ? 'best-3rd' : 'qualified',
-      headline:
-        s.rank === 1
-          ? 'Clinched 1st — group winner'
-          : s.rank === 4
-            ? 'Eliminated'
-            : s.rank === 3
-              ? 'Finished 3rd — advancing then depends on other groups'
-              : 'Qualified — finished 2nd',
-      detail: null,
-      maxRank: s.rank,
-      minRank: s.rank,
-    }));
+    const teams = standing.map((s) => {
+      const mc = mcOf(s.code);
+      let headline;
+      if (s.rank === 1) headline = mc ? 'Won the group' : 'Clinched 1st — group winner';
+      else if (s.rank === 4) headline = 'Eliminated';
+      else if (s.rank === 2) headline = mc ? 'Qualified for the Round of 32' : 'Qualified — finished 2nd';
+      else headline = 'Finished 3rd — advancing then depends on other groups';
+      // For a finished 3rd-place team, surface its qualification odds (cross-group).
+      let detail = null;
+      if (s.rank === 3 && mc && mc.pAdvance != null) {
+        detail = `${pctMC(mc.pAdvance)} to advance as one of the best third-placed teams.`;
+      }
+      return {
+        code: s.code,
+        name: s.name,
+        status:
+          s.rank === 1 ? 'won-group' : s.rank === 4 ? 'eliminated' : s.rank === 3 ? 'best-3rd' : 'qualified',
+        headline,
+        detail,
+        maxRank: s.rank,
+        minRank: s.rank,
+      };
+    });
     return { teams, deadRubbers: [] };
   }
 
@@ -1148,14 +1322,16 @@ export function summarizeGroup(group, opts = {}) {
 
   const teams = group.teams.map((team) => {
     const code = team.code;
+    const mc = mcOf(code);
     const ranks = scenarios.map((s) => s.rankByCode[code]);
     const minRank = Math.min(...ranks); // best
     const maxRank = Math.max(...ranks); // worst
     const allRanks = new Set(ranks);
 
-    // rank == 1 in ALL scenarios -> clinched 1st.
+    // rank == 1 in ALL scenarios -> clinched 1st (won the group).
     if (minRank === 1 && maxRank === 1) {
-      return mk(code, team.name, 'won-group', 'Clinched 1st — group winner', null, maxRank, minRank);
+      const hl = mc ? 'Won the group' : 'Clinched 1st — group winner';
+      return mk(code, team.name, 'won-group', hl, null, maxRank, minRank);
     }
 
     // rank == 4 in ALL -> eliminated.
@@ -1166,44 +1342,41 @@ export function summarizeGroup(group, opts = {}) {
     // rank in {1,2} in all scenarios but not always 1 -> clinched top-2.
     if (maxRank <= 2) {
       const firstReachable = allRanks.has(1);
+      const relevant = relevantMatchIndices(code, unplayed, scenarios);
       let detail = null;
       if (firstReachable) {
-        const relevant = relevantMatchIndices(code, unplayed, scenarios);
         detail = detailForTop(code, team.name, unplayed, scenarios, relevant, nameOf);
       }
-      return mk(
-        code,
-        team.name,
-        'qualified',
-        'Qualified — clinched a top-2 place',
-        detail,
-        maxRank,
-        minRank
-      );
+      const headline = mc
+        ? mcQualifiedHeadline(mc, firstReachable)
+        : 'Qualified — clinched a top-2 place';
+      return mk(code, team.name, 'qualified', headline, detail, maxRank, minRank);
     }
+
+    const relevant = relevantMatchIndices(code, unplayed, scenarios);
 
     // best achievable POSITION is 3rd.
     if (minRank === 3) {
       let detail = null;
-      if (maxRank > 3) {
-        const relevant = relevantMatchIndices(code, unplayed, scenarios);
+      if (mc) detail = mcFinalRoundDetail(code, group, unplayed, scenarios, mc);
+      if (detail == null && maxRank > 3) {
         detail = describeConditional(code, team.name, unplayed, scenarios, relevant, nameOf);
       }
-      return mk(
-        code,
-        team.name,
-        'best-3rd',
-        'Can finish no higher than 3rd — advancing then depends on other groups',
-        detail,
-        maxRank,
-        minRank
-      );
+      const headline = mc
+        ? mcContentionHeadline(mc)
+        : 'Can finish no higher than 3rd — advancing then depends on other groups';
+      return mk(code, team.name, 'best-3rd', headline, detail, maxRank, minRank);
     }
 
     // ---- conditional ----
-    const relevant = relevantMatchIndices(code, unplayed, scenarios);
-    const detail = describeConditional(code, team.name, unplayed, scenarios, relevant, nameOf);
-    const headline = conditionalHeadline(code, allRanks, unplayed, scenarios, relevant);
+    let detail = null;
+    if (mc) detail = mcFinalRoundDetail(code, group, unplayed, scenarios, mc);
+    if (detail == null) {
+      detail = describeConditional(code, team.name, unplayed, scenarios, relevant, nameOf);
+    }
+    const headline = mc
+      ? mcContentionHeadline(mc)
+      : conditionalHeadline(code, allRanks, unplayed, scenarios, relevant);
     return mk(code, team.name, 'conditional', headline, detail, maxRank, minRank);
   });
 

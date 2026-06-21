@@ -203,6 +203,7 @@ function cloneGroupsForSim(groups) {
  *   plus any expectedGoals overrides.
  * @returns {{
  *   groupRank: Record<string,number>,
+ *   groupPoints: Record<string,number>,
  *   qualifiedAs: Record<string,'winner'|'runnerup'|'third'|null>,
  *   r32: Array<{match:number, home:string, away:string}>,
  *   reached: Record<string,number>,
@@ -242,6 +243,7 @@ export function simulateTournament(groups, bracket, rng, opts = {}) {
   const winnerOfGroup = {};   // letter -> code
   const runnerUpOfGroup = {}; // letter -> code
   const groupRank = {};       // code -> 1..4
+  const groupPoints = {};     // code -> final group points
   const qualifiedAs = {};     // code -> role | null
   const standings = {};       // letter -> ranked array
 
@@ -251,6 +253,7 @@ export function simulateTournament(groups, bracket, rng, opts = {}) {
     standings[letter] = standing;
     for (const s of standing) {
       groupRank[s.code] = s.rank;
+      groupPoints[s.code] = s.points;
       qualifiedAs[s.code] = null;
       if (s.rank === 1) winnerOfGroup[letter] = s.code;
       else if (s.rank === 2) runnerUpOfGroup[letter] = s.code;
@@ -380,7 +383,7 @@ export function simulateTournament(groups, bracket, rng, opts = {}) {
     }
   }
 
-  return { groupRank, qualifiedAs, r32, reached, champion, knockout };
+  return { groupRank, groupPoints, qualifiedAs, r32, reached, champion, knockout };
 }
 
 // ----------------------------------------------------------------------------
@@ -396,7 +399,9 @@ export function simulateTournament(groups, bracket, rng, opts = {}) {
  *                          resolveThirdPlaceSlots, ...expectedGoals overrides }
  * @returns {{
  *   n:number,
- *   perTeam: Array<object>,             // sorted by pWinCup desc
+ *   perTeam: Array<object>,             // sorted by pWinCup desc; each entry adds
+ *                                       //   pAdvance, pQualifyIfThird, and
+ *                                       //   advanceByPoints{pts:{pFinish,pAdvanceGiven}}
  *   perR32Slot: Array<{match,home:[{code,p}],away:[{code,p}]}>,
  *   modalBracket: Array<{match, home:{code,p}, away:{code,p}}>,
  *   perSlot: Array<{match,round,home:[{code,p}],away:[{code,p}]}>,   // ALL ko rounds, true freqs
@@ -422,6 +427,11 @@ export function monteCarlo(groups, bracket, opts = {}) {
         winGroup: 0, runnerUp: 0, thirdQualify: 0,
         g1: 0, g2: 0, g3: 0, g4: 0, // full final group-position distribution
         reachR32: 0, reachR16: 0, reachQF: 0, reachSF: 0, reachFinal: 0, winCup: 0,
+        // conditional-advancement: keyed by final group points value ->
+        //   { finishes, advances }  (advances = finished on that points total
+        //   AND reached the R32 this sim). Lets the UI translate a remaining
+        //   result (win/draw/loss) into a P(advance) for the resulting total.
+        ptsTally: {},
       };
     }
     return C[code];
@@ -467,6 +477,18 @@ export function monteCarlo(groups, bracket, opts = {}) {
       else c.g4++;
     }
 
+    // conditional advancement by final group points.
+    // "advanced this sim" uses the SAME source reachR32 uses: a code is in
+    // r.reached with index >= R32 iff it filled an R32 fixture this sim.
+    for (const [code, pts] of Object.entries(r.groupPoints)) {
+      const c = C[code];
+      let bucket = c.ptsTally[pts];
+      if (!bucket) bucket = c.ptsTally[pts] = { finishes: 0, advances: 0 };
+      bucket.finishes++;
+      const idx = r.reached[code];
+      if (idx !== undefined && idx >= ROUND_INDEX.R32) bucket.advances++;
+    }
+
     // furthest round reached (cumulative: reaching SF implies reached R16, etc.)
     for (const [code, idx] of Object.entries(r.reached)) {
       const c = C[code];
@@ -494,23 +516,42 @@ export function monteCarlo(groups, bracket, opts = {}) {
   }
 
   const perTeam = Object.values(C)
-    .map((c) => ({
-      code: c.code,
-      name: c.name,
-      pWinGroup: c.winGroup / n,
-      pRunnerUp: c.runnerUp / n,
-      pThirdQualify: c.thirdQualify / n,
-      pGroup1: c.g1 / n, // full final group-position distribution (Elo model)
-      pGroup2: c.g2 / n,
-      pGroup3: c.g3 / n,
-      pGroup4: c.g4 / n,
-      pReachR32: c.reachR32 / n,
-      pReachR16: c.reachR16 / n,
-      pReachQF: c.reachQF / n,
-      pReachSF: c.reachSF / n,
-      pReachFinal: c.reachFinal / n,
-      pWinCup: c.winCup / n,
-    }))
+    .map((c) => {
+      // advanceByPoints: final-points value -> { pFinish, pAdvanceGiven }.
+      //   pFinish        = P(team finishes the group on exactly this point total)
+      //   pAdvanceGiven  = P(reach R32 | finished on this total)  [0 if no finishes]
+      // Full floats, no rounding — the UI rounds. Lets the UI translate a
+      // remaining win/draw/loss (which maps to a specific final total) into a
+      // P(advance) like "a draw -> 98%, a loss -> 50%".
+      const advanceByPoints = {};
+      for (const [pts, b] of Object.entries(c.ptsTally)) {
+        advanceByPoints[pts] = {
+          pFinish: b.finishes / n,
+          pAdvanceGiven: b.finishes ? b.advances / b.finishes : 0,
+        };
+      }
+      return {
+        code: c.code,
+        name: c.name,
+        pWinGroup: c.winGroup / n,
+        pRunnerUp: c.runnerUp / n,
+        pThirdQualify: c.thirdQualify / n,
+        pGroup1: c.g1 / n, // full final group-position distribution (Elo model)
+        pGroup2: c.g2 / n,
+        pGroup3: c.g3 / n,
+        pGroup4: c.g4 / n,
+        pReachR32: c.reachR32 / n,
+        pReachR16: c.reachR16 / n,
+        pReachQF: c.reachQF / n,
+        pReachSF: c.reachSF / n,
+        pReachFinal: c.reachFinal / n,
+        pWinCup: c.winCup / n,
+        // --- conditional-advancement stats -----------------------------------
+        pAdvance: c.reachR32 / n,                              // overall P(reach R32)
+        pQualifyIfThird: c.g3 ? c.thirdQualify / c.g3 : 0,     // P(qualify | finish 3rd)
+        advanceByPoints,
+      };
+    })
     .sort((a, b) => b.pWinCup - a.pWinCup);
 
   // per-R32-slot distributions (top candidates) + modal bracket

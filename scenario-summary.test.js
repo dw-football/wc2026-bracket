@@ -15,6 +15,24 @@ import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import { fetchRaw, toGroups } from './adapter.js';
 import { summarizeGroup, __test } from './scenario-summary.js';
+import { monteCarlo } from './model.js';
+import { resolveThirdPlaceSlots } from './allocation.js';
+
+// Build a real Monte-Carlo per-team map (code -> perTeam entry) for the live
+// data, shared across the mc-aware tests below.
+async function buildMcByCode() {
+  const teams = JSON.parse(await readFile('teams.json', 'utf8'));
+  const bracket = JSON.parse(await readFile('bracket.json', 'utf8'));
+  const raw = await fetchRaw();
+  const groups = toGroups(raw, teams);
+  const mc = monteCarlo(groups, bracket, {
+    n: 4000, seed: 12345, hostCodes: new Set(['USA', 'MEX', 'CAN']),
+    topCandidates: 6, resolveThirdPlaceSlots,
+  });
+  const map = {};
+  mc.perTeam.forEach((e) => { map[e.code] = e; });
+  return { groups, mcByCode: map };
+}
 
 // --- helpers ---------------------------------------------------------------
 
@@ -473,4 +491,81 @@ test('minimalCover: single-variable W/D/L partition yields three singleton subcu
   const cover = __test.minimalCover(target, off, 1);
   assert.equal(cover.length, 1);
   assert.deepEqual([...cover[0][0]].sort(), ['D']);
+});
+
+// ===========================================================================
+// MC-DRIVEN — probability-aware headlines + result-based detail (final round)
+// ===========================================================================
+
+test('MC: Group D final-round headlines + result-based detail (verbatim sign-off)', async () => {
+  const { groups, mcByCode } = await buildMcByCode();
+  const out = summarizeGroup(groups.find((g) => g.name === 'Group D'), { mcByCode });
+  const get = (c) => out.teams.find((t) => t.code === c);
+
+  // USA won the group deterministically.
+  assert.equal(get('USA').headline, 'Won the group');
+  // TUR eliminated.
+  assert.equal(get('TUR').headline, 'Eliminated');
+
+  // AUS: top-2-safe with a win or draw; a loss drops to 3rd WITH advance odds.
+  const aus = get('AUS');
+  assert.match(aus.headline, /to qualify$/);
+  assert.match(aus.detail, /^2nd with a win or draw vs Paraguay; a loss → 3rd \(\d/);
+
+  // PAR: 2nd with a win; a draw/loss → 3rd, EACH with a %.
+  const par = get('PAR');
+  assert.match(par.detail, /^2nd with a win over Australia; a draw → 3rd \(\d+%\); a loss → 3rd \(\d+%\)\.$/);
+});
+
+test('MC: a team that realistically cannot finish 2nd never has a top-2 headline (Bosnia/Qatar guard)', async () => {
+  const { groups, mcByCode } = await buildMcByCode();
+  // summarizeGroup is the FINAL-ROUND analyzer (1-2 unplayed). Only sweep those.
+  const finalRound = groups.filter((g) => {
+    const u = g.matches.filter((m) => !m.played).length;
+    return u >= 1 && u <= 2;
+  });
+  for (const g of finalRound) {
+    const out = summarizeGroup(g, { mcByCode });
+    for (const t of out.teams) {
+      const mc = mcByCode[t.code];
+      if (!mc) continue;
+      const pTop2 = (mc.pGroup2 || 0) + (mc.pGroup1 || 0);
+      // A team that essentially cannot finish top-2 must NOT carry a headline that
+      // asserts it can finish 1st/2nd. The contention headlines say "to qualify"
+      // or "fighting for 3rd" — never "finish 2nd"/"can still finish 2nd".
+      if (pTop2 < 0.01 && t.status !== 'qualified' && t.status !== 'won-group') {
+        assert.doesNotMatch(
+          t.headline,
+          /finish 2nd|finish 1st|as high as 2nd|still finish 2nd/,
+          `${g.name} ${t.code} (pTop2≈0) claims a top-2 finish: ${t.headline}`
+        );
+      }
+    }
+  }
+});
+
+test('MC: every 3rd-place (or "out") result mention in the detail carries a %', async () => {
+  const { groups, mcByCode } = await buildMcByCode();
+  // summarizeGroup is the FINAL-ROUND analyzer (1-2 unplayed). Only sweep those.
+  const finalRound = groups.filter((g) => {
+    const u = g.matches.filter((m) => !m.played).length;
+    return u >= 1 && u <= 2;
+  });
+  for (const g of finalRound) {
+    const out = summarizeGroup(g, { mcByCode });
+    for (const t of out.teams) {
+      if (!t.detail) continue;
+      // Any "→ 3rd", "→ 2nd or 3rd", or "→ out" arrow result must be followed by
+      // a parenthetical percentage.
+      const re = /→ (?:3rd|2nd or 3rd|out)(?:\s*\([~<]?\d|\s*\(99%\))/g;
+      const arrows = t.detail.match(/→ (?:3rd|2nd or 3rd|out)[^;.]*/g) || [];
+      for (const seg of arrows) {
+        assert.match(
+          seg,
+          /\([~<]?\d|\(99%\)|\(<1%\)/,
+          `${g.name} ${t.code} 3rd/out result lacks a %: "${seg}" in ${t.detail}`
+        );
+      }
+    }
+  }
 });

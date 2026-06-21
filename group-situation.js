@@ -523,47 +523,138 @@ function addTrigger(out, code, predicate, combos, round, ownResult, playsThisRou
 // needLine / statusLine phrasing
 // ----------------------------------------------------------------------------
 
-function buildStatusLine(status) {
+function buildStatusLine(status, mc) {
   switch (status) {
-    case 'won-group': return 'Clinched 1st';
-    case 'qualified': return 'Through to the R32';
+    case 'won-group': return mc ? 'Won the group' : 'Clinched 1st';
+    case 'qualified': {
+      if (!mc) return 'Through to the R32';
+      // Through on points; note any live chance to win the group.
+      if ((mc.pWinGroup ?? 0) > 0.005) {
+        return `Qualified for the Round of 32 — ${pctMC(mc.pWinGroup)} to win the group`;
+      }
+      return 'Qualified for the Round of 32';
+    }
     case 'eliminated': return 'Eliminated';
-    default: return 'Still alive';
+    default: {
+      // Contention: drive a realistic headline from the Monte-Carlo advance odds,
+      // never claiming top-2 when it is realistically impossible.
+      if (mc) {
+        const pAdv = mc.pAdvance ?? 0;
+        const pTop2 = (mc.pGroup1 ?? 0) + (mc.pGroup2 ?? 0);
+        if (pAdv >= 0.99) return `Virtually through — ${pctMC(pAdv)} to qualify`;
+        if (pTop2 < 0.01) return `Realistically fighting for 3rd — ${pctMC(pAdv)} to advance`;
+        if (pAdv >= 0.85) return `In good shape — ${pctMC(pAdv)} to qualify`;
+        return `In contention — ${pctMC(pAdv)} to qualify`;
+      }
+      return 'Still alive';
+    }
   }
 }
 
-function buildNeedLine(status, mt, remaining) {
+/** Compact percent formatter, matching the UI / scenario-summary. */
+function pctMC(p) {
+  if (p == null) return '';
+  if (p >= 0.995) return '99%';
+  if (p > 0 && p <= 0.005) return '<1%';
+  const v = p * 100;
+  return (v >= 10 ? Math.round(v) : Math.round(v * 10) / 10) + '%';
+}
+
+/**
+ * Express the MINIMAL set of own remaining results that GUARANTEES a final point
+ * total of at least `delta` ABOVE the team's current total, over `remaining`
+ * games. Returns a result phrase ("two wins", "a win and a draw", "two draws",
+ * "a single draw", "at least one win") or null if not cleanly expressible.
+ *
+ * This is result language, never "needs N points FROM its last games".
+ */
+function resultsForDelta(delta, remaining) {
+  if (delta <= 0) return null; // already safe
+  if (remaining === 1) {
+    if (delta > 3) return null;            // unreachable in one game
+    if (delta === 3) return 'a win';        // only a win reaches 3
+    if (delta === 2) return 'a win';        // a draw (1) falls short of 2
+    if (delta === 1) return 'a draw (or better)';
+    return null;
+  }
+  if (remaining === 2) {
+    if (delta > 6) return null;
+    if (delta === 6) return 'two wins';
+    if (delta >= 4) return 'a win and a draw';   // 4 needs ≥ W+D; 5 same minimal guarantee
+    if (delta === 3) return 'at least one win';   // a win (3) or fall short with draws
+    if (delta === 2) return 'two draws (or better)';
+    if (delta === 1) return 'a single draw (or better)';
+    return null;
+  }
+  return null;
+}
+
+/**
+ * The minimal own result that AVOIDS elimination — i.e. reaching the
+ * elimination threshold. Expressed as the negative: what leaves them out.
+ * Returns a phrase like "out if winless" / "out without a win" / null.
+ */
+function eliminationResultPhrase(deltaToFloor, remaining) {
+  if (deltaToFloor <= 0) return null; // floor already secured -> no risk of dropping
+  if (remaining === 2) {
+    if (deltaToFloor === 3) return 'out without a win';        // need ≥3: winless => out
+    if (deltaToFloor === 6) return 'out unless they win both'; // need both wins to survive
+    if (deltaToFloor === 2) return 'out if they take fewer than two points';
+    if (deltaToFloor === 1) return 'out if winless';
+  }
+  if (remaining === 1) {
+    if (deltaToFloor === 3) return 'out with anything less than a win';
+    if (deltaToFloor >= 1) return 'out with a loss';
+  }
+  return null;
+}
+
+function buildNeedLine(status, mt, remaining, curPts, mc) {
   if (status === 'won-group') return 'Already won the group.';
   if (status === 'qualified') return 'Already through to the knockout round.';
   if (status === 'eliminated') return 'Cannot finish in the top two; eliminated.';
 
-  // Contention: express magic number + elimination threshold.
-  const games = remaining === 1 ? 'last game' : `last ${remaining} games`;
-  const parts = [];
+  const overall = mc && mc.pAdvance != null ? ` — ${pctMC(mc.pAdvance)} to advance overall` : '';
 
+  // --- safe (magic) clause, result-based ---------------------------------
+  let safeClause;
   if (mt.magicNumber != null) {
+    const delta = mt.magicNumber - curPts;
+    const resultPhrase = resultsForDelta(delta, remaining);
     const tieFlag = mt.tieAtMagic ? ' (could come down to goal difference)' : '';
-    parts.push(`Needs ${mt.magicNumber} pts to be safe${tieFlag}`);
+    if (resultPhrase) {
+      // "Two draws (or better) guarantees advancing" / "Needs two wins to be safe".
+      if (/\bor better\b/.test(resultPhrase)) {
+        safeClause = `${cap(resultPhrase)} guarantees a top-2 place${tieFlag}`;
+      } else {
+        safeClause = `Needs ${resultPhrase} to be safe${tieFlag}`;
+      }
+    } else {
+      // Fallback: absolute finishing total, never "from its last games".
+      safeClause = `Needs to finish on ${mt.magicNumber}+ points to be safe${tieFlag}`;
+    }
   } else {
-    // Even winning out isn't a guaranteed-safe POINTS total -> the cut may rest
-    // on goal difference at the top reachable total.
-    parts.push(`Can reach a top-2 place but no points total guarantees it (could come down to goal difference)`);
+    safeClause = 'Can reach a top-2 place but no points total guarantees it (could come down to goal difference)';
   }
 
-  if (mt.eliminationThreshold != null) {
-    parts.push(`out if it finishes below ${mt.eliminationThreshold}`);
+  // --- elimination floor clause ------------------------------------------
+  // Only meaningful if the team can still finish BELOW the floor; if curPts is
+  // already >= the threshold the floor cannot bite, so we omit it (the bug fix).
+  let floorClause = '';
+  if (mt.eliminationThreshold != null && curPts < mt.eliminationThreshold) {
+    const deltaToFloor = mt.eliminationThreshold - curPts;
+    const elimPhrase = eliminationResultPhrase(deltaToFloor, remaining);
+    floorClause = elimPhrase
+      ? `; ${elimPhrase}`
+      : `; out if it finishes below ${mt.eliminationThreshold} points`;
   }
 
-  let line = parts.join('; ');
-  // Mention the games-left framing once, naturally.
-  if (mt.magicNumber != null) {
-    line = `Needs ${mt.magicNumber} pts from its ${games} to be safe` +
-      (mt.tieAtMagic ? ' (could come down to goal difference)' : '') +
-      (mt.eliminationThreshold != null ? `; out if it finishes below ${mt.eliminationThreshold}.` : '.');
-  } else {
-    line = line + '.';
-  }
-  return line;
+  return `${safeClause}${floorClause}${overall}.`;
+}
+
+/** Capitalize first letter. */
+function cap(s) {
+  return s ? s.charAt(0).toUpperCase() + s.slice(1) : s;
 }
 
 // ----------------------------------------------------------------------------
@@ -574,7 +665,8 @@ function buildNeedLine(status, mt, remaining) {
  * @param {{name,teams,matches}} group
  * @returns {{teams:Array, nextRound:{matchKeys,date,triggers}, decided:boolean}}
  */
-export function groupSituation(group) {
+export function groupSituation(group, opts = {}) {
+  const mcByCode = opts.mcByCode || null; // code -> perTeam entry, or null
   const { pts, played } = currentPoints(group);
   const unplayed = group.matches.filter((m) => !m.played);
 
@@ -625,10 +717,16 @@ export function groupSituation(group) {
       played: m.played,
       remaining: m.remaining,
       status: m.status,
-      statusLine: buildStatusLine(m.status),
+      statusLine: buildStatusLine(m.status, mcByCode ? mcByCode[m.code] || null : null),
       magicNumber: m.mt.magicNumber,
       eliminationThreshold: m.mt.eliminationThreshold,
-      needLine: buildNeedLine(m.status, m.mt, m.remaining),
+      needLine: buildNeedLine(
+        m.status,
+        m.mt,
+        m.remaining,
+        m.points,
+        mcByCode ? mcByCode[m.code] || null : null
+      ),
     };
   });
 
