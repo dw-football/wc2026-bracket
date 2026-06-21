@@ -425,6 +425,22 @@ select,input[type=number],input[type=text]{background:#0c0e12;color:var(--txt);
 .scn-legend{margin-top:3px;color:var(--dim);font-size:10.5px}
 .scn-legend .lg{white-space:nowrap}
 .scn-legend .lg i{display:inline-block;width:8px;height:8px;border-radius:2px;margin-right:3px;vertical-align:baseline}
+/* compact inline finish distribution (uncertain teams), sits to the right of the name */
+.scn-dist{margin-left:auto;font-size:11.5px;color:var(--dim);font-variant-numeric:tabular-nums;white-space:nowrap}
+.scn-dist .p1{color:var(--good)}
+.scn-dist .p2{color:var(--accent)}
+.scn-dist .p3{color:var(--warn)}
+.scn-dist .p4{color:var(--bad)}
+.scn-dist .elo{color:var(--dim2);font-size:10px;margin-left:6px}
+@media(max-width:680px){
+  .scn-team .h{flex-wrap:wrap}
+  .scn-dist{margin-left:0;flex-basis:100%;white-space:normal;margin-top:2px}
+}
+/* remaining fixtures list at top of a group scenario view */
+.scn-fixtures{margin:2px 0 12px;padding:8px 10px;background:var(--panel2);border:1px solid var(--line);border-radius:8px}
+.scn-fixtures .fx-h{color:var(--dim2);text-transform:uppercase;letter-spacing:.5px;font-size:10px;margin-bottom:5px}
+.scn-fixtures .fx{font-size:13px;color:var(--txt);padding:2px 0}
+.scn-fixtures .fx .when{color:var(--dim)}
 .scn-next{margin-top:10px;border-top:1px solid #20242e;padding-top:8px}
 .scn-triggers{margin:4px 0 0;padding-left:18px;font-size:13px;color:var(--txt)}
 .scn-triggers li{margin:3px 0}
@@ -507,7 +523,7 @@ const APP_JS = String.raw`
   function cloneGroups(gs){
     return gs.map(function(g){
       return { name:g.name, teams:g.teams.map(function(t){return {code:t.code,name:t.name,elo:t.elo};}),
-        matches:g.matches.map(function(m){return {home:m.home,away:m.away,homeGoals:m.homeGoals,awayGoals:m.awayGoals,played:m.played, manual:m.manual||false};}) };
+        matches:g.matches.map(function(m){return {home:m.home,away:m.away,homeGoals:m.homeGoals,awayGoals:m.awayGoals,played:m.played, manual:m.manual||false, date:m.date||null, time:m.time||null};}) };
     });
   }
   var baseGroups = DATA.groups;            // pristine (feed)
@@ -1284,29 +1300,98 @@ const APP_JS = String.raw`
     var m={}; state.mc.perTeam.forEach(function(e){ m[e.code]=e; }); return m;
   }
 
-  // Render one compact "Elo model: 1st x% · 2nd y% · 3rd z% · 4th w%" line for a
-  // team, or a placeholder while the sim is still running.
-  function eloLine(code, dist){
-    var d=document.createElement('div'); d.className='scn-elo';
-    if(!dist){ d.innerHTML='<span class="lbl">Elo model</span> <span class="muted tiny">computing finish distribution…</span>'; return d; }
-    var e=dist[code];
-    if(!e){ d.innerHTML='<span class="lbl">Elo model</span> <span class="muted tiny">n/a</span>'; return d; }
-    var r=function(p){ return Math.round((p||0)*100); };
-    var p1=r(e.pGroup1),p2=r(e.pGroup2),p3=r(e.pGroup3),p4=r(e.pGroup4);
-    // 4-segment stacked bar + a compact numeric legend underneath.
-    var segs=[['#34d27b',p1,'1st'],['#4ea1ff',p2,'2nd'],['#f0b429',p3,'3rd'],['#ef5e5e',p4,'4th']];
-    var bar='<span class="scn-bar">'+segs.map(function(s){
-      return s[1]>0?'<span class="seg" style="width:'+s[1]+'%;background:'+s[0]+'" title="'+s[2]+' '+s[1]+'%"></span>':''; }).join('')+'</span>';
-    var legend=segs.map(function(s){
-      return '<span class="lg"><i style="background:'+s[0]+'"></i>'+s[2]+' '+s[1]+'%</span>'; }).join(' · ');
-    d.innerHTML='<span class="lbl">Elo model</span>'+bar+'<div class="scn-legend">'+legend+'</div>';
+  // Convert a match's venue-local date+time ("HH:MM UTC±N") to US Eastern
+  // (America/New_York; June = EDT = UTC−4), returning a formatted string like
+  // "Wed Jun 24, 6:00 PM ET". Handles date rollover across the UTC→ET shift.
+  var ET_OFFSET=-4; // EDT in June 2026
+  var WKD=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+  var MON=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  function fixtureWhenET(date, time){
+    if(!date || !time) return '';
+    var mt=/(\d{1,2}):(\d{2})\s*UTC\s*([+-]\d+)?/.exec(time);
+    if(!mt) return '';
+    var hh=+mt[1], mi=+mt[2], off=mt[3]?+mt[3]:0;
+    var p=date.split('-').map(Number); var Y=p[0], Mo=(p[1]||1)-1, D=p[2]||1;
+    // local clock at the venue offset -> UTC -> ET. Build a UTC date then shift.
+    var dt=new Date(Date.UTC(Y, Mo, D, hh-off+ET_OFFSET, mi));
+    var wd=WKD[dt.getUTCDay()], mon=MON[dt.getUTCMonth()], day=dt.getUTCDate();
+    var H=dt.getUTCHours(), M=dt.getUTCMinutes();
+    var ap=H>=12?'PM':'AM'; var h12=H%12; if(h12===0) h12=12;
+    var mm=(M<10?'0':'')+M;
+    return wd+' '+mon+' '+day+', '+h12+':'+mm+' '+ap+' ET';
+  }
+
+  // "Remaining fixtures" block: one line per UNPLAYED match in the group, using
+  // full team names and the kickoff converted to ET. "Group complete" if none.
+  function remainingFixtures(g){
+    var d=document.createElement('div'); d.className='scn-fixtures';
+    var unplayed=g.matches.filter(function(m){return !m.played;});
+    var h=document.createElement('div'); h.className='fx-h'; h.textContent='Remaining fixtures';
+    d.appendChild(h);
+    if(!unplayed.length){
+      var c=document.createElement('div'); c.className='fx'; c.textContent='Group complete'; d.appendChild(c);
+      return d;
+    }
+    unplayed.forEach(function(m){
+      var n1=nameByCode[m.home]||m.home, n2=nameByCode[m.away]||m.away;
+      var when=fixtureWhenET(m.date, m.time);
+      var row=document.createElement('div'); row.className='fx';
+      row.innerHTML=esc(n1)+' vs '+esc(n2)+(when?' — <span class="when">'+esc(when)+'</span>':'');
+      d.appendChild(row);
+    });
     return d;
   }
 
-  function teamHeader(code, name){
+  // True if a team's final group position is mathematically determined — one of
+  // pGroup1..4 is effectively certain (>= 0.9995). Clinched/eliminated teams.
+  function determinedPos(e){
+    if(!e) return 0; // unknown -> treat as uncertain
+    var ps=[e.pGroup1,e.pGroup2,e.pGroup3,e.pGroup4];
+    for(var i=0;i<4;i++){ if((ps[i]||0)>=0.9995) return i+1; }
+    return 0;
+  }
+
+  // While the sim is still running we have no distribution; show a faint
+  // "computing…" Elo line so the layout doesn't jump when it backfills.
+  function eloPendingLine(){
+    var d=document.createElement('div'); d.className='scn-elo';
+    d.innerHTML='<span class="lbl">Elo model</span> <span class="muted tiny">computing finish distribution…</span>';
+    return d;
+  }
+
+  // Build the compact inline distribution string for an UNCERTAIN team, omitting
+  // any position under 0.5%. Whole %. e.g. "2nd 81% · 3rd 16% · 4th 3%".
+  // Returns a <span class="scn-dist"> element (placed right of the team name).
+  function inlineDist(e){
+    var d=document.createElement('span'); d.className='scn-dist';
+    var r=function(p){ return Math.round((p||0)*100); };
+    var labels=['1st','2nd','3rd','4th'], cls=['p1','p2','p3','p4'];
+    var ps=[e.pGroup1,e.pGroup2,e.pGroup3,e.pGroup4];
+    var parts=[];
+    for(var i=0;i<4;i++){
+      if((ps[i]||0)<0.005) continue; // omit positions at 0% (< 0.5%)
+      parts.push('<span class="'+cls[i]+'">'+labels[i]+' '+r(ps[i])+'%</span>');
+    }
+    d.innerHTML=parts.join(' &middot; ')+'<span class="elo" title="Elo-model probabilities, not a guarantee">(Elo)</span>';
+    return d;
+  }
+
+  // Team header. For UNCERTAIN teams (dist present + not position-determined),
+  // appends the compact inline finish distribution to the right of the name.
+  function teamHeader(code, name, e){
     var h=document.createElement('div'); h.className='h';
     h.innerHTML='<span class="cd" style="color:'+accentFor(code)+'">'+code+'</span> <span class="nm">'+esc(name)+'</span>';
+    if(e && !determinedPos(e)) h.appendChild(inlineDist(e));
     return h;
+  }
+
+  // Append the model-distribution display to a team row, per the three display
+  // rules: (a) no sim yet -> faint "computing…" line; (b) determined position
+  // (clinched/eliminated) -> nothing (the deterministic headline says it all);
+  // (c) uncertain -> handled inline in the header by teamHeader, nothing here.
+  function appendDist(row, code, dist){
+    if(!dist){ row.appendChild(eloPendingLine()); return; }
+    // determined or uncertain: both add nothing below the name.
   }
 
   function renderScenario(){
@@ -1358,6 +1443,9 @@ const APP_JS = String.raw`
         (nUn<=2?' — final round':''));
     card.appendChild(head);
 
+    // Remaining fixtures (date + time in ET) replace the old placeholder text.
+    card.appendChild(remainingFixtures(g));
+
     if(nUn===0){
       // ---- STAGE: complete -> final standings table ----
       var note=document.createElement('div'); note.className='scn-note';
@@ -1377,9 +1465,10 @@ const APP_JS = String.raw`
       t.appendChild(tb); card.appendChild(t);
       // Elo finish row per team (in standing order).
       orderedTeams.forEach(function(team){
+        var e=dist?dist[team.code]:null;
         var row=document.createElement('div'); row.className='scn-team';
-        row.appendChild(teamHeader(team.code, team.name));
-        row.appendChild(eloLine(team.code, dist));
+        row.appendChild(teamHeader(team.code, team.name, e));
+        appendDist(row, team.code, dist);
         card.appendChild(row);
       });
 
@@ -1391,11 +1480,12 @@ const APP_JS = String.raw`
       var byCode={}; sum.teams.forEach(function(t){ byCode[t.code]=t; });
       orderedTeams.forEach(function(team){
         var s=byCode[team.code]; if(!s) return;
+        var e=dist?dist[team.code]:null;
         var row=document.createElement('div'); row.className='scn-team';
-        row.appendChild(teamHeader(team.code, team.name));
+        row.appendChild(teamHeader(team.code, team.name, e));
         var hl=document.createElement('div'); hl.className='scn-headline'; hl.textContent=s.headline; row.appendChild(hl);
         if(s.detail){ var dt=document.createElement('div'); dt.className='desc'; dt.textContent=s.detail; row.appendChild(dt); }
-        row.appendChild(eloLine(team.code, dist));
+        appendDist(row, team.code, dist);
         card.appendChild(row);
       });
       if(sum.deadRubbers && sum.deadRubbers.length){
@@ -1414,13 +1504,14 @@ const APP_JS = String.raw`
       var byC={}; sit.teams.forEach(function(t){ byC[t.code]=t; });
       orderedTeams.forEach(function(team){
         var s=byC[team.code]; if(!s) return;
+        var e=dist?dist[team.code]:null;
         var row=document.createElement('div'); row.className='scn-team';
-        row.appendChild(teamHeader(team.code, team.name));
+        row.appendChild(teamHeader(team.code, team.name, e));
         var hl=document.createElement('div'); hl.className='scn-headline';
         hl.textContent=s.statusLine+' · '+s.points+' pts ('+s.played+' played)';
         row.appendChild(hl);
         var nl=document.createElement('div'); nl.className='desc'; nl.textContent=s.needLine; row.appendChild(nl);
-        row.appendChild(eloLine(team.code, dist));
+        appendDist(row, team.code, dist);
         card.appendChild(row);
       });
       // Next round block.

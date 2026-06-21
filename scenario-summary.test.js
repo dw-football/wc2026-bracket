@@ -112,9 +112,77 @@ test('GOLDEN Group A — South Korea reduces to the minimal coupled-group form',
 
   // Czech-Mexico appears ONLY in the loss branch (the 4th-place condition).
   assert.match(detail, /4th if Czech Republic beat Mexico/);
+  // KOR keeps the "fate in its own hands" headline.
+  assert.match(kor.headline, /fate in its own hands/);
 
   // Whole thing is one-to-two sentences.
   assert.ok(sentenceCount(detail) <= 2, `KOR detail too long: ${detail}`);
+
+  // --- South Africa: SUBJECT-FIRST ordering (the flagged fix) ---------------
+  const rsa = byCode(out, 'RSA');
+  assert.equal(
+    rsa.detail,
+    '2nd with a win over South Korea, provided Mexico avoid defeat against Czech Republic; ' +
+      '3rd with a draw against South Korea if Mexico beat Czech Republic; ' +
+      '4th with a draw or loss against South Korea if Czech Republic avoid defeat against Mexico.'
+  );
+  // The OLD bug rendered "2nd with Mexico avoid defeat and a win over South Korea"
+  // (dependency before the subject's own result). Assert the subject's own result
+  // ("a win over South Korea") appears BEFORE the other-match condition ("Mexico
+  // avoid defeat") in the leading 2nd-place clause.
+  const rsaSecond = rsa.detail.split(';')[0];
+  assert.ok(
+    rsaSecond.indexOf('a win over South Korea') < rsaSecond.indexOf('Mexico avoid defeat'),
+    `RSA 2nd clause must lead with its own result, not the dependency: ${rsaSecond}`
+  );
+  // Every rank clause must START with the ordinal + "with"/"only by" + an own
+  // result word ("a win"/"a draw"/"a loss"/"beating"/"drawing"/"losing"), never
+  // with another team's name.
+  for (const clause of rsa.detail.split(';')) {
+    const c = clause.trim();
+    assert.match(
+      c,
+      /^(\dth|\dnd|\drd|\dst|1st|2nd|3rd|4th)\b/,
+      `RSA clause must lead with a rank: ${c}`
+    );
+  }
+
+  // --- Czech Republic: concrete realistic path FIRST, GD caveat explicit ----
+  const cze = byCode(out, 'CZE');
+  assert.equal(
+    cze.detail,
+    '3rd with a win or draw against Mexico, provided South Korea avoid defeat against South Africa; ' +
+      '2nd only by beating Mexico while South Africa beat South Korea (and even then on goal difference); ' +
+      'otherwise 4th.'
+  );
+  // Leads with the realistic outcome (3rd), not 2nd.
+  assert.match(cze.detail.split(';')[0], /^3rd/);
+  // The low-probability 2nd path is stated CONCRETELY (a real result), with the
+  // goal-difference caveat appended — never a bare "2nd on goal difference".
+  assert.match(cze.detail, /2nd only by beating Mexico/);
+  assert.match(cze.detail, /and even then on goal difference/);
+
+  // --- NO bare "on goal difference" anywhere in Group A ----------------------
+  for (const t of out.teams) {
+    if (!t.detail) continue;
+    for (const clause of t.detail.split(';')) {
+      const c = clause.trim();
+      assert.ok(
+        !/^on goal difference/.test(c),
+        `${t.code} has a clause starting with bare "on goal difference": ${c}`
+      );
+    }
+    // If "on goal difference" appears, it must be inside a parenthetical caveat
+    // attached to a concrete result clause (the "(and even then on goal
+    // difference)" form), never standing alone.
+    if (/on goal difference/.test(t.detail)) {
+      assert.match(
+        t.detail,
+        /\(and even then on goal difference\)/,
+        `${t.code} mentions goal difference without the concrete-result caveat: ${t.detail}`
+      );
+    }
+  }
 });
 
 // ===========================================================================
@@ -307,6 +375,21 @@ test('SWEEP A-F — no detail line exceeds two sentences', async () => {
         sentenceCount(t.detail) <= 2,
         `${g.name} ${t.code} detail exceeds 2 sentences: ${t.detail}`
       );
+      // No clause may START with a bare "on goal difference"; any GD mention must
+      // ride on the concrete-result caveat.
+      for (const clause of t.detail.split(';')) {
+        assert.ok(
+          !/^\s*on goal difference/.test(clause),
+          `${g.name} ${t.code} clause starts with bare "on goal difference": ${clause}`
+        );
+      }
+      if (/on goal difference/.test(t.detail)) {
+        assert.match(
+          t.detail,
+          /\(and even then on goal difference\)/,
+          `${g.name} ${t.code} bare goal-difference mention: ${t.detail}`
+        );
+      }
     }
   }
 });

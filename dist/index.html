@@ -133,6 +133,22 @@ select,input[type=number],input[type=text]{background:#0c0e12;color:var(--txt);
 .scn-legend{margin-top:3px;color:var(--dim);font-size:10.5px}
 .scn-legend .lg{white-space:nowrap}
 .scn-legend .lg i{display:inline-block;width:8px;height:8px;border-radius:2px;margin-right:3px;vertical-align:baseline}
+/* compact inline finish distribution (uncertain teams), sits to the right of the name */
+.scn-dist{margin-left:auto;font-size:11.5px;color:var(--dim);font-variant-numeric:tabular-nums;white-space:nowrap}
+.scn-dist .p1{color:var(--good)}
+.scn-dist .p2{color:var(--accent)}
+.scn-dist .p3{color:var(--warn)}
+.scn-dist .p4{color:var(--bad)}
+.scn-dist .elo{color:var(--dim2);font-size:10px;margin-left:6px}
+@media(max-width:680px){
+  .scn-team .h{flex-wrap:wrap}
+  .scn-dist{margin-left:0;flex-basis:100%;white-space:normal;margin-top:2px}
+}
+/* remaining fixtures list at top of a group scenario view */
+.scn-fixtures{margin:2px 0 12px;padding:8px 10px;background:var(--panel2);border:1px solid var(--line);border-radius:8px}
+.scn-fixtures .fx-h{color:var(--dim2);text-transform:uppercase;letter-spacing:.5px;font-size:10px;margin-bottom:5px}
+.scn-fixtures .fx{font-size:13px;color:var(--txt);padding:2px 0}
+.scn-fixtures .fx .when{color:var(--dim)}
 .scn-next{margin-top:10px;border-top:1px solid #20242e;padding-top:8px}
 .scn-triggers{margin:4px 0 0;padding-left:18px;font-size:13px;color:var(--txt)}
 .scn-triggers li{margin:3px 0}
@@ -190,7 +206,7 @@ var __APP_DATA__ = {
   teams: [{"name":"Spain","code":"ESP","elo":2129},{"name":"Argentina","code":"ARG","elo":2128},{"name":"France","code":"FRA","elo":2084},{"name":"England","code":"ENG","elo":2055},{"name":"Colombia","code":"COL","elo":1998},{"name":"Brazil","code":"BRA","elo":1986},{"name":"Netherlands","code":"NED","elo":1972},{"name":"Portugal","code":"POR","elo":1967},{"name":"Germany","code":"GER","elo":1954},{"name":"Norway","code":"NOR","elo":1929},{"name":"Japan","code":"JPN","elo":1925},{"name":"Mexico","code":"MEX","elo":1896},{"name":"Switzerland","code":"SUI","elo":1885},{"name":"Croatia","code":"CRO","elo":1881},{"name":"Belgium","code":"BEL","elo":1879},{"name":"Uruguay","code":"URU","elo":1870},{"name":"Morocco","code":"MAR","elo":1866},{"name":"Ecuador","code":"ECU","elo":1864},{"name":"Austria","code":"AUT","elo":1857},{"name":"Senegal","code":"SEN","elo":1839},{"name":"USA","code":"USA","elo":1820},{"name":"Paraguay","code":"PAR","elo":1816},{"name":"Turkey","code":"TUR","elo":1813},{"name":"Australia","code":"AUS","elo":1799},{"name":"Canada","code":"CAN","elo":1777},{"name":"South Korea","code":"KOR","elo":1771},{"name":"Scotland","code":"SCO","elo":1768},{"name":"Algeria","code":"ALG","elo":1759},{"name":"Iran","code":"IRN","elo":1756},{"name":"Ivory Coast","code":"CIV","elo":1728},{"name":"Sweden","code":"SWE","elo":1727},{"name":"Egypt","code":"EGY","elo":1711},{"name":"Uzbekistan","code":"UZB","elo":1698},{"name":"Czech Republic","code":"CZE","elo":1696},{"name":"Panama","code":"PAN","elo":1683},{"name":"DR Congo","code":"COD","elo":1674},{"name":"Jordan","code":"JOR","elo":1653},{"name":"Cape Verde","code":"CPV","elo":1606},{"name":"Saudi Arabia","code":"KSA","elo":1598},{"name":"Bosnia & Herzegovina","code":"BIH","elo":1596},{"name":"Iraq","code":"IRQ","elo":1592},{"name":"New Zealand","code":"NZL","elo":1578},{"name":"Tunisia","code":"TUN","elo":1570},{"name":"Ghana","code":"GHA","elo":1557},{"name":"Haiti","code":"HAI","elo":1528},{"name":"South Africa","code":"RSA","elo":1527},{"name":"Curaçao","code":"CUW","elo":1453},{"name":"Qatar","code":"QAT","elo":1437}],
   bracket: {"source":"R32 + Annex C: Wikipedia raw wikitext, INDEPENDENTLY CONFIRMED against FIFA official regulations PDF + openfootball + ESPN/CBS/Fox (R32 byte-identical; allocation 495/495 exact). R16 matches 91-94 CORRECTED 2026-06-21: Wikipedia had them transposed (M91/M93 and M92/M94 swapped), which misrouted R16 winners into the wrong SF half; fixed to openfootball/ESPN/CBS/Fox venue-anchored order (M91=W76/W78, M92=W79/W80, M93=W83/W84, M94=W81/W82).","thirdPlaceSlotLabels":["1A","1B","1D","1E","1G","1I","1K","1L"],"rounds":{"R32":[{"match":73,"home":{"type":"runnerup","group":"A"},"away":{"type":"runnerup","group":"B"}},{"match":74,"home":{"type":"winner","group":"E"},"away":{"type":"third","from":["A","B","C","D","F"]}},{"match":75,"home":{"type":"winner","group":"F"},"away":{"type":"runnerup","group":"C"}},{"match":76,"home":{"type":"winner","group":"C"},"away":{"type":"runnerup","group":"F"}},{"match":77,"home":{"type":"winner","group":"I"},"away":{"type":"third","from":["C","D","F","G","H"]}},{"match":78,"home":{"type":"runnerup","group":"E"},"away":{"type":"runnerup","group":"I"}},{"match":79,"home":{"type":"winner","group":"A"},"away":{"type":"third","from":["C","E","F","H","I"]}},{"match":80,"home":{"type":"winner","group":"L"},"away":{"type":"third","from":["E","H","I","J","K"]}},{"match":81,"home":{"type":"winner","group":"D"},"away":{"type":"third","from":["B","E","F","I","J"]}},{"match":82,"home":{"type":"winner","group":"G"},"away":{"type":"third","from":["A","E","H","I","J"]}},{"match":83,"home":{"type":"runnerup","group":"K"},"away":{"type":"runnerup","group":"L"}},{"match":84,"home":{"type":"winner","group":"H"},"away":{"type":"runnerup","group":"J"}},{"match":85,"home":{"type":"winner","group":"B"},"away":{"type":"third","from":["E","F","G","I","J"]}},{"match":86,"home":{"type":"winner","group":"J"},"away":{"type":"runnerup","group":"H"}},{"match":87,"home":{"type":"winner","group":"K"},"away":{"type":"third","from":["D","E","I","J","L"]}},{"match":88,"home":{"type":"runnerup","group":"D"},"away":{"type":"runnerup","group":"G"}}],"R16":[{"match":89,"home":{"type":"winnerOf","match":74},"away":{"type":"winnerOf","match":77}},{"match":90,"home":{"type":"winnerOf","match":73},"away":{"type":"winnerOf","match":75}},{"match":91,"home":{"type":"winnerOf","match":76},"away":{"type":"winnerOf","match":78}},{"match":92,"home":{"type":"winnerOf","match":79},"away":{"type":"winnerOf","match":80}},{"match":93,"home":{"type":"winnerOf","match":83},"away":{"type":"winnerOf","match":84}},{"match":94,"home":{"type":"winnerOf","match":81},"away":{"type":"winnerOf","match":82}},{"match":95,"home":{"type":"winnerOf","match":86},"away":{"type":"winnerOf","match":88}},{"match":96,"home":{"type":"winnerOf","match":85},"away":{"type":"winnerOf","match":87}}],"QF":[{"match":97,"home":{"type":"winnerOf","match":89},"away":{"type":"winnerOf","match":90}},{"match":98,"home":{"type":"winnerOf","match":93},"away":{"type":"winnerOf","match":94}},{"match":99,"home":{"type":"winnerOf","match":91},"away":{"type":"winnerOf","match":92}},{"match":100,"home":{"type":"winnerOf","match":95},"away":{"type":"winnerOf","match":96}}],"SF":[{"match":101,"home":{"type":"winnerOf","match":97},"away":{"type":"winnerOf","match":98}},{"match":102,"home":{"type":"winnerOf","match":99},"away":{"type":"winnerOf","match":100}}],"ThirdPlace":[{"match":103,"home":{"type":"loserOf","match":101},"away":{"type":"loserOf","match":102}}],"Final":[{"match":104,"home":{"type":"winnerOf","match":101},"away":{"type":"winnerOf","match":102}}]}},
   groups: [{"name":"Group A","teams":[{"code":"CZE","name":"Czech Republic","elo":1696},{"code":"KOR","name":"South Korea","elo":1771},{"code":"MEX","name":"Mexico","elo":1896},{"code":"RSA","name":"South Africa","elo":1527}],"matches":[{"home":"MEX","away":"RSA","homeGoals":2,"awayGoals":0,"played":true,"date":"2026-06-11","time":"13:00 UTC-6"},{"home":"KOR","away":"CZE","homeGoals":2,"awayGoals":1,"played":true,"date":"2026-06-11","time":"20:00 UTC-6"},{"home":"CZE","away":"RSA","homeGoals":1,"awayGoals":1,"played":true,"date":"2026-06-18","time":"12:00 UTC-4"},{"home":"MEX","away":"KOR","homeGoals":1,"awayGoals":0,"played":true,"date":"2026-06-18","time":"19:00 UTC-6"},{"home":"CZE","away":"MEX","homeGoals":null,"awayGoals":null,"played":false,"date":"2026-06-24","time":"19:00 UTC-6"},{"home":"RSA","away":"KOR","homeGoals":null,"awayGoals":null,"played":false,"date":"2026-06-24","time":"19:00 UTC-6"}]},{"name":"Group B","teams":[{"code":"BIH","name":"Bosnia & Herzegovina","elo":1596},{"code":"CAN","name":"Canada","elo":1777},{"code":"QAT","name":"Qatar","elo":1437},{"code":"SUI","name":"Switzerland","elo":1885}],"matches":[{"home":"CAN","away":"BIH","homeGoals":1,"awayGoals":1,"played":true,"date":"2026-06-12","time":"15:00 UTC-4"},{"home":"QAT","away":"SUI","homeGoals":1,"awayGoals":1,"played":true,"date":"2026-06-13","time":"12:00 UTC-7"},{"home":"SUI","away":"BIH","homeGoals":4,"awayGoals":1,"played":true,"date":"2026-06-18","time":"12:00 UTC-7"},{"home":"CAN","away":"QAT","homeGoals":6,"awayGoals":0,"played":true,"date":"2026-06-18","time":"15:00 UTC-7"},{"home":"SUI","away":"CAN","homeGoals":null,"awayGoals":null,"played":false,"date":"2026-06-24","time":"12:00 UTC-7"},{"home":"BIH","away":"QAT","homeGoals":null,"awayGoals":null,"played":false,"date":"2026-06-24","time":"12:00 UTC-7"}]},{"name":"Group C","teams":[{"code":"BRA","name":"Brazil","elo":1986},{"code":"HAI","name":"Haiti","elo":1528},{"code":"MAR","name":"Morocco","elo":1866},{"code":"SCO","name":"Scotland","elo":1768}],"matches":[{"home":"BRA","away":"MAR","homeGoals":1,"awayGoals":1,"played":true,"date":"2026-06-13","time":"18:00 UTC-4"},{"home":"HAI","away":"SCO","homeGoals":0,"awayGoals":1,"played":true,"date":"2026-06-13","time":"21:00 UTC-4"},{"home":"SCO","away":"MAR","homeGoals":0,"awayGoals":1,"played":true,"date":"2026-06-19","time":"18:00 UTC-4"},{"home":"BRA","away":"HAI","homeGoals":3,"awayGoals":0,"played":true,"date":"2026-06-19","time":"20:30 UTC-4"},{"home":"SCO","away":"BRA","homeGoals":null,"awayGoals":null,"played":false,"date":"2026-06-24","time":"18:00 UTC-4"},{"home":"MAR","away":"HAI","homeGoals":null,"awayGoals":null,"played":false,"date":"2026-06-24","time":"18:00 UTC-4"}]},{"name":"Group D","teams":[{"code":"AUS","name":"Australia","elo":1799},{"code":"PAR","name":"Paraguay","elo":1816},{"code":"TUR","name":"Turkey","elo":1813},{"code":"USA","name":"USA","elo":1820}],"matches":[{"home":"USA","away":"PAR","homeGoals":4,"awayGoals":1,"played":true,"date":"2026-06-12","time":"18:00 UTC-7"},{"home":"AUS","away":"TUR","homeGoals":2,"awayGoals":0,"played":true,"date":"2026-06-13","time":"21:00 UTC-7"},{"home":"USA","away":"AUS","homeGoals":2,"awayGoals":0,"played":true,"date":"2026-06-19","time":"12:00 UTC-7"},{"home":"TUR","away":"PAR","homeGoals":0,"awayGoals":1,"played":true,"date":"2026-06-19","time":"20:00 UTC-7"},{"home":"TUR","away":"USA","homeGoals":null,"awayGoals":null,"played":false,"date":"2026-06-25","time":"19:00 UTC-7"},{"home":"PAR","away":"AUS","homeGoals":null,"awayGoals":null,"played":false,"date":"2026-06-25","time":"19:00 UTC-7"}]},{"name":"Group E","teams":[{"code":"CIV","name":"Ivory Coast","elo":1728},{"code":"CUW","name":"Curaçao","elo":1453},{"code":"ECU","name":"Ecuador","elo":1864},{"code":"GER","name":"Germany","elo":1954}],"matches":[{"home":"GER","away":"CUW","homeGoals":7,"awayGoals":1,"played":true,"date":"2026-06-14","time":"12:00 UTC-5"},{"home":"CIV","away":"ECU","homeGoals":1,"awayGoals":0,"played":true,"date":"2026-06-14","time":"19:00 UTC-4"},{"home":"GER","away":"CIV","homeGoals":2,"awayGoals":1,"played":true,"date":"2026-06-20","time":"16:00 UTC-4"},{"home":"ECU","away":"CUW","homeGoals":0,"awayGoals":0,"played":true,"date":"2026-06-20","time":"19:00 UTC-5"},{"home":"CUW","away":"CIV","homeGoals":null,"awayGoals":null,"played":false,"date":"2026-06-25","time":"16:00 UTC-4"},{"home":"ECU","away":"GER","homeGoals":null,"awayGoals":null,"played":false,"date":"2026-06-25","time":"16:00 UTC-4"}]},{"name":"Group F","teams":[{"code":"JPN","name":"Japan","elo":1925},{"code":"NED","name":"Netherlands","elo":1972},{"code":"SWE","name":"Sweden","elo":1727},{"code":"TUN","name":"Tunisia","elo":1570}],"matches":[{"home":"NED","away":"JPN","homeGoals":2,"awayGoals":2,"played":true,"date":"2026-06-14","time":"15:00 UTC-5"},{"home":"SWE","away":"TUN","homeGoals":5,"awayGoals":1,"played":true,"date":"2026-06-14","time":"20:00 UTC-6"},{"home":"NED","away":"SWE","homeGoals":5,"awayGoals":1,"played":true,"date":"2026-06-20","time":"12:00 UTC-5"},{"home":"TUN","away":"JPN","homeGoals":0,"awayGoals":4,"played":true,"date":"2026-06-20","time":"22:00 UTC-6"},{"home":"JPN","away":"SWE","homeGoals":null,"awayGoals":null,"played":false,"date":"2026-06-25","time":"18:00 UTC-5"},{"home":"TUN","away":"NED","homeGoals":null,"awayGoals":null,"played":false,"date":"2026-06-25","time":"18:00 UTC-5"}]},{"name":"Group G","teams":[{"code":"BEL","name":"Belgium","elo":1879},{"code":"EGY","name":"Egypt","elo":1711},{"code":"IRN","name":"Iran","elo":1756},{"code":"NZL","name":"New Zealand","elo":1578}],"matches":[{"home":"BEL","away":"EGY","homeGoals":1,"awayGoals":1,"played":true,"date":"2026-06-15","time":"12:00 UTC-7"},{"home":"IRN","away":"NZL","homeGoals":2,"awayGoals":2,"played":true,"date":"2026-06-15","time":"18:00 UTC-7"},{"home":"BEL","away":"IRN","homeGoals":0,"awayGoals":0,"played":true,"date":"2026-06-21","time":"12:00 UTC-7"},{"home":"NZL","away":"EGY","homeGoals":null,"awayGoals":null,"played":false,"date":"2026-06-21","time":"18:00 UTC-7"},{"home":"EGY","away":"IRN","homeGoals":null,"awayGoals":null,"played":false,"date":"2026-06-26","time":"20:00 UTC-7"},{"home":"NZL","away":"BEL","homeGoals":null,"awayGoals":null,"played":false,"date":"2026-06-26","time":"20:00 UTC-7"}]},{"name":"Group H","teams":[{"code":"CPV","name":"Cape Verde","elo":1606},{"code":"ESP","name":"Spain","elo":2129},{"code":"KSA","name":"Saudi Arabia","elo":1598},{"code":"URU","name":"Uruguay","elo":1870}],"matches":[{"home":"ESP","away":"CPV","homeGoals":0,"awayGoals":0,"played":true,"date":"2026-06-15","time":"12:00 UTC-4"},{"home":"KSA","away":"URU","homeGoals":1,"awayGoals":1,"played":true,"date":"2026-06-15","time":"18:00 UTC-4"},{"home":"ESP","away":"KSA","homeGoals":4,"awayGoals":0,"played":true,"date":"2026-06-21","time":"12:00 UTC-4"},{"home":"URU","away":"CPV","homeGoals":null,"awayGoals":null,"played":false,"date":"2026-06-21","time":"18:00 UTC-4"},{"home":"CPV","away":"KSA","homeGoals":null,"awayGoals":null,"played":false,"date":"2026-06-26","time":"19:00 UTC-5"},{"home":"URU","away":"ESP","homeGoals":null,"awayGoals":null,"played":false,"date":"2026-06-26","time":"18:00 UTC-6"}]},{"name":"Group I","teams":[{"code":"FRA","name":"France","elo":2084},{"code":"IRQ","name":"Iraq","elo":1592},{"code":"NOR","name":"Norway","elo":1929},{"code":"SEN","name":"Senegal","elo":1839}],"matches":[{"home":"FRA","away":"SEN","homeGoals":3,"awayGoals":1,"played":true,"date":"2026-06-16","time":"15:00 UTC-4"},{"home":"IRQ","away":"NOR","homeGoals":1,"awayGoals":4,"played":true,"date":"2026-06-16","time":"18:00 UTC-4"},{"home":"FRA","away":"IRQ","homeGoals":null,"awayGoals":null,"played":false,"date":"2026-06-22","time":"17:00 UTC-4"},{"home":"NOR","away":"SEN","homeGoals":null,"awayGoals":null,"played":false,"date":"2026-06-22","time":"20:00 UTC-4"},{"home":"NOR","away":"FRA","homeGoals":null,"awayGoals":null,"played":false,"date":"2026-06-26","time":"15:00 UTC-4"},{"home":"SEN","away":"IRQ","homeGoals":null,"awayGoals":null,"played":false,"date":"2026-06-26","time":"15:00 UTC-4"}]},{"name":"Group J","teams":[{"code":"ALG","name":"Algeria","elo":1759},{"code":"ARG","name":"Argentina","elo":2128},{"code":"AUT","name":"Austria","elo":1857},{"code":"JOR","name":"Jordan","elo":1653}],"matches":[{"home":"ARG","away":"ALG","homeGoals":3,"awayGoals":0,"played":true,"date":"2026-06-16","time":"20:00 UTC-5"},{"home":"AUT","away":"JOR","homeGoals":3,"awayGoals":1,"played":true,"date":"2026-06-16","time":"21:00 UTC-7"},{"home":"ARG","away":"AUT","homeGoals":null,"awayGoals":null,"played":false,"date":"2026-06-22","time":"12:00 UTC-5"},{"home":"JOR","away":"ALG","homeGoals":null,"awayGoals":null,"played":false,"date":"2026-06-22","time":"20:00 UTC-7"},{"home":"ALG","away":"AUT","homeGoals":null,"awayGoals":null,"played":false,"date":"2026-06-27","time":"21:00 UTC-5"},{"home":"JOR","away":"ARG","homeGoals":null,"awayGoals":null,"played":false,"date":"2026-06-27","time":"21:00 UTC-5"}]},{"name":"Group K","teams":[{"code":"COD","name":"DR Congo","elo":1674},{"code":"COL","name":"Colombia","elo":1998},{"code":"POR","name":"Portugal","elo":1967},{"code":"UZB","name":"Uzbekistan","elo":1698}],"matches":[{"home":"POR","away":"COD","homeGoals":1,"awayGoals":1,"played":true,"date":"2026-06-17","time":"12:00 UTC-5"},{"home":"UZB","away":"COL","homeGoals":1,"awayGoals":3,"played":true,"date":"2026-06-17","time":"20:00 UTC-6"},{"home":"POR","away":"UZB","homeGoals":null,"awayGoals":null,"played":false,"date":"2026-06-23","time":"12:00 UTC-5"},{"home":"COL","away":"COD","homeGoals":null,"awayGoals":null,"played":false,"date":"2026-06-23","time":"20:00 UTC-6"},{"home":"COL","away":"POR","homeGoals":null,"awayGoals":null,"played":false,"date":"2026-06-27","time":"19:30 UTC-4"},{"home":"COD","away":"UZB","homeGoals":null,"awayGoals":null,"played":false,"date":"2026-06-27","time":"19:30 UTC-4"}]},{"name":"Group L","teams":[{"code":"CRO","name":"Croatia","elo":1881},{"code":"ENG","name":"England","elo":2055},{"code":"GHA","name":"Ghana","elo":1557},{"code":"PAN","name":"Panama","elo":1683}],"matches":[{"home":"ENG","away":"CRO","homeGoals":4,"awayGoals":2,"played":true,"date":"2026-06-17","time":"15:00 UTC-5"},{"home":"GHA","away":"PAN","homeGoals":1,"awayGoals":0,"played":true,"date":"2026-06-17","time":"19:00 UTC-4"},{"home":"ENG","away":"GHA","homeGoals":null,"awayGoals":null,"played":false,"date":"2026-06-23","time":"16:00 UTC-4"},{"home":"PAN","away":"CRO","homeGoals":null,"awayGoals":null,"played":false,"date":"2026-06-23","time":"19:00 UTC-4"},{"home":"PAN","away":"ENG","homeGoals":null,"awayGoals":null,"played":false,"date":"2026-06-27","time":"17:00 UTC-4"},{"home":"CRO","away":"GHA","homeGoals":null,"awayGoals":null,"played":false,"date":"2026-06-27","time":"17:00 UTC-4"}]}],
-  freshness: {"dataThrough":"Belgium 0-0 Iran","lastDate":"2026-06-21","playedCount":38,"totalCount":104,"builtAtISO":"2026-06-21T21:48:15.491Z"}
+  freshness: {"dataThrough":"Belgium 0-0 Iran","lastDate":"2026-06-21","playedCount":38,"totalCount":104,"builtAtISO":"2026-06-21T22:05:35.249Z"}
 };
 
 /* ============================================================================
@@ -2017,8 +2033,12 @@ function ownMatchPhrase(set, opp) {
  *   {D,L} (!W) -> "Mexico avoid defeat"               (away not beaten)
  *   {W,L} (!D) -> "Czech Republic or Mexico win"      (no draw)
  *   full       -> "" (dropped)
+ *
+ * When `withOpp` is true, "avoid defeat" forms name the opponent for clarity
+ * inside a subject-first dependency clause:
+ *   {D,L} -> "Mexico avoid defeat against Czech Republic"
  */
-function otherMatchPhrase(set, match, nameOf) {
+function otherMatchPhrase(set, match, nameOf, withOpp = false) {
   const home = nameOf(match.home);
   const away = nameOf(match.away);
   if (set.size === 3) return '';
@@ -2029,8 +2049,8 @@ function otherMatchPhrase(set, match, nameOf) {
     return `${home} and ${away} draw`;
   }
   // size 2 -> express as the natural negation of the excluded outcome.
-  if (!set.has('L')) return `${home} avoid defeat`; // {W,D}
-  if (!set.has('W')) return `${away} avoid defeat`; // {D,L}
+  if (!set.has('L')) return `${home} avoid defeat${withOpp ? ` against ${away}` : ''}`; // {W,D}
+  if (!set.has('W')) return `${away} avoid defeat${withOpp ? ` against ${home}` : ''}`; // {D,L}
   return `${home} or ${away} win`; // {W,L}, no draw
 }
 
@@ -2148,6 +2168,14 @@ function describeConditional(code, name, unplayed, scenarios, relevant, nameOf) 
   // Margin matters. Single match the subject plays -> concrete thresholds.
   if (numMatches === 1) {
     return describeSingleWithMargin(code, unplayed[relevant[0]], cells, ranks, nameOf);
+  }
+  // Two relevant matches, subject plays one of them, and a goal margin flips the
+  // rank inside some coarse cell. Organize the statement around the subject's OWN
+  // result (subject-first), append the other-match dependency, and surface any
+  // margin-only path with an explicit concrete result + a goal-difference caveat
+  // (never a bare "on goal difference").
+  if (ownIdx >= 0) {
+    return describeByOwnResultMargin(code, ranks, scenarios, unplayed, relevant, ownIdx, nameOf);
   }
   return describeWithMarginFallback(code, ranks, cells, unplayed, relevant, nameOf);
 }
@@ -2437,6 +2465,164 @@ function describeWithMarginFallback(code, ranks, cells, unplayed, relevant, name
   }
   clauses.sort((a, b) => a.rank - b.rank);
   return clauses.map((c) => c.text).join('; ') + '.';
+}
+
+// ---------------------------------------------------------------------------
+// Own-result-centric renderer for the MARGIN case (subject plays one of two
+// relevant matches; a goal margin flips the rank inside some coarse cell).
+// ---------------------------------------------------------------------------
+
+/**
+ * Build, per subject own-result (W/D/L, subject perspective), the map
+ *   otherCoarse ('W'|'D'|'L', other-match HOME perspective) -> Set<rank>.
+ * A set of size > 1 means that (own, other) coarse cell is decided on goal
+ * difference (margin split).
+ */
+function sliceOwnVsOther(code, scenarios, unplayed, relevant, ownIdx) {
+  const ownU = relevant[ownIdx];
+  const otherI = relevant.find((_, i) => i !== ownIdx);
+  const ownMatch = unplayed[ownU];
+  const otherMatch = unplayed[otherI];
+  const byOwn = new Map(); // subjOwn -> Map(otherCoarse -> Set<rank>)
+  for (const s of scenarios) {
+    const subjOwn = fromSubjectPerspective(s.coarse[ownU], ownMatch, code);
+    const oth = s.coarse[otherI];
+    if (!byOwn.has(subjOwn)) byOwn.set(subjOwn, new Map());
+    const m = byOwn.get(subjOwn);
+    if (!m.has(oth)) m.set(oth, new Set());
+    m.get(oth).add(s.rankByCode[code]);
+  }
+  return { byOwn, ownMatch, otherMatch };
+}
+
+/**
+ * Render the subject's own result (a single coarse 'W'|'D'|'L', subject persp.)
+ * as a noun phrase naming the opponent, e.g. "a win over South Korea",
+ * "a draw against South Korea", "a loss".
+ */
+function ownSinglePhrase(subjC, opp) {
+  if (subjC === 'W') return `a win over ${opp}`;
+  if (subjC === 'D') return `a draw against ${opp}`;
+  return `a loss`;
+}
+
+/**
+ * Margin case, subject plays one of two relevant matches. Produce one clause per
+ * achievable rank (best -> worst), each SUBJECT-FIRST: it leads with the rank and
+ * the subject's own result, then appends the other-match dependency with a
+ * natural connector. Any path that exists only on a goal-difference tiebreak is
+ * stated with its concrete results and an explicit "(... and even then on goal
+ * difference)" caveat — never a bare "on goal difference".
+ */
+function describeByOwnResultMargin(code, ranks, scenarios, unplayed, relevant, ownIdx, nameOf) {
+  const { byOwn, ownMatch, otherMatch } = sliceOwnVsOther(code, scenarios, unplayed, relevant, ownIdx);
+  const opp = nameOf(ownMatch.home === code ? ownMatch.away : ownMatch.home);
+  const COARSE_ORDER = { W: 0, D: 1, L: 2 };
+  const sortCoarse = (a, b) => COARSE_ORDER[a] - COARSE_ORDER[b];
+
+  // Per rank, gather the own-results that reach it, separating CLEAN cells
+  // (rankSet === {r}) from GD-only cells (r is the BETTER member of a split cell,
+  // i.e. reachable only on a favourable goal difference).
+  const perRank = new Map(); // r -> { clean: Map<own,Set<other>>, gd: Map<own,Set<other>> }
+  for (const r of ranks) perRank.set(r, { clean: new Map(), gd: new Map() });
+  for (const [subjOwn, otherMap] of byOwn) {
+    for (const [oth, rankSet] of otherMap) {
+      const sorted = [...rankSet].sort((a, b) => a - b);
+      const best = sorted[0];
+      for (const r of sorted) {
+        const slot = perRank.get(r);
+        if (!slot) continue;
+        const bucket = rankSet.size === 1 ? slot.clean : r === best ? slot.gd : null;
+        if (!bucket) continue; // worse member of a split: owned by the better rank
+        if (!bucket.has(subjOwn)) bucket.set(subjOwn, new Set());
+        bucket.get(subjOwn).add(oth);
+      }
+    }
+  }
+
+  // Render one rank's clean own-results into a subject-first clause body, with
+  // the chosen dependency connector ("provided" for the lead clause, "if"
+  // otherwise). Returns { body, groups } where groups counts distinct
+  // own-result/condition segments (used to decide the "otherwise" tail).
+  const cleanBody = (slot, connector) => {
+    // Merge own-results that share an IDENTICAL other-condition.
+    const byCond = new Map(); // condKey -> { owns: [coarse], otherSet }
+    for (const [own, otherSet] of slot.clean) {
+      const key = [...otherSet].sort().join('');
+      if (!byCond.has(key)) byCond.set(key, { owns: [], otherSet });
+      byCond.get(key).owns.push(own);
+    }
+    const segs = [];
+    for (const { owns, otherSet } of byCond.values()) {
+      owns.sort(sortCoarse);
+      const ownP = ownMergedPhrase(owns, opp);
+      const cond = otherCondition(otherSet, otherMatch, nameOf);
+      // "provided" reads with a comma; "if"/"unless" read without one.
+      const sep = connector === 'provided' ? ', provided' : ` ${connector}`;
+      segs.push(cond ? `${ownP}${sep} ${cond}` : ownP);
+    }
+    return { body: segs.join(', or '), groups: byCond.size };
+  };
+
+  // The worst clean rank becomes a bare "otherwise Nth" tail only when its body
+  // is MULTI-CONDITION (messy) — a single decisive own-result is stated concretely.
+  const cleanRanks = ranks.filter((r) => perRank.get(r).clean.size > 0);
+  const worstClean = cleanRanks.length ? Math.max(...cleanRanks) : null;
+  let tailRank = null;
+  if (worstClean !== null && cleanRanks.length >= 2) {
+    const { groups } = cleanBody(perRank.get(worstClean), 'if');
+    if (groups >= 2) tailRank = worstClean;
+  }
+
+  // Order: clean ranks best -> worst, then GD-only ranks (low-probability) after,
+  // then the "otherwise" tail. Track clause index for connector choice.
+  const cleanList = cleanRanks.filter((r) => r !== tailRank);
+  const gdRanks = ranks.filter((r) => perRank.get(r).clean.size === 0 && perRank.get(r).gd.size > 0);
+
+  const clauses = [];
+  let idx = 0;
+  for (const r of cleanList) {
+    const connector = idx === 0 ? 'provided' : 'if';
+    const { body } = cleanBody(perRank.get(r), connector);
+    clauses.push(`${ordinal(r)} with ${body}`);
+    idx++;
+  }
+  for (const r of gdRanks) {
+    const slot = perRank.get(r);
+    const [own, otherSet] = [...slot.gd.entries()].sort((a, b) => sortCoarse(a[0], b[0]))[0];
+    const cond = otherCondition(otherSet, otherMatch, nameOf);
+    const path = cond ? `${ownGerundPhrase(own, opp)} while ${cond}` : ownGerundPhrase(own, opp);
+    clauses.push(`${ordinal(r)} only by ${path} (and even then on goal difference)`);
+  }
+  let out = clauses.join('; ');
+  if (tailRank !== null) out += `; otherwise ${ordinal(tailRank)}`;
+  return out + '.';
+}
+
+/** Merge own-result coarse values into one phrase: {W}->"a win over X",
+ *  {W,D}->"a win or draw against X", {D,L}->"a draw or loss against X", etc. */
+function ownMergedPhrase(owns, opp) {
+  const set = new Set(owns);
+  if (set.size === 1) return ownSinglePhrase([...set][0], opp);
+  const order = ['W', 'D', 'L'];
+  const words = order.filter((c) => set.has(c)).map((c) => (c === 'W' ? 'win' : c === 'D' ? 'draw' : 'loss'));
+  return `a ${words.join(' or ')} against ${opp}`;
+}
+
+/** Gerund form of the subject's own result for a "only by ..." path:
+ *  W -> "beating South Korea", D -> "drawing with South Korea", L -> "losing". */
+function ownGerundPhrase(subjC, opp) {
+  if (subjC === 'W') return `beating ${opp}`;
+  if (subjC === 'D') return `drawing with ${opp}`;
+  return `losing`;
+}
+
+/** Render an other-match condition from a set of its HOME-perspective coarse
+ *  outcomes, naming the opponent in "avoid defeat" forms. Returns '' if the set
+ *  spans all three outcomes (unconditional). */
+function otherCondition(otherCoarseSet, otherMatch, nameOf) {
+  if (otherCoarseSet.size >= 3) return '';
+  return otherMatchPhrase(new Set(otherCoarseSet), otherMatch, nameOf, true);
 }
 
 // ---------------------------------------------------------------------------
@@ -5186,8 +5372,12 @@ function ownMatchPhrase(set, opp) {
  *   {D,L} (!W) -> "Mexico avoid defeat"               (away not beaten)
  *   {W,L} (!D) -> "Czech Republic or Mexico win"      (no draw)
  *   full       -> "" (dropped)
+ *
+ * When \`withOpp\` is true, "avoid defeat" forms name the opponent for clarity
+ * inside a subject-first dependency clause:
+ *   {D,L} -> "Mexico avoid defeat against Czech Republic"
  */
-function otherMatchPhrase(set, match, nameOf) {
+function otherMatchPhrase(set, match, nameOf, withOpp = false) {
   const home = nameOf(match.home);
   const away = nameOf(match.away);
   if (set.size === 3) return '';
@@ -5198,8 +5388,8 @@ function otherMatchPhrase(set, match, nameOf) {
     return \`\${home} and \${away} draw\`;
   }
   // size 2 -> express as the natural negation of the excluded outcome.
-  if (!set.has('L')) return \`\${home} avoid defeat\`; // {W,D}
-  if (!set.has('W')) return \`\${away} avoid defeat\`; // {D,L}
+  if (!set.has('L')) return \`\${home} avoid defeat\${withOpp ? \` against \${away}\` : ''}\`; // {W,D}
+  if (!set.has('W')) return \`\${away} avoid defeat\${withOpp ? \` against \${home}\` : ''}\`; // {D,L}
   return \`\${home} or \${away} win\`; // {W,L}, no draw
 }
 
@@ -5317,6 +5507,14 @@ function describeConditional(code, name, unplayed, scenarios, relevant, nameOf) 
   // Margin matters. Single match the subject plays -> concrete thresholds.
   if (numMatches === 1) {
     return describeSingleWithMargin(code, unplayed[relevant[0]], cells, ranks, nameOf);
+  }
+  // Two relevant matches, subject plays one of them, and a goal margin flips the
+  // rank inside some coarse cell. Organize the statement around the subject's OWN
+  // result (subject-first), append the other-match dependency, and surface any
+  // margin-only path with an explicit concrete result + a goal-difference caveat
+  // (never a bare "on goal difference").
+  if (ownIdx >= 0) {
+    return describeByOwnResultMargin(code, ranks, scenarios, unplayed, relevant, ownIdx, nameOf);
   }
   return describeWithMarginFallback(code, ranks, cells, unplayed, relevant, nameOf);
 }
@@ -5606,6 +5804,164 @@ function describeWithMarginFallback(code, ranks, cells, unplayed, relevant, name
   }
   clauses.sort((a, b) => a.rank - b.rank);
   return clauses.map((c) => c.text).join('; ') + '.';
+}
+
+// ---------------------------------------------------------------------------
+// Own-result-centric renderer for the MARGIN case (subject plays one of two
+// relevant matches; a goal margin flips the rank inside some coarse cell).
+// ---------------------------------------------------------------------------
+
+/**
+ * Build, per subject own-result (W/D/L, subject perspective), the map
+ *   otherCoarse ('W'|'D'|'L', other-match HOME perspective) -> Set<rank>.
+ * A set of size > 1 means that (own, other) coarse cell is decided on goal
+ * difference (margin split).
+ */
+function sliceOwnVsOther(code, scenarios, unplayed, relevant, ownIdx) {
+  const ownU = relevant[ownIdx];
+  const otherI = relevant.find((_, i) => i !== ownIdx);
+  const ownMatch = unplayed[ownU];
+  const otherMatch = unplayed[otherI];
+  const byOwn = new Map(); // subjOwn -> Map(otherCoarse -> Set<rank>)
+  for (const s of scenarios) {
+    const subjOwn = fromSubjectPerspective(s.coarse[ownU], ownMatch, code);
+    const oth = s.coarse[otherI];
+    if (!byOwn.has(subjOwn)) byOwn.set(subjOwn, new Map());
+    const m = byOwn.get(subjOwn);
+    if (!m.has(oth)) m.set(oth, new Set());
+    m.get(oth).add(s.rankByCode[code]);
+  }
+  return { byOwn, ownMatch, otherMatch };
+}
+
+/**
+ * Render the subject's own result (a single coarse 'W'|'D'|'L', subject persp.)
+ * as a noun phrase naming the opponent, e.g. "a win over South Korea",
+ * "a draw against South Korea", "a loss".
+ */
+function ownSinglePhrase(subjC, opp) {
+  if (subjC === 'W') return \`a win over \${opp}\`;
+  if (subjC === 'D') return \`a draw against \${opp}\`;
+  return \`a loss\`;
+}
+
+/**
+ * Margin case, subject plays one of two relevant matches. Produce one clause per
+ * achievable rank (best -> worst), each SUBJECT-FIRST: it leads with the rank and
+ * the subject's own result, then appends the other-match dependency with a
+ * natural connector. Any path that exists only on a goal-difference tiebreak is
+ * stated with its concrete results and an explicit "(... and even then on goal
+ * difference)" caveat — never a bare "on goal difference".
+ */
+function describeByOwnResultMargin(code, ranks, scenarios, unplayed, relevant, ownIdx, nameOf) {
+  const { byOwn, ownMatch, otherMatch } = sliceOwnVsOther(code, scenarios, unplayed, relevant, ownIdx);
+  const opp = nameOf(ownMatch.home === code ? ownMatch.away : ownMatch.home);
+  const COARSE_ORDER = { W: 0, D: 1, L: 2 };
+  const sortCoarse = (a, b) => COARSE_ORDER[a] - COARSE_ORDER[b];
+
+  // Per rank, gather the own-results that reach it, separating CLEAN cells
+  // (rankSet === {r}) from GD-only cells (r is the BETTER member of a split cell,
+  // i.e. reachable only on a favourable goal difference).
+  const perRank = new Map(); // r -> { clean: Map<own,Set<other>>, gd: Map<own,Set<other>> }
+  for (const r of ranks) perRank.set(r, { clean: new Map(), gd: new Map() });
+  for (const [subjOwn, otherMap] of byOwn) {
+    for (const [oth, rankSet] of otherMap) {
+      const sorted = [...rankSet].sort((a, b) => a - b);
+      const best = sorted[0];
+      for (const r of sorted) {
+        const slot = perRank.get(r);
+        if (!slot) continue;
+        const bucket = rankSet.size === 1 ? slot.clean : r === best ? slot.gd : null;
+        if (!bucket) continue; // worse member of a split: owned by the better rank
+        if (!bucket.has(subjOwn)) bucket.set(subjOwn, new Set());
+        bucket.get(subjOwn).add(oth);
+      }
+    }
+  }
+
+  // Render one rank's clean own-results into a subject-first clause body, with
+  // the chosen dependency connector ("provided" for the lead clause, "if"
+  // otherwise). Returns { body, groups } where groups counts distinct
+  // own-result/condition segments (used to decide the "otherwise" tail).
+  const cleanBody = (slot, connector) => {
+    // Merge own-results that share an IDENTICAL other-condition.
+    const byCond = new Map(); // condKey -> { owns: [coarse], otherSet }
+    for (const [own, otherSet] of slot.clean) {
+      const key = [...otherSet].sort().join('');
+      if (!byCond.has(key)) byCond.set(key, { owns: [], otherSet });
+      byCond.get(key).owns.push(own);
+    }
+    const segs = [];
+    for (const { owns, otherSet } of byCond.values()) {
+      owns.sort(sortCoarse);
+      const ownP = ownMergedPhrase(owns, opp);
+      const cond = otherCondition(otherSet, otherMatch, nameOf);
+      // "provided" reads with a comma; "if"/"unless" read without one.
+      const sep = connector === 'provided' ? ', provided' : \` \${connector}\`;
+      segs.push(cond ? \`\${ownP}\${sep} \${cond}\` : ownP);
+    }
+    return { body: segs.join(', or '), groups: byCond.size };
+  };
+
+  // The worst clean rank becomes a bare "otherwise Nth" tail only when its body
+  // is MULTI-CONDITION (messy) — a single decisive own-result is stated concretely.
+  const cleanRanks = ranks.filter((r) => perRank.get(r).clean.size > 0);
+  const worstClean = cleanRanks.length ? Math.max(...cleanRanks) : null;
+  let tailRank = null;
+  if (worstClean !== null && cleanRanks.length >= 2) {
+    const { groups } = cleanBody(perRank.get(worstClean), 'if');
+    if (groups >= 2) tailRank = worstClean;
+  }
+
+  // Order: clean ranks best -> worst, then GD-only ranks (low-probability) after,
+  // then the "otherwise" tail. Track clause index for connector choice.
+  const cleanList = cleanRanks.filter((r) => r !== tailRank);
+  const gdRanks = ranks.filter((r) => perRank.get(r).clean.size === 0 && perRank.get(r).gd.size > 0);
+
+  const clauses = [];
+  let idx = 0;
+  for (const r of cleanList) {
+    const connector = idx === 0 ? 'provided' : 'if';
+    const { body } = cleanBody(perRank.get(r), connector);
+    clauses.push(\`\${ordinal(r)} with \${body}\`);
+    idx++;
+  }
+  for (const r of gdRanks) {
+    const slot = perRank.get(r);
+    const [own, otherSet] = [...slot.gd.entries()].sort((a, b) => sortCoarse(a[0], b[0]))[0];
+    const cond = otherCondition(otherSet, otherMatch, nameOf);
+    const path = cond ? \`\${ownGerundPhrase(own, opp)} while \${cond}\` : ownGerundPhrase(own, opp);
+    clauses.push(\`\${ordinal(r)} only by \${path} (and even then on goal difference)\`);
+  }
+  let out = clauses.join('; ');
+  if (tailRank !== null) out += \`; otherwise \${ordinal(tailRank)}\`;
+  return out + '.';
+}
+
+/** Merge own-result coarse values into one phrase: {W}->"a win over X",
+ *  {W,D}->"a win or draw against X", {D,L}->"a draw or loss against X", etc. */
+function ownMergedPhrase(owns, opp) {
+  const set = new Set(owns);
+  if (set.size === 1) return ownSinglePhrase([...set][0], opp);
+  const order = ['W', 'D', 'L'];
+  const words = order.filter((c) => set.has(c)).map((c) => (c === 'W' ? 'win' : c === 'D' ? 'draw' : 'loss'));
+  return \`a \${words.join(' or ')} against \${opp}\`;
+}
+
+/** Gerund form of the subject's own result for a "only by ..." path:
+ *  W -> "beating South Korea", D -> "drawing with South Korea", L -> "losing". */
+function ownGerundPhrase(subjC, opp) {
+  if (subjC === 'W') return \`beating \${opp}\`;
+  if (subjC === 'D') return \`drawing with \${opp}\`;
+  return \`losing\`;
+}
+
+/** Render an other-match condition from a set of its HOME-perspective coarse
+ *  outcomes, naming the opponent in "avoid defeat" forms. Returns '' if the set
+ *  spans all three outcomes (unconditional). */
+function otherCondition(otherCoarseSet, otherMatch, nameOf) {
+  if (otherCoarseSet.size >= 3) return '';
+  return otherMatchPhrase(new Set(otherCoarseSet), otherMatch, nameOf, true);
 }
 
 // ---------------------------------------------------------------------------
@@ -6590,7 +6946,7 @@ self.onmessage = function (e) {
   function cloneGroups(gs){
     return gs.map(function(g){
       return { name:g.name, teams:g.teams.map(function(t){return {code:t.code,name:t.name,elo:t.elo};}),
-        matches:g.matches.map(function(m){return {home:m.home,away:m.away,homeGoals:m.homeGoals,awayGoals:m.awayGoals,played:m.played, manual:m.manual||false};}) };
+        matches:g.matches.map(function(m){return {home:m.home,away:m.away,homeGoals:m.homeGoals,awayGoals:m.awayGoals,played:m.played, manual:m.manual||false, date:m.date||null, time:m.time||null};}) };
     });
   }
   var baseGroups = DATA.groups;            // pristine (feed)
@@ -7367,29 +7723,98 @@ self.onmessage = function (e) {
     var m={}; state.mc.perTeam.forEach(function(e){ m[e.code]=e; }); return m;
   }
 
-  // Render one compact "Elo model: 1st x% · 2nd y% · 3rd z% · 4th w%" line for a
-  // team, or a placeholder while the sim is still running.
-  function eloLine(code, dist){
-    var d=document.createElement('div'); d.className='scn-elo';
-    if(!dist){ d.innerHTML='<span class="lbl">Elo model</span> <span class="muted tiny">computing finish distribution…</span>'; return d; }
-    var e=dist[code];
-    if(!e){ d.innerHTML='<span class="lbl">Elo model</span> <span class="muted tiny">n/a</span>'; return d; }
-    var r=function(p){ return Math.round((p||0)*100); };
-    var p1=r(e.pGroup1),p2=r(e.pGroup2),p3=r(e.pGroup3),p4=r(e.pGroup4);
-    // 4-segment stacked bar + a compact numeric legend underneath.
-    var segs=[['#34d27b',p1,'1st'],['#4ea1ff',p2,'2nd'],['#f0b429',p3,'3rd'],['#ef5e5e',p4,'4th']];
-    var bar='<span class="scn-bar">'+segs.map(function(s){
-      return s[1]>0?'<span class="seg" style="width:'+s[1]+'%;background:'+s[0]+'" title="'+s[2]+' '+s[1]+'%"></span>':''; }).join('')+'</span>';
-    var legend=segs.map(function(s){
-      return '<span class="lg"><i style="background:'+s[0]+'"></i>'+s[2]+' '+s[1]+'%</span>'; }).join(' · ');
-    d.innerHTML='<span class="lbl">Elo model</span>'+bar+'<div class="scn-legend">'+legend+'</div>';
+  // Convert a match's venue-local date+time ("HH:MM UTC±N") to US Eastern
+  // (America/New_York; June = EDT = UTC−4), returning a formatted string like
+  // "Wed Jun 24, 6:00 PM ET". Handles date rollover across the UTC→ET shift.
+  var ET_OFFSET=-4; // EDT in June 2026
+  var WKD=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+  var MON=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  function fixtureWhenET(date, time){
+    if(!date || !time) return '';
+    var mt=/(\d{1,2}):(\d{2})\s*UTC\s*([+-]\d+)?/.exec(time);
+    if(!mt) return '';
+    var hh=+mt[1], mi=+mt[2], off=mt[3]?+mt[3]:0;
+    var p=date.split('-').map(Number); var Y=p[0], Mo=(p[1]||1)-1, D=p[2]||1;
+    // local clock at the venue offset -> UTC -> ET. Build a UTC date then shift.
+    var dt=new Date(Date.UTC(Y, Mo, D, hh-off+ET_OFFSET, mi));
+    var wd=WKD[dt.getUTCDay()], mon=MON[dt.getUTCMonth()], day=dt.getUTCDate();
+    var H=dt.getUTCHours(), M=dt.getUTCMinutes();
+    var ap=H>=12?'PM':'AM'; var h12=H%12; if(h12===0) h12=12;
+    var mm=(M<10?'0':'')+M;
+    return wd+' '+mon+' '+day+', '+h12+':'+mm+' '+ap+' ET';
+  }
+
+  // "Remaining fixtures" block: one line per UNPLAYED match in the group, using
+  // full team names and the kickoff converted to ET. "Group complete" if none.
+  function remainingFixtures(g){
+    var d=document.createElement('div'); d.className='scn-fixtures';
+    var unplayed=g.matches.filter(function(m){return !m.played;});
+    var h=document.createElement('div'); h.className='fx-h'; h.textContent='Remaining fixtures';
+    d.appendChild(h);
+    if(!unplayed.length){
+      var c=document.createElement('div'); c.className='fx'; c.textContent='Group complete'; d.appendChild(c);
+      return d;
+    }
+    unplayed.forEach(function(m){
+      var n1=nameByCode[m.home]||m.home, n2=nameByCode[m.away]||m.away;
+      var when=fixtureWhenET(m.date, m.time);
+      var row=document.createElement('div'); row.className='fx';
+      row.innerHTML=esc(n1)+' vs '+esc(n2)+(when?' — <span class="when">'+esc(when)+'</span>':'');
+      d.appendChild(row);
+    });
     return d;
   }
 
-  function teamHeader(code, name){
+  // True if a team's final group position is mathematically determined — one of
+  // pGroup1..4 is effectively certain (>= 0.9995). Clinched/eliminated teams.
+  function determinedPos(e){
+    if(!e) return 0; // unknown -> treat as uncertain
+    var ps=[e.pGroup1,e.pGroup2,e.pGroup3,e.pGroup4];
+    for(var i=0;i<4;i++){ if((ps[i]||0)>=0.9995) return i+1; }
+    return 0;
+  }
+
+  // While the sim is still running we have no distribution; show a faint
+  // "computing…" Elo line so the layout doesn't jump when it backfills.
+  function eloPendingLine(){
+    var d=document.createElement('div'); d.className='scn-elo';
+    d.innerHTML='<span class="lbl">Elo model</span> <span class="muted tiny">computing finish distribution…</span>';
+    return d;
+  }
+
+  // Build the compact inline distribution string for an UNCERTAIN team, omitting
+  // any position under 0.5%. Whole %. e.g. "2nd 81% · 3rd 16% · 4th 3%".
+  // Returns a <span class="scn-dist"> element (placed right of the team name).
+  function inlineDist(e){
+    var d=document.createElement('span'); d.className='scn-dist';
+    var r=function(p){ return Math.round((p||0)*100); };
+    var labels=['1st','2nd','3rd','4th'], cls=['p1','p2','p3','p4'];
+    var ps=[e.pGroup1,e.pGroup2,e.pGroup3,e.pGroup4];
+    var parts=[];
+    for(var i=0;i<4;i++){
+      if((ps[i]||0)<0.005) continue; // omit positions at 0% (< 0.5%)
+      parts.push('<span class="'+cls[i]+'">'+labels[i]+' '+r(ps[i])+'%</span>');
+    }
+    d.innerHTML=parts.join(' &middot; ')+'<span class="elo" title="Elo-model probabilities, not a guarantee">(Elo)</span>';
+    return d;
+  }
+
+  // Team header. For UNCERTAIN teams (dist present + not position-determined),
+  // appends the compact inline finish distribution to the right of the name.
+  function teamHeader(code, name, e){
     var h=document.createElement('div'); h.className='h';
     h.innerHTML='<span class="cd" style="color:'+accentFor(code)+'">'+code+'</span> <span class="nm">'+esc(name)+'</span>';
+    if(e && !determinedPos(e)) h.appendChild(inlineDist(e));
     return h;
+  }
+
+  // Append the model-distribution display to a team row, per the three display
+  // rules: (a) no sim yet -> faint "computing…" line; (b) determined position
+  // (clinched/eliminated) -> nothing (the deterministic headline says it all);
+  // (c) uncertain -> handled inline in the header by teamHeader, nothing here.
+  function appendDist(row, code, dist){
+    if(!dist){ row.appendChild(eloPendingLine()); return; }
+    // determined or uncertain: both add nothing below the name.
   }
 
   function renderScenario(){
@@ -7441,6 +7866,9 @@ self.onmessage = function (e) {
         (nUn<=2?' — final round':''));
     card.appendChild(head);
 
+    // Remaining fixtures (date + time in ET) replace the old placeholder text.
+    card.appendChild(remainingFixtures(g));
+
     if(nUn===0){
       // ---- STAGE: complete -> final standings table ----
       var note=document.createElement('div'); note.className='scn-note';
@@ -7460,9 +7888,10 @@ self.onmessage = function (e) {
       t.appendChild(tb); card.appendChild(t);
       // Elo finish row per team (in standing order).
       orderedTeams.forEach(function(team){
+        var e=dist?dist[team.code]:null;
         var row=document.createElement('div'); row.className='scn-team';
-        row.appendChild(teamHeader(team.code, team.name));
-        row.appendChild(eloLine(team.code, dist));
+        row.appendChild(teamHeader(team.code, team.name, e));
+        appendDist(row, team.code, dist);
         card.appendChild(row);
       });
 
@@ -7474,11 +7903,12 @@ self.onmessage = function (e) {
       var byCode={}; sum.teams.forEach(function(t){ byCode[t.code]=t; });
       orderedTeams.forEach(function(team){
         var s=byCode[team.code]; if(!s) return;
+        var e=dist?dist[team.code]:null;
         var row=document.createElement('div'); row.className='scn-team';
-        row.appendChild(teamHeader(team.code, team.name));
+        row.appendChild(teamHeader(team.code, team.name, e));
         var hl=document.createElement('div'); hl.className='scn-headline'; hl.textContent=s.headline; row.appendChild(hl);
         if(s.detail){ var dt=document.createElement('div'); dt.className='desc'; dt.textContent=s.detail; row.appendChild(dt); }
-        row.appendChild(eloLine(team.code, dist));
+        appendDist(row, team.code, dist);
         card.appendChild(row);
       });
       if(sum.deadRubbers && sum.deadRubbers.length){
@@ -7497,13 +7927,14 @@ self.onmessage = function (e) {
       var byC={}; sit.teams.forEach(function(t){ byC[t.code]=t; });
       orderedTeams.forEach(function(team){
         var s=byC[team.code]; if(!s) return;
+        var e=dist?dist[team.code]:null;
         var row=document.createElement('div'); row.className='scn-team';
-        row.appendChild(teamHeader(team.code, team.name));
+        row.appendChild(teamHeader(team.code, team.name, e));
         var hl=document.createElement('div'); hl.className='scn-headline';
         hl.textContent=s.statusLine+' · '+s.points+' pts ('+s.played+' played)';
         row.appendChild(hl);
         var nl=document.createElement('div'); nl.className='desc'; nl.textContent=s.needLine; row.appendChild(nl);
-        row.appendChild(eloLine(team.code, dist));
+        appendDist(row, team.code, dist);
         card.appendChild(row);
       });
       // Next round block.

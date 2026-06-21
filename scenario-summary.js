@@ -358,8 +358,12 @@ function ownMatchPhrase(set, opp) {
  *   {D,L} (!W) -> "Mexico avoid defeat"               (away not beaten)
  *   {W,L} (!D) -> "Czech Republic or Mexico win"      (no draw)
  *   full       -> "" (dropped)
+ *
+ * When `withOpp` is true, "avoid defeat" forms name the opponent for clarity
+ * inside a subject-first dependency clause:
+ *   {D,L} -> "Mexico avoid defeat against Czech Republic"
  */
-function otherMatchPhrase(set, match, nameOf) {
+function otherMatchPhrase(set, match, nameOf, withOpp = false) {
   const home = nameOf(match.home);
   const away = nameOf(match.away);
   if (set.size === 3) return '';
@@ -370,8 +374,8 @@ function otherMatchPhrase(set, match, nameOf) {
     return `${home} and ${away} draw`;
   }
   // size 2 -> express as the natural negation of the excluded outcome.
-  if (!set.has('L')) return `${home} avoid defeat`; // {W,D}
-  if (!set.has('W')) return `${away} avoid defeat`; // {D,L}
+  if (!set.has('L')) return `${home} avoid defeat${withOpp ? ` against ${away}` : ''}`; // {W,D}
+  if (!set.has('W')) return `${away} avoid defeat${withOpp ? ` against ${home}` : ''}`; // {D,L}
   return `${home} or ${away} win`; // {W,L}, no draw
 }
 
@@ -489,6 +493,14 @@ function describeConditional(code, name, unplayed, scenarios, relevant, nameOf) 
   // Margin matters. Single match the subject plays -> concrete thresholds.
   if (numMatches === 1) {
     return describeSingleWithMargin(code, unplayed[relevant[0]], cells, ranks, nameOf);
+  }
+  // Two relevant matches, subject plays one of them, and a goal margin flips the
+  // rank inside some coarse cell. Organize the statement around the subject's OWN
+  // result (subject-first), append the other-match dependency, and surface any
+  // margin-only path with an explicit concrete result + a goal-difference caveat
+  // (never a bare "on goal difference").
+  if (ownIdx >= 0) {
+    return describeByOwnResultMargin(code, ranks, scenarios, unplayed, relevant, ownIdx, nameOf);
   }
   return describeWithMarginFallback(code, ranks, cells, unplayed, relevant, nameOf);
 }
@@ -778,6 +790,164 @@ function describeWithMarginFallback(code, ranks, cells, unplayed, relevant, name
   }
   clauses.sort((a, b) => a.rank - b.rank);
   return clauses.map((c) => c.text).join('; ') + '.';
+}
+
+// ---------------------------------------------------------------------------
+// Own-result-centric renderer for the MARGIN case (subject plays one of two
+// relevant matches; a goal margin flips the rank inside some coarse cell).
+// ---------------------------------------------------------------------------
+
+/**
+ * Build, per subject own-result (W/D/L, subject perspective), the map
+ *   otherCoarse ('W'|'D'|'L', other-match HOME perspective) -> Set<rank>.
+ * A set of size > 1 means that (own, other) coarse cell is decided on goal
+ * difference (margin split).
+ */
+function sliceOwnVsOther(code, scenarios, unplayed, relevant, ownIdx) {
+  const ownU = relevant[ownIdx];
+  const otherI = relevant.find((_, i) => i !== ownIdx);
+  const ownMatch = unplayed[ownU];
+  const otherMatch = unplayed[otherI];
+  const byOwn = new Map(); // subjOwn -> Map(otherCoarse -> Set<rank>)
+  for (const s of scenarios) {
+    const subjOwn = fromSubjectPerspective(s.coarse[ownU], ownMatch, code);
+    const oth = s.coarse[otherI];
+    if (!byOwn.has(subjOwn)) byOwn.set(subjOwn, new Map());
+    const m = byOwn.get(subjOwn);
+    if (!m.has(oth)) m.set(oth, new Set());
+    m.get(oth).add(s.rankByCode[code]);
+  }
+  return { byOwn, ownMatch, otherMatch };
+}
+
+/**
+ * Render the subject's own result (a single coarse 'W'|'D'|'L', subject persp.)
+ * as a noun phrase naming the opponent, e.g. "a win over South Korea",
+ * "a draw against South Korea", "a loss".
+ */
+function ownSinglePhrase(subjC, opp) {
+  if (subjC === 'W') return `a win over ${opp}`;
+  if (subjC === 'D') return `a draw against ${opp}`;
+  return `a loss`;
+}
+
+/**
+ * Margin case, subject plays one of two relevant matches. Produce one clause per
+ * achievable rank (best -> worst), each SUBJECT-FIRST: it leads with the rank and
+ * the subject's own result, then appends the other-match dependency with a
+ * natural connector. Any path that exists only on a goal-difference tiebreak is
+ * stated with its concrete results and an explicit "(... and even then on goal
+ * difference)" caveat — never a bare "on goal difference".
+ */
+function describeByOwnResultMargin(code, ranks, scenarios, unplayed, relevant, ownIdx, nameOf) {
+  const { byOwn, ownMatch, otherMatch } = sliceOwnVsOther(code, scenarios, unplayed, relevant, ownIdx);
+  const opp = nameOf(ownMatch.home === code ? ownMatch.away : ownMatch.home);
+  const COARSE_ORDER = { W: 0, D: 1, L: 2 };
+  const sortCoarse = (a, b) => COARSE_ORDER[a] - COARSE_ORDER[b];
+
+  // Per rank, gather the own-results that reach it, separating CLEAN cells
+  // (rankSet === {r}) from GD-only cells (r is the BETTER member of a split cell,
+  // i.e. reachable only on a favourable goal difference).
+  const perRank = new Map(); // r -> { clean: Map<own,Set<other>>, gd: Map<own,Set<other>> }
+  for (const r of ranks) perRank.set(r, { clean: new Map(), gd: new Map() });
+  for (const [subjOwn, otherMap] of byOwn) {
+    for (const [oth, rankSet] of otherMap) {
+      const sorted = [...rankSet].sort((a, b) => a - b);
+      const best = sorted[0];
+      for (const r of sorted) {
+        const slot = perRank.get(r);
+        if (!slot) continue;
+        const bucket = rankSet.size === 1 ? slot.clean : r === best ? slot.gd : null;
+        if (!bucket) continue; // worse member of a split: owned by the better rank
+        if (!bucket.has(subjOwn)) bucket.set(subjOwn, new Set());
+        bucket.get(subjOwn).add(oth);
+      }
+    }
+  }
+
+  // Render one rank's clean own-results into a subject-first clause body, with
+  // the chosen dependency connector ("provided" for the lead clause, "if"
+  // otherwise). Returns { body, groups } where groups counts distinct
+  // own-result/condition segments (used to decide the "otherwise" tail).
+  const cleanBody = (slot, connector) => {
+    // Merge own-results that share an IDENTICAL other-condition.
+    const byCond = new Map(); // condKey -> { owns: [coarse], otherSet }
+    for (const [own, otherSet] of slot.clean) {
+      const key = [...otherSet].sort().join('');
+      if (!byCond.has(key)) byCond.set(key, { owns: [], otherSet });
+      byCond.get(key).owns.push(own);
+    }
+    const segs = [];
+    for (const { owns, otherSet } of byCond.values()) {
+      owns.sort(sortCoarse);
+      const ownP = ownMergedPhrase(owns, opp);
+      const cond = otherCondition(otherSet, otherMatch, nameOf);
+      // "provided" reads with a comma; "if"/"unless" read without one.
+      const sep = connector === 'provided' ? ', provided' : ` ${connector}`;
+      segs.push(cond ? `${ownP}${sep} ${cond}` : ownP);
+    }
+    return { body: segs.join(', or '), groups: byCond.size };
+  };
+
+  // The worst clean rank becomes a bare "otherwise Nth" tail only when its body
+  // is MULTI-CONDITION (messy) — a single decisive own-result is stated concretely.
+  const cleanRanks = ranks.filter((r) => perRank.get(r).clean.size > 0);
+  const worstClean = cleanRanks.length ? Math.max(...cleanRanks) : null;
+  let tailRank = null;
+  if (worstClean !== null && cleanRanks.length >= 2) {
+    const { groups } = cleanBody(perRank.get(worstClean), 'if');
+    if (groups >= 2) tailRank = worstClean;
+  }
+
+  // Order: clean ranks best -> worst, then GD-only ranks (low-probability) after,
+  // then the "otherwise" tail. Track clause index for connector choice.
+  const cleanList = cleanRanks.filter((r) => r !== tailRank);
+  const gdRanks = ranks.filter((r) => perRank.get(r).clean.size === 0 && perRank.get(r).gd.size > 0);
+
+  const clauses = [];
+  let idx = 0;
+  for (const r of cleanList) {
+    const connector = idx === 0 ? 'provided' : 'if';
+    const { body } = cleanBody(perRank.get(r), connector);
+    clauses.push(`${ordinal(r)} with ${body}`);
+    idx++;
+  }
+  for (const r of gdRanks) {
+    const slot = perRank.get(r);
+    const [own, otherSet] = [...slot.gd.entries()].sort((a, b) => sortCoarse(a[0], b[0]))[0];
+    const cond = otherCondition(otherSet, otherMatch, nameOf);
+    const path = cond ? `${ownGerundPhrase(own, opp)} while ${cond}` : ownGerundPhrase(own, opp);
+    clauses.push(`${ordinal(r)} only by ${path} (and even then on goal difference)`);
+  }
+  let out = clauses.join('; ');
+  if (tailRank !== null) out += `; otherwise ${ordinal(tailRank)}`;
+  return out + '.';
+}
+
+/** Merge own-result coarse values into one phrase: {W}->"a win over X",
+ *  {W,D}->"a win or draw against X", {D,L}->"a draw or loss against X", etc. */
+function ownMergedPhrase(owns, opp) {
+  const set = new Set(owns);
+  if (set.size === 1) return ownSinglePhrase([...set][0], opp);
+  const order = ['W', 'D', 'L'];
+  const words = order.filter((c) => set.has(c)).map((c) => (c === 'W' ? 'win' : c === 'D' ? 'draw' : 'loss'));
+  return `a ${words.join(' or ')} against ${opp}`;
+}
+
+/** Gerund form of the subject's own result for a "only by ..." path:
+ *  W -> "beating South Korea", D -> "drawing with South Korea", L -> "losing". */
+function ownGerundPhrase(subjC, opp) {
+  if (subjC === 'W') return `beating ${opp}`;
+  if (subjC === 'D') return `drawing with ${opp}`;
+  return `losing`;
+}
+
+/** Render an other-match condition from a set of its HOME-perspective coarse
+ *  outcomes, naming the opponent in "avoid defeat" forms. Returns '' if the set
+ *  spans all three outcomes (unconditional). */
+function otherCondition(otherCoarseSet, otherMatch, nameOf) {
+  if (otherCoarseSet.size >= 3) return '';
+  return otherMatchPhrase(new Set(otherCoarseSet), otherMatch, nameOf, true);
 }
 
 // ---------------------------------------------------------------------------
