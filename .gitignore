@@ -1,0 +1,10 @@
+# Secrets — never commit
+.env
+*.key
+
+# Node
+node_modules/
+
+# Build artifacts / cached API pulls
+data/raw/
+*.log
