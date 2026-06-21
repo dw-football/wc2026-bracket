@@ -51,6 +51,29 @@ function stripModuleSyntax(src) {
   return s;
 }
 
+// Wrap a self-contained ES module in an IIFE so its top-level declarations stay
+// PRIVATE (avoids collisions like `COARSE`/`matchKey` shared across modules),
+// while EXPORTING the named symbols out to the shared bundle scope. Any free
+// references the module makes (e.g. computeGroupStanding) resolve up the scope
+// chain to the already-inlined engine — IIFEs are closures, so that still works.
+//
+//   exportNames: array of identifiers the module's `export` declared.
+// Produces:
+//   var __m = (function(){
+//     <module body with import/export stripped>
+//     return { name1: name1, name2: name2 };
+//   })();
+//   var name1 = __m.name1, name2 = __m.name2;
+// The IIFE return reads the INNER (private) declarations; the outer vars expose
+// only the chosen exports. No inner top-level name leaks to the shared scope, so
+// collisions like COARSE/matchKey across modules are impossible.
+function wrapModuleIIFE(src, exportNames, holder) {
+  const body = stripModuleSyntax(src);
+  const ret = exportNames.map((n) => `${n}: ${n}`).join(', ');
+  const outer = exportNames.map((n) => `${n} = ${holder}.${n}`).join(', ');
+  return `var ${holder} = (function(){\n${body}\nreturn { ${ret} };\n})();\nvar ${outer};`;
+}
+
 // Replace allocation.js's filesystem-backed getAllocation with the baked table.
 function patchAllocation(src) {
   let s = stripModuleSyntax(src);
@@ -110,10 +133,12 @@ function computeFreshness(raw) {
 async function main() {
   const refresh = process.argv.includes('--refresh');
 
-  const [engineSrc, allocationSrc, modelSrc] = await Promise.all([
+  const [engineSrc, allocationSrc, modelSrc, scenarioSummarySrc, groupSituationSrc] = await Promise.all([
     readText('engine.js'),
     readText('allocation.js'),
     readText('model.js'),
+    readText('scenario-summary.js'),
+    readText('group-situation.js'),
   ]);
 
   const [teams, bracket, allocation] = await Promise.all([
@@ -131,6 +156,11 @@ async function main() {
   const engineBundle = stripModuleSyntax(engineSrc);
   const allocationBundle = patchAllocation(allocationSrc);
   const modelBundle = stripModuleSyntax(modelSrc);
+  // These two analyzers are wrapped in IIFEs so their private top-level consts
+  // (COARSE, matchKey, ordinal, MAX_GOALS, …) don't collide with each other or
+  // with engine/model; only their public exports are hoisted to the bundle scope.
+  const scenarioSummaryBundle = wrapModuleIIFE(scenarioSummarySrc, ['summarizeGroup', '__test'], '__scnSummaryMod');
+  const groupSituationBundle = wrapModuleIIFE(groupSituationSrc, ['groupSituation'], '__grpSituationMod');
 
   const logicBundle = [
     '/* ===== engine.js ===== */',
@@ -139,6 +169,10 @@ async function main() {
     allocationBundle,
     '/* ===== model.js ===== */',
     modelBundle,
+    '/* ===== scenario-summary.js (summarizeGroup; final-round analyzer) ===== */',
+    scenarioSummaryBundle,
+    '/* ===== group-situation.js (groupSituation; pre-final analyzer) ===== */',
+    groupSituationBundle,
   ].join('\n\n');
 
   // Sanity: no leftover module tokens in the bundled LOGIC.
@@ -153,7 +187,7 @@ async function main() {
   // Verify it parses as a function body (classic script scope).
   try {
     // eslint-disable-next-line no-new-func
-    new Function(`${logicBundle}\nreturn typeof monteCarlo === 'function' && typeof computeGroupStanding === 'function' && typeof resolveThirdPlaceSlots === 'function';`);
+    new Function(`${logicBundle}\nreturn typeof monteCarlo === 'function' && typeof computeGroupStanding === 'function' && typeof resolveThirdPlaceSlots === 'function' && typeof summarizeGroup === 'function' && typeof groupSituation === 'function';`);
   } catch (e) {
     throw new Error(`bundled logic failed to parse: ${e.message}`);
   }
@@ -377,6 +411,23 @@ select,input[type=number],input[type=text]{background:#0c0e12;color:var(--txt);
 .scn-team .h .nm{color:var(--dim);font-size:12px}
 .scn-team .desc{color:var(--txt);font-size:13px;margin-top:3px}
 .scn-note{color:var(--warn);font-size:12px;margin:8px 0}
+.scn-stage{font-size:14px;margin:2px 0 8px;color:var(--txt)}
+.scn-stage b{color:var(--txt)}
+.scn-chips{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0 12px}
+.gchip{background:var(--panel);border:1px solid var(--line);color:var(--dim);
+  width:34px;height:34px;border-radius:8px;cursor:pointer;font-size:14px;font-weight:700}
+.gchip.on{background:var(--panel2);color:var(--txt);border-color:var(--accent)}
+.scn-headline{font-weight:650;font-size:13px;color:var(--txt);margin-top:3px}
+.scn-elo{margin-top:5px;font-size:11px;color:var(--dim)}
+.scn-elo .lbl{display:inline-block;color:var(--dim2);text-transform:uppercase;letter-spacing:.5px;font-size:10px;margin-right:6px}
+.scn-bar{display:inline-flex;width:160px;max-width:60%;height:8px;border-radius:4px;overflow:hidden;vertical-align:middle;background:#0c0e12;border:1px solid var(--line)}
+.scn-bar .seg{display:block;height:100%}
+.scn-legend{margin-top:3px;color:var(--dim);font-size:10.5px}
+.scn-legend .lg{white-space:nowrap}
+.scn-legend .lg i{display:inline-block;width:8px;height:8px;border-radius:2px;margin-right:3px;vertical-align:baseline}
+.scn-next{margin-top:10px;border-top:1px solid #20242e;padding-top:8px}
+.scn-triggers{margin:4px 0 0;padding-left:18px;font-size:13px;color:var(--txt)}
+.scn-triggers li{margin:3px 0}
 .callout{background:#11151c;border-left:3px solid var(--accent);padding:8px 10px;border-radius:0 8px 8px 0;font-size:13px;color:var(--dim);margin:6px 0}
 
 details.about{margin-top:18px;background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:8px 12px}
@@ -599,8 +650,11 @@ const APP_JS = String.raw`
     root.appendChild(about());
 
     // kick a projection if needed (poster mode computes synchronously up front,
-    // so we never schedule the async worker there — capture must see a full bracket)
-    if(!POSTER && state.mode==='projected' && state.tab!=='scenario' && !state.mc && !state.simming){
+    // so we never schedule the async worker there — capture must see a full bracket).
+    // The scenario tab also wants mc (for the per-team Elo P1-4 distribution), so
+    // it no longer opts out — it renders the deterministic content immediately and
+    // backfills the Elo line when the sim returns.
+    if(!POSTER && state.mode==='projected' && !state.mc && !state.simming){
       runProjection();
     }
   }
@@ -1148,70 +1202,182 @@ const APP_JS = String.raw`
   }
 
   // ---------------- SCENARIO CALCULATOR ----------------
+  // Stage-aware, group-at-a-time view. One selector (the group). Everything for
+  // that group renders automatically based on how many matches are still unplayed:
+  //   0 unplayed         -> "Group complete" + final standings table.
+  //   1-2 unplayed (final round) -> summarizeGroup(): per-team headline + detail,
+  //                          plus any dead-rubber note.
+  //   3+ unplayed (pre-final)    -> groupSituation(): per-team statusLine + needLine,
+  //                          plus a "Next round" trigger block.
+  // EVERY stage also shows each team's Elo-model finish distribution P(1st..4th),
+  // sourced from the Monte-Carlo mc.perTeam (backfilled when the sim returns).
+
+  // Reflect group overrides in My-Picks mode (so edited scores change the
+  // scenario); in Projected mode it reflects the real feed.
+  function scenarioGroups(){ return groupsForCompute(); }
+
+  // Map code -> mc.perTeam entry (Elo finish distribution), or null if no sim yet.
+  function eloDistByCode(){
+    if(!state.mc || !state.mc.perTeam) return null;
+    var m={}; state.mc.perTeam.forEach(function(e){ m[e.code]=e; }); return m;
+  }
+
+  // Render one compact "Elo model: 1st x% · 2nd y% · 3rd z% · 4th w%" line for a
+  // team, or a placeholder while the sim is still running.
+  function eloLine(code, dist){
+    var d=document.createElement('div'); d.className='scn-elo';
+    if(!dist){ d.innerHTML='<span class="lbl">Elo model</span> <span class="muted tiny">computing finish distribution…</span>'; return d; }
+    var e=dist[code];
+    if(!e){ d.innerHTML='<span class="lbl">Elo model</span> <span class="muted tiny">n/a</span>'; return d; }
+    var r=function(p){ return Math.round((p||0)*100); };
+    var p1=r(e.pGroup1),p2=r(e.pGroup2),p3=r(e.pGroup3),p4=r(e.pGroup4);
+    // 4-segment stacked bar + a compact numeric legend underneath.
+    var segs=[['#34d27b',p1,'1st'],['#4ea1ff',p2,'2nd'],['#f0b429',p3,'3rd'],['#ef5e5e',p4,'4th']];
+    var bar='<span class="scn-bar">'+segs.map(function(s){
+      return s[1]>0?'<span class="seg" style="width:'+s[1]+'%;background:'+s[0]+'" title="'+s[2]+' '+s[1]+'%"></span>':''; }).join('')+'</span>';
+    var legend=segs.map(function(s){
+      return '<span class="lg"><i style="background:'+s[0]+'"></i>'+s[2]+' '+s[1]+'%</span>'; }).join(' · ');
+    d.innerHTML='<span class="lbl">Elo model</span>'+bar+'<div class="scn-legend">'+legend+'</div>';
+    return d;
+  }
+
+  function teamHeader(code, name){
+    var h=document.createElement('div'); h.className='h';
+    h.innerHTML='<span class="cd" style="color:'+accentFor(code)+'">'+code+'</span> <span class="nm">'+esc(name)+'</span>';
+    return h;
+  }
+
   function renderScenario(){
     var sec=document.createElement('div'); sec.className='section active';
-    var gs=baseGroups; // scenarios always against the real feed
+    var gs=scenarioGroups();
+
     var callout=document.createElement('div'); callout.className='callout';
-    callout.innerHTML='These are <b>within-group positions</b> (1st/2nd/3rd/4th) and are <b>deterministic</b>. They do <b>not</b> assert 3rd-place qualification or knockout opponents — those are cross-group and shown probabilistically in the bracket.';
+    callout.innerHTML='Within-group positions (1st/2nd/3rd/4th) shown as <b>clinch / eliminate / needs</b> lines are <b>deterministic facts</b>. The <b>Elo model</b> row is this projector’s <i>probabilistic</i> view of where each team finishes — a model estimate, not a guarantee. Finishing 3rd is stated as fact; whether a 3rd-place team <b>advances</b> is cross-group and is never asserted here.';
     sec.appendChild(callout);
 
-    // controls: group select + match select
-    var ctrls=document.createElement('div'); ctrls.className='scn-controls';
-    var gsel=document.createElement('select');
-    gs.forEach(function(g){ var o=document.createElement('option'); o.value=letterOf(g); o.textContent=g.name; gsel.appendChild(o); });
-    if(!state.scnGroup) state.scnGroup=letterOf(gs[0]);
-    gsel.value=state.scnGroup;
-    var msel=document.createElement('select');
-    ctrls.appendChild(document.createTextNode('Group: ')); ctrls.appendChild(gsel);
-    ctrls.appendChild(document.createTextNode(' Match: ')); ctrls.appendChild(msel);
-    sec.appendChild(ctrls);
-
-    var out=document.createElement('div'); sec.appendChild(out);
-
-    function curGroup(){ return gs.filter(function(g){return letterOf(g)===state.scnGroup;})[0]; }
-    function key(m){ return m.home+'-'+m.away; }
-
-    function refillMatches(){
-      msel.innerHTML='';
-      var g=curGroup();
-      var unplayed=g.matches.filter(function(m){return !m.played;});
-      if(!unplayed.length){ var o=document.createElement('option'); o.textContent='(all matches played)'; o.value=''; msel.appendChild(o); return; }
-      // detect simultaneous final pair (same date+time) -> not available in feed times here,
-      // so we approximate: if exactly 2 unplayed remain in the group, offer joint mode.
-      unplayed.forEach(function(m){ var o=document.createElement('option'); o.value=key(m); o.textContent=m.home+' v '+m.away; msel.appendChild(o); });
-      if(unplayed.length===2){ var oj=document.createElement('option'); oj.value='JOINT'; oj.textContent='Final round — BOTH games (joint)'; msel.appendChild(oj); msel.value='JOINT'; }
+    // ---- group selector: a row of A–L chips ----
+    if(!state.scnGroup){
+      // default to the first final-round group (1-2 unplayed), else group A.
+      var def=null;
+      gs.forEach(function(g){
+        var u=g.matches.filter(function(m){return !m.played;}).length;
+        if(def===null && u>=1 && u<=2) def=letterOf(g);
+      });
+      state.scnGroup=def||letterOf(gs[0]);
     }
+    var chips=document.createElement('div'); chips.className='scn-chips';
+    gs.forEach(function(g){
+      var L=letterOf(g);
+      var b=document.createElement('button'); b.className='gchip'+(state.scnGroup===L?' on':'');
+      b.textContent=L;
+      b.onclick=function(){ state.scnGroup=L; render(); };
+      chips.appendChild(b);
+    });
+    sec.appendChild(chips);
 
-    function compute(){
-      out.innerHTML='';
-      var g=curGroup();
-      var unplayed=g.matches.filter(function(m){return !m.played;});
-      if(!unplayed.length){ out.innerHTML='<div class="scn-card muted">All matches in '+esc(g.name)+' are played — the group is decided.</div>'; return; }
-      var keys;
-      if(msel.value==='JOINT'){ keys=unplayed.slice(0,2).map(key); }
-      else if(msel.value){ keys=[msel.value]; }
-      else { keys=[key(unplayed[0])]; }
-      var grid;
-      try{ grid=scenarioGrid(g, keys, 6); }
-      catch(e){ out.innerHTML='<div class="scn-card muted">Scenario unavailable: '+esc(e.message)+'</div>'; return; }
-      var card=document.createElement('div'); card.className='scn-card';
-      var head=document.createElement('div'); head.className='scn-note';
-      head.innerHTML=(keys.length===2?'Joint final-round scenario for both remaining matches: '
-        :'Scenario for the next match: ')+'<b>'+esc(grid.matches.join('  +  '))+'</b>';
-      card.appendChild(head);
-      g.teams.forEach(function(team){
-        var s=grid.teams[team.code]; if(!s) return;
+    var g=gs.filter(function(x){return letterOf(x)===state.scnGroup;})[0];
+    if(!g){ return sec; }
+
+    var dist=eloDistByCode();
+    // Standing order for the whole group (deterministic, drives team ordering).
+    var standing=computeGroupStanding(g);
+    var orderIdx={}; standing.forEach(function(s,i){ orderIdx[s.code]=i; });
+    var orderedTeams=g.teams.slice().sort(function(a,b){
+      return (orderIdx[a.code]==null?99:orderIdx[a.code])-(orderIdx[b.code]==null?99:orderIdx[b.code]);
+    });
+
+    var unplayed=g.matches.filter(function(m){return !m.played;});
+    var card=document.createElement('div'); card.className='scn-card';
+
+    var head=document.createElement('div'); head.className='scn-stage';
+    var nUn=unplayed.length;
+    head.innerHTML='<b>'+esc(g.name)+'</b> · '+
+      (nUn===0?'group complete':nUn+' match'+(nUn===1?'':'es')+' to play'+
+        (nUn<=2?' — final round':''));
+    card.appendChild(head);
+
+    if(nUn===0){
+      // ---- STAGE: complete -> final standings table ----
+      var note=document.createElement('div'); note.className='scn-note';
+      note.textContent='Group complete — final standings:';
+      card.appendChild(note);
+      var t=document.createElement('table'); t.style.marginBottom='6px';
+      t.innerHTML='<thead><tr><th>#</th><th>Team</th><th>P</th><th>W</th><th>D</th><th>L</th><th>GF</th><th>GA</th><th>GD</th><th>Pts</th></tr></thead>';
+      var tb=document.createElement('tbody');
+      standing.forEach(function(s){
+        var tr=document.createElement('tr'); if(s.rank<=2) tr.className='q'+s.rank;
+        tr.innerHTML='<td>'+s.rank+'</td>'+
+          '<td><span style="color:'+accentFor(s.code)+';font-weight:700">'+s.code+'</span> <span class="muted tiny">'+esc(s.name)+'</span></td>'+
+          '<td>'+s.played+'</td><td>'+s.won+'</td><td>'+s.drawn+'</td><td>'+s.lost+'</td>'+
+          '<td>'+s.gf+'</td><td>'+s.ga+'</td><td>'+(s.gd>0?'+':'')+s.gd+'</td><td><b>'+s.points+'</b></td>';
+        tb.appendChild(tr);
+      });
+      t.appendChild(tb); card.appendChild(t);
+      // Elo finish row per team (in standing order).
+      orderedTeams.forEach(function(team){
         var row=document.createElement('div'); row.className='scn-team';
-        row.innerHTML='<div class="h"><span class="cd" style="color:'+accentFor(team.code)+'">'+team.code+'</span> <span class="nm">'+esc(team.name)+'</span></div>'+
-          '<div class="desc">'+esc(grid.describe(team.code))+'</div>';
+        row.appendChild(teamHeader(team.code, team.name));
+        row.appendChild(eloLine(team.code, dist));
         card.appendChild(row);
       });
-      out.appendChild(card);
+
+    } else if(nUn<=2){
+      // ---- STAGE: final round (1-2 unplayed) -> summarizeGroup ----
+      var sum;
+      try{ sum=summarizeGroup(g); }
+      catch(e){ var er=document.createElement('div'); er.className='muted tiny'; er.textContent='Final-round summary unavailable: '+esc(e.message); card.appendChild(er); sec.appendChild(card); return sec; }
+      var byCode={}; sum.teams.forEach(function(t){ byCode[t.code]=t; });
+      orderedTeams.forEach(function(team){
+        var s=byCode[team.code]; if(!s) return;
+        var row=document.createElement('div'); row.className='scn-team';
+        row.appendChild(teamHeader(team.code, team.name));
+        var hl=document.createElement('div'); hl.className='scn-headline'; hl.textContent=s.headline; row.appendChild(hl);
+        if(s.detail){ var dt=document.createElement('div'); dt.className='desc'; dt.textContent=s.detail; row.appendChild(dt); }
+        row.appendChild(eloLine(team.code, dist));
+        card.appendChild(row);
+      });
+      if(sum.deadRubbers && sum.deadRubbers.length){
+        var dr=document.createElement('div'); dr.className='scn-note';
+        dr.innerHTML=sum.deadRubbers.map(function(k){
+          var p=k.split('-'); return 'Dead rubber: '+esc(p[0])+' v '+esc(p[1])+' — result can’t change any position.';
+        }).join('<br>');
+        card.appendChild(dr);
+      }
+
+    } else {
+      // ---- STAGE: pre-final (3+ unplayed) -> groupSituation ----
+      var sit;
+      try{ sit=groupSituation(g); }
+      catch(e){ var er2=document.createElement('div'); er2.className='muted tiny'; er2.textContent='Group situation unavailable: '+esc(e.message); card.appendChild(er2); sec.appendChild(card); return sec; }
+      var byC={}; sit.teams.forEach(function(t){ byC[t.code]=t; });
+      orderedTeams.forEach(function(team){
+        var s=byC[team.code]; if(!s) return;
+        var row=document.createElement('div'); row.className='scn-team';
+        row.appendChild(teamHeader(team.code, team.name));
+        var hl=document.createElement('div'); hl.className='scn-headline';
+        hl.textContent=s.statusLine+' · '+s.points+' pts ('+s.played+' played)';
+        row.appendChild(hl);
+        var nl=document.createElement('div'); nl.className='desc'; nl.textContent=s.needLine; row.appendChild(nl);
+        row.appendChild(eloLine(team.code, dist));
+        card.appendChild(row);
+      });
+      // Next round block.
+      var nr=sit.nextRound;
+      if(nr && nr.triggers && nr.triggers.length){
+        var nb=document.createElement('div'); nb.className='scn-next';
+        var nh=document.createElement('div'); nh.className='scn-note';
+        nh.innerHTML='<b>Next round'+(nr.date?' ('+esc(nr.date)+')':'')+'</b>'+(sit.decided?' — group already decided on points':'')+':';
+        nb.appendChild(nh);
+        var ul=document.createElement('ul'); ul.className='scn-triggers';
+        nr.triggers.forEach(function(tr){ var li=document.createElement('li'); li.textContent=tr; ul.appendChild(li); });
+        nb.appendChild(ul);
+        card.appendChild(nb);
+      } else if(sit.decided){
+        var nd=document.createElement('div'); nd.className='scn-note'; nd.textContent='Group already decided on points.'; card.appendChild(nd);
+      }
     }
 
-    gsel.onchange=function(){ state.scnGroup=gsel.value; refillMatches(); compute(); };
-    msel.onchange=compute;
-    refillMatches(); compute();
+    sec.appendChild(card);
     return sec;
   }
 

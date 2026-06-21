@@ -119,6 +119,23 @@ select,input[type=number],input[type=text]{background:#0c0e12;color:var(--txt);
 .scn-team .h .nm{color:var(--dim);font-size:12px}
 .scn-team .desc{color:var(--txt);font-size:13px;margin-top:3px}
 .scn-note{color:var(--warn);font-size:12px;margin:8px 0}
+.scn-stage{font-size:14px;margin:2px 0 8px;color:var(--txt)}
+.scn-stage b{color:var(--txt)}
+.scn-chips{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0 12px}
+.gchip{background:var(--panel);border:1px solid var(--line);color:var(--dim);
+  width:34px;height:34px;border-radius:8px;cursor:pointer;font-size:14px;font-weight:700}
+.gchip.on{background:var(--panel2);color:var(--txt);border-color:var(--accent)}
+.scn-headline{font-weight:650;font-size:13px;color:var(--txt);margin-top:3px}
+.scn-elo{margin-top:5px;font-size:11px;color:var(--dim)}
+.scn-elo .lbl{display:inline-block;color:var(--dim2);text-transform:uppercase;letter-spacing:.5px;font-size:10px;margin-right:6px}
+.scn-bar{display:inline-flex;width:160px;max-width:60%;height:8px;border-radius:4px;overflow:hidden;vertical-align:middle;background:#0c0e12;border:1px solid var(--line)}
+.scn-bar .seg{display:block;height:100%}
+.scn-legend{margin-top:3px;color:var(--dim);font-size:10.5px}
+.scn-legend .lg{white-space:nowrap}
+.scn-legend .lg i{display:inline-block;width:8px;height:8px;border-radius:2px;margin-right:3px;vertical-align:baseline}
+.scn-next{margin-top:10px;border-top:1px solid #20242e;padding-top:8px}
+.scn-triggers{margin:4px 0 0;padding-left:18px;font-size:13px;color:var(--txt)}
+.scn-triggers li{margin:3px 0}
 .callout{background:#11151c;border-left:3px solid var(--accent);padding:8px 10px;border-radius:0 8px 8px 0;font-size:13px;color:var(--dim);margin:6px 0}
 
 details.about{margin-top:18px;background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:8px 12px}
@@ -173,7 +190,7 @@ var __APP_DATA__ = {
   teams: [{"name":"Spain","code":"ESP","elo":2129},{"name":"Argentina","code":"ARG","elo":2128},{"name":"France","code":"FRA","elo":2084},{"name":"England","code":"ENG","elo":2055},{"name":"Colombia","code":"COL","elo":1998},{"name":"Brazil","code":"BRA","elo":1986},{"name":"Netherlands","code":"NED","elo":1972},{"name":"Portugal","code":"POR","elo":1967},{"name":"Germany","code":"GER","elo":1954},{"name":"Norway","code":"NOR","elo":1929},{"name":"Japan","code":"JPN","elo":1925},{"name":"Mexico","code":"MEX","elo":1896},{"name":"Switzerland","code":"SUI","elo":1885},{"name":"Croatia","code":"CRO","elo":1881},{"name":"Belgium","code":"BEL","elo":1879},{"name":"Uruguay","code":"URU","elo":1870},{"name":"Morocco","code":"MAR","elo":1866},{"name":"Ecuador","code":"ECU","elo":1864},{"name":"Austria","code":"AUT","elo":1857},{"name":"Senegal","code":"SEN","elo":1839},{"name":"USA","code":"USA","elo":1820},{"name":"Paraguay","code":"PAR","elo":1816},{"name":"Turkey","code":"TUR","elo":1813},{"name":"Australia","code":"AUS","elo":1799},{"name":"Canada","code":"CAN","elo":1777},{"name":"South Korea","code":"KOR","elo":1771},{"name":"Scotland","code":"SCO","elo":1768},{"name":"Algeria","code":"ALG","elo":1759},{"name":"Iran","code":"IRN","elo":1756},{"name":"Ivory Coast","code":"CIV","elo":1728},{"name":"Sweden","code":"SWE","elo":1727},{"name":"Egypt","code":"EGY","elo":1711},{"name":"Uzbekistan","code":"UZB","elo":1698},{"name":"Czech Republic","code":"CZE","elo":1696},{"name":"Panama","code":"PAN","elo":1683},{"name":"DR Congo","code":"COD","elo":1674},{"name":"Jordan","code":"JOR","elo":1653},{"name":"Cape Verde","code":"CPV","elo":1606},{"name":"Saudi Arabia","code":"KSA","elo":1598},{"name":"Bosnia & Herzegovina","code":"BIH","elo":1596},{"name":"Iraq","code":"IRQ","elo":1592},{"name":"New Zealand","code":"NZL","elo":1578},{"name":"Tunisia","code":"TUN","elo":1570},{"name":"Ghana","code":"GHA","elo":1557},{"name":"Haiti","code":"HAI","elo":1528},{"name":"South Africa","code":"RSA","elo":1527},{"name":"Curaçao","code":"CUW","elo":1453},{"name":"Qatar","code":"QAT","elo":1437}],
   bracket: {"source":"R32 + Annex C: Wikipedia raw wikitext, INDEPENDENTLY CONFIRMED against FIFA official regulations PDF + openfootball + ESPN/CBS/Fox (R32 byte-identical; allocation 495/495 exact). R16 matches 91-94 CORRECTED 2026-06-21: Wikipedia had them transposed (M91/M93 and M92/M94 swapped), which misrouted R16 winners into the wrong SF half; fixed to openfootball/ESPN/CBS/Fox venue-anchored order (M91=W76/W78, M92=W79/W80, M93=W83/W84, M94=W81/W82).","thirdPlaceSlotLabels":["1A","1B","1D","1E","1G","1I","1K","1L"],"rounds":{"R32":[{"match":73,"home":{"type":"runnerup","group":"A"},"away":{"type":"runnerup","group":"B"}},{"match":74,"home":{"type":"winner","group":"E"},"away":{"type":"third","from":["A","B","C","D","F"]}},{"match":75,"home":{"type":"winner","group":"F"},"away":{"type":"runnerup","group":"C"}},{"match":76,"home":{"type":"winner","group":"C"},"away":{"type":"runnerup","group":"F"}},{"match":77,"home":{"type":"winner","group":"I"},"away":{"type":"third","from":["C","D","F","G","H"]}},{"match":78,"home":{"type":"runnerup","group":"E"},"away":{"type":"runnerup","group":"I"}},{"match":79,"home":{"type":"winner","group":"A"},"away":{"type":"third","from":["C","E","F","H","I"]}},{"match":80,"home":{"type":"winner","group":"L"},"away":{"type":"third","from":["E","H","I","J","K"]}},{"match":81,"home":{"type":"winner","group":"D"},"away":{"type":"third","from":["B","E","F","I","J"]}},{"match":82,"home":{"type":"winner","group":"G"},"away":{"type":"third","from":["A","E","H","I","J"]}},{"match":83,"home":{"type":"runnerup","group":"K"},"away":{"type":"runnerup","group":"L"}},{"match":84,"home":{"type":"winner","group":"H"},"away":{"type":"runnerup","group":"J"}},{"match":85,"home":{"type":"winner","group":"B"},"away":{"type":"third","from":["E","F","G","I","J"]}},{"match":86,"home":{"type":"winner","group":"J"},"away":{"type":"runnerup","group":"H"}},{"match":87,"home":{"type":"winner","group":"K"},"away":{"type":"third","from":["D","E","I","J","L"]}},{"match":88,"home":{"type":"runnerup","group":"D"},"away":{"type":"runnerup","group":"G"}}],"R16":[{"match":89,"home":{"type":"winnerOf","match":74},"away":{"type":"winnerOf","match":77}},{"match":90,"home":{"type":"winnerOf","match":73},"away":{"type":"winnerOf","match":75}},{"match":91,"home":{"type":"winnerOf","match":76},"away":{"type":"winnerOf","match":78}},{"match":92,"home":{"type":"winnerOf","match":79},"away":{"type":"winnerOf","match":80}},{"match":93,"home":{"type":"winnerOf","match":83},"away":{"type":"winnerOf","match":84}},{"match":94,"home":{"type":"winnerOf","match":81},"away":{"type":"winnerOf","match":82}},{"match":95,"home":{"type":"winnerOf","match":86},"away":{"type":"winnerOf","match":88}},{"match":96,"home":{"type":"winnerOf","match":85},"away":{"type":"winnerOf","match":87}}],"QF":[{"match":97,"home":{"type":"winnerOf","match":89},"away":{"type":"winnerOf","match":90}},{"match":98,"home":{"type":"winnerOf","match":93},"away":{"type":"winnerOf","match":94}},{"match":99,"home":{"type":"winnerOf","match":91},"away":{"type":"winnerOf","match":92}},{"match":100,"home":{"type":"winnerOf","match":95},"away":{"type":"winnerOf","match":96}}],"SF":[{"match":101,"home":{"type":"winnerOf","match":97},"away":{"type":"winnerOf","match":98}},{"match":102,"home":{"type":"winnerOf","match":99},"away":{"type":"winnerOf","match":100}}],"ThirdPlace":[{"match":103,"home":{"type":"loserOf","match":101},"away":{"type":"loserOf","match":102}}],"Final":[{"match":104,"home":{"type":"winnerOf","match":101},"away":{"type":"winnerOf","match":102}}]}},
   groups: [{"name":"Group A","teams":[{"code":"CZE","name":"Czech Republic","elo":1696},{"code":"KOR","name":"South Korea","elo":1771},{"code":"MEX","name":"Mexico","elo":1896},{"code":"RSA","name":"South Africa","elo":1527}],"matches":[{"home":"MEX","away":"RSA","homeGoals":2,"awayGoals":0,"played":true,"date":"2026-06-11","time":"13:00 UTC-6"},{"home":"KOR","away":"CZE","homeGoals":2,"awayGoals":1,"played":true,"date":"2026-06-11","time":"20:00 UTC-6"},{"home":"CZE","away":"RSA","homeGoals":1,"awayGoals":1,"played":true,"date":"2026-06-18","time":"12:00 UTC-4"},{"home":"MEX","away":"KOR","homeGoals":1,"awayGoals":0,"played":true,"date":"2026-06-18","time":"19:00 UTC-6"},{"home":"CZE","away":"MEX","homeGoals":null,"awayGoals":null,"played":false,"date":"2026-06-24","time":"19:00 UTC-6"},{"home":"RSA","away":"KOR","homeGoals":null,"awayGoals":null,"played":false,"date":"2026-06-24","time":"19:00 UTC-6"}]},{"name":"Group B","teams":[{"code":"BIH","name":"Bosnia & Herzegovina","elo":1596},{"code":"CAN","name":"Canada","elo":1777},{"code":"QAT","name":"Qatar","elo":1437},{"code":"SUI","name":"Switzerland","elo":1885}],"matches":[{"home":"CAN","away":"BIH","homeGoals":1,"awayGoals":1,"played":true,"date":"2026-06-12","time":"15:00 UTC-4"},{"home":"QAT","away":"SUI","homeGoals":1,"awayGoals":1,"played":true,"date":"2026-06-13","time":"12:00 UTC-7"},{"home":"SUI","away":"BIH","homeGoals":4,"awayGoals":1,"played":true,"date":"2026-06-18","time":"12:00 UTC-7"},{"home":"CAN","away":"QAT","homeGoals":6,"awayGoals":0,"played":true,"date":"2026-06-18","time":"15:00 UTC-7"},{"home":"SUI","away":"CAN","homeGoals":null,"awayGoals":null,"played":false,"date":"2026-06-24","time":"12:00 UTC-7"},{"home":"BIH","away":"QAT","homeGoals":null,"awayGoals":null,"played":false,"date":"2026-06-24","time":"12:00 UTC-7"}]},{"name":"Group C","teams":[{"code":"BRA","name":"Brazil","elo":1986},{"code":"HAI","name":"Haiti","elo":1528},{"code":"MAR","name":"Morocco","elo":1866},{"code":"SCO","name":"Scotland","elo":1768}],"matches":[{"home":"BRA","away":"MAR","homeGoals":1,"awayGoals":1,"played":true,"date":"2026-06-13","time":"18:00 UTC-4"},{"home":"HAI","away":"SCO","homeGoals":0,"awayGoals":1,"played":true,"date":"2026-06-13","time":"21:00 UTC-4"},{"home":"SCO","away":"MAR","homeGoals":0,"awayGoals":1,"played":true,"date":"2026-06-19","time":"18:00 UTC-4"},{"home":"BRA","away":"HAI","homeGoals":3,"awayGoals":0,"played":true,"date":"2026-06-19","time":"20:30 UTC-4"},{"home":"SCO","away":"BRA","homeGoals":null,"awayGoals":null,"played":false,"date":"2026-06-24","time":"18:00 UTC-4"},{"home":"MAR","away":"HAI","homeGoals":null,"awayGoals":null,"played":false,"date":"2026-06-24","time":"18:00 UTC-4"}]},{"name":"Group D","teams":[{"code":"AUS","name":"Australia","elo":1799},{"code":"PAR","name":"Paraguay","elo":1816},{"code":"TUR","name":"Turkey","elo":1813},{"code":"USA","name":"USA","elo":1820}],"matches":[{"home":"USA","away":"PAR","homeGoals":4,"awayGoals":1,"played":true,"date":"2026-06-12","time":"18:00 UTC-7"},{"home":"AUS","away":"TUR","homeGoals":2,"awayGoals":0,"played":true,"date":"2026-06-13","time":"21:00 UTC-7"},{"home":"USA","away":"AUS","homeGoals":2,"awayGoals":0,"played":true,"date":"2026-06-19","time":"12:00 UTC-7"},{"home":"TUR","away":"PAR","homeGoals":0,"awayGoals":1,"played":true,"date":"2026-06-19","time":"20:00 UTC-7"},{"home":"TUR","away":"USA","homeGoals":null,"awayGoals":null,"played":false,"date":"2026-06-25","time":"19:00 UTC-7"},{"home":"PAR","away":"AUS","homeGoals":null,"awayGoals":null,"played":false,"date":"2026-06-25","time":"19:00 UTC-7"}]},{"name":"Group E","teams":[{"code":"CIV","name":"Ivory Coast","elo":1728},{"code":"CUW","name":"Curaçao","elo":1453},{"code":"ECU","name":"Ecuador","elo":1864},{"code":"GER","name":"Germany","elo":1954}],"matches":[{"home":"GER","away":"CUW","homeGoals":7,"awayGoals":1,"played":true,"date":"2026-06-14","time":"12:00 UTC-5"},{"home":"CIV","away":"ECU","homeGoals":1,"awayGoals":0,"played":true,"date":"2026-06-14","time":"19:00 UTC-4"},{"home":"GER","away":"CIV","homeGoals":2,"awayGoals":1,"played":true,"date":"2026-06-20","time":"16:00 UTC-4"},{"home":"ECU","away":"CUW","homeGoals":0,"awayGoals":0,"played":true,"date":"2026-06-20","time":"19:00 UTC-5"},{"home":"CUW","away":"CIV","homeGoals":null,"awayGoals":null,"played":false,"date":"2026-06-25","time":"16:00 UTC-4"},{"home":"ECU","away":"GER","homeGoals":null,"awayGoals":null,"played":false,"date":"2026-06-25","time":"16:00 UTC-4"}]},{"name":"Group F","teams":[{"code":"JPN","name":"Japan","elo":1925},{"code":"NED","name":"Netherlands","elo":1972},{"code":"SWE","name":"Sweden","elo":1727},{"code":"TUN","name":"Tunisia","elo":1570}],"matches":[{"home":"NED","away":"JPN","homeGoals":2,"awayGoals":2,"played":true,"date":"2026-06-14","time":"15:00 UTC-5"},{"home":"SWE","away":"TUN","homeGoals":5,"awayGoals":1,"played":true,"date":"2026-06-14","time":"20:00 UTC-6"},{"home":"NED","away":"SWE","homeGoals":5,"awayGoals":1,"played":true,"date":"2026-06-20","time":"12:00 UTC-5"},{"home":"TUN","away":"JPN","homeGoals":0,"awayGoals":4,"played":true,"date":"2026-06-20","time":"22:00 UTC-6"},{"home":"JPN","away":"SWE","homeGoals":null,"awayGoals":null,"played":false,"date":"2026-06-25","time":"18:00 UTC-5"},{"home":"TUN","away":"NED","homeGoals":null,"awayGoals":null,"played":false,"date":"2026-06-25","time":"18:00 UTC-5"}]},{"name":"Group G","teams":[{"code":"BEL","name":"Belgium","elo":1879},{"code":"EGY","name":"Egypt","elo":1711},{"code":"IRN","name":"Iran","elo":1756},{"code":"NZL","name":"New Zealand","elo":1578}],"matches":[{"home":"BEL","away":"EGY","homeGoals":1,"awayGoals":1,"played":true,"date":"2026-06-15","time":"12:00 UTC-7"},{"home":"IRN","away":"NZL","homeGoals":2,"awayGoals":2,"played":true,"date":"2026-06-15","time":"18:00 UTC-7"},{"home":"BEL","away":"IRN","homeGoals":0,"awayGoals":0,"played":true,"date":"2026-06-21","time":"12:00 UTC-7"},{"home":"NZL","away":"EGY","homeGoals":null,"awayGoals":null,"played":false,"date":"2026-06-21","time":"18:00 UTC-7"},{"home":"EGY","away":"IRN","homeGoals":null,"awayGoals":null,"played":false,"date":"2026-06-26","time":"20:00 UTC-7"},{"home":"NZL","away":"BEL","homeGoals":null,"awayGoals":null,"played":false,"date":"2026-06-26","time":"20:00 UTC-7"}]},{"name":"Group H","teams":[{"code":"CPV","name":"Cape Verde","elo":1606},{"code":"ESP","name":"Spain","elo":2129},{"code":"KSA","name":"Saudi Arabia","elo":1598},{"code":"URU","name":"Uruguay","elo":1870}],"matches":[{"home":"ESP","away":"CPV","homeGoals":0,"awayGoals":0,"played":true,"date":"2026-06-15","time":"12:00 UTC-4"},{"home":"KSA","away":"URU","homeGoals":1,"awayGoals":1,"played":true,"date":"2026-06-15","time":"18:00 UTC-4"},{"home":"ESP","away":"KSA","homeGoals":4,"awayGoals":0,"played":true,"date":"2026-06-21","time":"12:00 UTC-4"},{"home":"URU","away":"CPV","homeGoals":null,"awayGoals":null,"played":false,"date":"2026-06-21","time":"18:00 UTC-4"},{"home":"CPV","away":"KSA","homeGoals":null,"awayGoals":null,"played":false,"date":"2026-06-26","time":"19:00 UTC-5"},{"home":"URU","away":"ESP","homeGoals":null,"awayGoals":null,"played":false,"date":"2026-06-26","time":"18:00 UTC-6"}]},{"name":"Group I","teams":[{"code":"FRA","name":"France","elo":2084},{"code":"IRQ","name":"Iraq","elo":1592},{"code":"NOR","name":"Norway","elo":1929},{"code":"SEN","name":"Senegal","elo":1839}],"matches":[{"home":"FRA","away":"SEN","homeGoals":3,"awayGoals":1,"played":true,"date":"2026-06-16","time":"15:00 UTC-4"},{"home":"IRQ","away":"NOR","homeGoals":1,"awayGoals":4,"played":true,"date":"2026-06-16","time":"18:00 UTC-4"},{"home":"FRA","away":"IRQ","homeGoals":null,"awayGoals":null,"played":false,"date":"2026-06-22","time":"17:00 UTC-4"},{"home":"NOR","away":"SEN","homeGoals":null,"awayGoals":null,"played":false,"date":"2026-06-22","time":"20:00 UTC-4"},{"home":"NOR","away":"FRA","homeGoals":null,"awayGoals":null,"played":false,"date":"2026-06-26","time":"15:00 UTC-4"},{"home":"SEN","away":"IRQ","homeGoals":null,"awayGoals":null,"played":false,"date":"2026-06-26","time":"15:00 UTC-4"}]},{"name":"Group J","teams":[{"code":"ALG","name":"Algeria","elo":1759},{"code":"ARG","name":"Argentina","elo":2128},{"code":"AUT","name":"Austria","elo":1857},{"code":"JOR","name":"Jordan","elo":1653}],"matches":[{"home":"ARG","away":"ALG","homeGoals":3,"awayGoals":0,"played":true,"date":"2026-06-16","time":"20:00 UTC-5"},{"home":"AUT","away":"JOR","homeGoals":3,"awayGoals":1,"played":true,"date":"2026-06-16","time":"21:00 UTC-7"},{"home":"ARG","away":"AUT","homeGoals":null,"awayGoals":null,"played":false,"date":"2026-06-22","time":"12:00 UTC-5"},{"home":"JOR","away":"ALG","homeGoals":null,"awayGoals":null,"played":false,"date":"2026-06-22","time":"20:00 UTC-7"},{"home":"ALG","away":"AUT","homeGoals":null,"awayGoals":null,"played":false,"date":"2026-06-27","time":"21:00 UTC-5"},{"home":"JOR","away":"ARG","homeGoals":null,"awayGoals":null,"played":false,"date":"2026-06-27","time":"21:00 UTC-5"}]},{"name":"Group K","teams":[{"code":"COD","name":"DR Congo","elo":1674},{"code":"COL","name":"Colombia","elo":1998},{"code":"POR","name":"Portugal","elo":1967},{"code":"UZB","name":"Uzbekistan","elo":1698}],"matches":[{"home":"POR","away":"COD","homeGoals":1,"awayGoals":1,"played":true,"date":"2026-06-17","time":"12:00 UTC-5"},{"home":"UZB","away":"COL","homeGoals":1,"awayGoals":3,"played":true,"date":"2026-06-17","time":"20:00 UTC-6"},{"home":"POR","away":"UZB","homeGoals":null,"awayGoals":null,"played":false,"date":"2026-06-23","time":"12:00 UTC-5"},{"home":"COL","away":"COD","homeGoals":null,"awayGoals":null,"played":false,"date":"2026-06-23","time":"20:00 UTC-6"},{"home":"COL","away":"POR","homeGoals":null,"awayGoals":null,"played":false,"date":"2026-06-27","time":"19:30 UTC-4"},{"home":"COD","away":"UZB","homeGoals":null,"awayGoals":null,"played":false,"date":"2026-06-27","time":"19:30 UTC-4"}]},{"name":"Group L","teams":[{"code":"CRO","name":"Croatia","elo":1881},{"code":"ENG","name":"England","elo":2055},{"code":"GHA","name":"Ghana","elo":1557},{"code":"PAN","name":"Panama","elo":1683}],"matches":[{"home":"ENG","away":"CRO","homeGoals":4,"awayGoals":2,"played":true,"date":"2026-06-17","time":"15:00 UTC-5"},{"home":"GHA","away":"PAN","homeGoals":1,"awayGoals":0,"played":true,"date":"2026-06-17","time":"19:00 UTC-4"},{"home":"ENG","away":"GHA","homeGoals":null,"awayGoals":null,"played":false,"date":"2026-06-23","time":"16:00 UTC-4"},{"home":"PAN","away":"CRO","homeGoals":null,"awayGoals":null,"played":false,"date":"2026-06-23","time":"19:00 UTC-4"},{"home":"PAN","away":"ENG","homeGoals":null,"awayGoals":null,"played":false,"date":"2026-06-27","time":"17:00 UTC-4"},{"home":"CRO","away":"GHA","homeGoals":null,"awayGoals":null,"played":false,"date":"2026-06-27","time":"17:00 UTC-4"}]}],
-  freshness: {"dataThrough":"Belgium 0-0 Iran","lastDate":"2026-06-21","playedCount":38,"totalCount":104,"builtAtISO":"2026-06-21T21:33:50.768Z"}
+  freshness: {"dataThrough":"Belgium 0-0 Iran","lastDate":"2026-06-21","playedCount":38,"totalCount":104,"builtAtISO":"2026-06-21T21:45:34.206Z"}
 };
 
 /* ============================================================================
@@ -1493,6 +1510,7 @@ function monteCarlo(groups, bracket, opts = {}) {
         code,
         name: nameByCode.get(code),
         winGroup: 0, runnerUp: 0, thirdQualify: 0,
+        g1: 0, g2: 0, g3: 0, g4: 0, // full final group-position distribution
         reachR32: 0, reachR16: 0, reachQF: 0, reachSF: 0, reachFinal: 0, winCup: 0,
       };
     }
@@ -1530,6 +1548,15 @@ function monteCarlo(groups, bracket, opts = {}) {
       else if (role === 'third') C[code].thirdQualify++;
     }
 
+    // full final group-position distribution (1..4), independent of qualification
+    for (const [code, rk] of Object.entries(r.groupRank)) {
+      const c = C[code];
+      if (rk === 1) c.g1++;
+      else if (rk === 2) c.g2++;
+      else if (rk === 3) c.g3++;
+      else c.g4++;
+    }
+
     // furthest round reached (cumulative: reaching SF implies reached R16, etc.)
     for (const [code, idx] of Object.entries(r.reached)) {
       const c = C[code];
@@ -1563,6 +1590,10 @@ function monteCarlo(groups, bracket, opts = {}) {
       pWinGroup: c.winGroup / n,
       pRunnerUp: c.runnerUp / n,
       pThirdQualify: c.thirdQualify / n,
+      pGroup1: c.g1 / n, // full final group-position distribution (Elo model)
+      pGroup2: c.g2 / n,
+      pGroup3: c.g3 / n,
+      pGroup4: c.g4 / n,
       pReachR32: c.reachR32 / n,
       pReachR16: c.reachR16 / n,
       pReachQF: c.reachQF / n,
@@ -1624,6 +1655,1711 @@ function monteCarlo(groups, bracket, opts = {}) {
   return { n, perTeam, perR32Slot, modalBracket, perSlot, modalKnockout };
 }
 
+
+/* ===== scenario-summary.js (summarizeGroup; final-round analyzer) ===== */
+
+var __scnSummaryMod = (function(){
+// scenario-summary.js
+// "Scenario logic simplifier": turn the raw scenario truth-table for a group's
+// remaining match(es) into ESPN-style plain-English clinch / elimination /
+// qualification statements.
+//
+// Pure ES module, browser-safe (imports only from engine.js).
+//
+// Public API:
+//   summarizeGroup(group, opts?) -> {
+//     teams: [ { code, name, status, headline, detail, maxRank, minRank } ... ],
+//     deadRubbers: [ matchKey, ... ]
+//   }
+//
+// status is one of:
+//   'won-group'   rank == 1 in every scenario
+//   'qualified'   rank in {1,2} always, not always 1 (top-2 clinched)
+//   'best-3rd'    max achievable rank == 3 (never 1 or 2, sometimes 3)
+//   'eliminated'  rank == 4 in every scenario
+//   'conditional' everything else (rank still spans across qualifying lines)
+//
+// HONESTY LOCK: within-group rank (1/2/3/4) is deterministic and stated as
+// fact. Whether a 3rd-place finish QUALIFIES, and any knockout opponent, are
+// CROSS-GROUP and are NEVER asserted here.
+//
+// ---------------------------------------------------------------------------
+// CORE IDEA — per-OUTCOME Boolean minimization
+// ---------------------------------------------------------------------------
+// There are 1 or 2 unplayed matches. Treat each as a ternary variable over
+// {W,D,L} (HOME team's perspective). For a team T and a within-group rank r,
+// the set of outcome-cells (a subset of the 3- or 9-cell grid) that produce
+// rank r is a Boolean function. We compute the EXACT minimal cover of that set
+// as a union of "subcubes" (per match: a subset of {W,D,L}, or "any"=dropped),
+// minimizing the number of subcubes and then preferring subcubes that DROP a
+// match. A dropped match disappears from the prose clause — that is the fix for
+// the old per-team-only variable elimination, which still enumerated coupled
+// groups.
+
+const MAX_GOALS = 6;
+const COARSE = ['W', 'D', 'L'];
+
+const matchKey = (m) => `${m.home}-${m.away}`;
+const ordinal = (n) => (n === 1 ? '1st' : n === 2 ? '2nd' : n === 3 ? '3rd' : `${n}th`);
+
+// ---------------------------------------------------------------------------
+// Enumeration
+// ---------------------------------------------------------------------------
+
+/**
+ * Enumerate every scoreline combination for the unplayed matches, holding
+ * played matches fixed. For each scenario record, per team, its within-group
+ * rank, plus the coarse W/D/L (home perspective) and signed home margin for
+ * each unplayed match.
+ *
+ * @returns {{ unplayed: Array, scenarios: Array<{coarse, margins, rankByCode}> }}
+ */
+function enumerateScenarios(group, maxGoals = MAX_GOALS) {
+  const played = group.matches.filter((m) => m.played);
+  const unplayed = group.matches.filter((m) => !m.played);
+  const scenarios = [];
+
+  const acc = new Array(unplayed.length);
+  const recurse = (idx) => {
+    if (idx === unplayed.length) {
+      const synthetic = played.concat(
+        unplayed.map((m, k) => ({
+          home: m.home,
+          away: m.away,
+          homeGoals: acc[k][0],
+          awayGoals: acc[k][1],
+          played: true,
+        }))
+      );
+      const standing = computeGroupStanding({ ...group, matches: synthetic });
+      const rankByCode = {};
+      for (const t of standing) rankByCode[t.code] = t.rank;
+      const coarse = acc.map(([h, a]) => (h > a ? 'W' : h < a ? 'L' : 'D'));
+      const margins = acc.map(([h, a]) => h - a);
+      scenarios.push({ coarse, margins, rankByCode });
+      return;
+    }
+    for (let h = 0; h <= maxGoals; h++) {
+      for (let a = 0; a <= maxGoals; a++) {
+        acc[idx] = [h, a];
+        recurse(idx + 1);
+      }
+    }
+  };
+  recurse(0);
+
+  return { unplayed, scenarios };
+}
+
+// ---------------------------------------------------------------------------
+// Variable elimination (per-team relevance — coarse first cut)
+// ---------------------------------------------------------------------------
+
+/**
+ * Determine which unplayed matches actually affect this team's rank.
+ *
+ * A match j is RELEVANT to team T if, fixing every other match's full scoreline,
+ * varying match j changes T's rank for some fixing. Tested exactly against the
+ * enumerated scenarios.
+ *
+ * @returns {number[]} indices of relevant matches (sorted)
+ */
+function relevantMatchIndices(code, unplayed, scenarios) {
+  const relevant = [];
+  for (let j = 0; j < unplayed.length; j++) {
+    const groups = new Map(); // key = margins of all matches != j -> Set<rank>
+    for (const s of scenarios) {
+      const otherKey = s.margins.filter((_, k) => k !== j).join(',');
+      if (!groups.has(otherKey)) groups.set(otherKey, new Set());
+      groups.get(otherKey).add(s.rankByCode[code]);
+    }
+    let affects = false;
+    for (const set of groups.values()) {
+      if (set.size > 1) {
+        affects = true;
+        break;
+      }
+    }
+    if (affects) relevant.push(j);
+  }
+  return relevant;
+}
+
+// ---------------------------------------------------------------------------
+// Coarse cell table for a team over its RELEVANT matches
+// ---------------------------------------------------------------------------
+
+/**
+ * Build the coarse-outcome cell table for `code` over the `relevant` matches.
+ * Each cell is keyed by the tuple of coarse home-outcomes and records:
+ *   coarse: string[]  (one of 'W'|'D'|'L' per relevant match, home perspective)
+ *   rankSet: Set<number>
+ *   byMargin: Map<marginSignature, Set<rank>>   (subject-perspective margins)
+ *
+ * marginMatters is true iff some coarse cell spans >1 rank (a goal margin flips
+ * the result within fixed W/D/L outcomes).
+ */
+function buildRelevantCells(code, unplayed, scenarios, relevant) {
+  const cells = new Map();
+  for (const s of scenarios) {
+    const coarse = relevant.map((j) => s.coarse[j]);
+    const key = coarse.join('|');
+    if (!cells.has(key)) cells.set(key, { coarse, rankSet: new Set(), byMargin: new Map() });
+    const cell = cells.get(key);
+    cell.rankSet.add(s.rankByCode[code]);
+    const marg = relevant
+      .map((j) => {
+        const m = unplayed[j];
+        const hm = s.margins[j];
+        return m.away === code ? -hm : hm;
+      })
+      .join(',');
+    if (!cell.byMargin.has(marg)) cell.byMargin.set(marg, new Set());
+    cell.byMargin.get(marg).add(s.rankByCode[code]);
+  }
+  let marginMatters = false;
+  for (const cell of cells.values()) if (cell.rankSet.size > 1) marginMatters = true;
+  return { cells, marginMatters };
+}
+
+// ===========================================================================
+// MINIMAL COVER  (the core fix)
+// ===========================================================================
+//
+// A "subcube" over N (=1 or 2) ternary match variables is an array of N sets,
+// each a non-empty subset of {W,D,L}. The subcube covers a coarse cell iff each
+// of the cell's coarse outcomes is in the corresponding set. A subcube where a
+// match's set is the full {W,D,L} effectively DROPS that match from the clause.
+//
+// minimalCover(targetCells, otherCells, numMatches):
+//   targetCells : Array<string[]>  coarse tuples that MUST be covered
+//   otherCells  : Set<string>      "off" cells that must NOT be covered
+//                  (cells reachable but belonging to a different rank)
+//   Returns the minimum-cardinality set of valid subcubes whose union is
+//   exactly targetCells, with a tie-break preferring (a) more dropped matches,
+//   then (b) larger 2-of-3 sets over singletons. Exact brute force (search
+//   space is tiny: 7^numMatches candidate subcubes).
+//
+// Validity: a subcube is valid iff it covers no off-cell. We only ever pass
+// off-cells that are reachable; unreachable grid cells (e.g. impossible
+// combos — none here, every W/D/L combo is reachable) are treated as "don't
+// care" by simply not appearing in either set.
+
+/** All 7 non-empty subsets of {W,D,L}, as arrays, richest-to-leanest order. */
+const SUBSETS = (() => {
+  const out = [];
+  for (let mask = 1; mask < 8; mask++) {
+    const s = [];
+    if (mask & 1) s.push('W');
+    if (mask & 2) s.push('D');
+    if (mask & 4) s.push('L');
+    out.push(s);
+  }
+  // sort so the FULL set (size 3 = "any") comes first, then size 2, then size 1
+  out.sort((a, b) => b.length - a.length);
+  return out;
+})();
+
+/** Cartesian product of per-match subset choices -> all candidate subcubes. */
+function allSubcubes(numMatches) {
+  let acc = [[]];
+  for (let i = 0; i < numMatches; i++) {
+    const next = [];
+    for (const partial of acc) for (const s of SUBSETS) next.push(partial.concat([s]));
+    acc = next;
+  }
+  return acc;
+}
+
+/** Does subcube cover coarse cell (array of 'W'|'D'|'L')? */
+function subcubeCovers(subcube, coarse) {
+  for (let i = 0; i < subcube.length; i++) if (!subcube[i].includes(coarse[i])) return false;
+  return true;
+}
+
+/** Cost tuple for a subcube: fewer dropped matches is WORSE in count terms but
+ *  preferred at equal cover size. We score: primary = #non-dropped matches
+ *  (lower better), secondary = total literals = sum of (3 - setSize) (lower
+ *  better, i.e. larger sets preferred). */
+function subcubeCost(subcube) {
+  let nonDropped = 0;
+  let literals = 0;
+  for (const s of subcube) {
+    if (s.length < 3) {
+      nonDropped++;
+      literals += 3 - s.length; // size2 -> 1, size1 -> 2
+    }
+  }
+  return nonDropped * 10 + literals;
+}
+
+/**
+ * Exact minimal cover. Returns Array<subcube>.
+ */
+function minimalCover(targetCells, otherCells, numMatches) {
+  const targetKeys = new Set(targetCells.map((c) => c.join('|')));
+  if (targetKeys.size === 0) return [];
+
+  // Candidate VALID subcubes: cover >=1 target cell, no off cell.
+  const candidates = [];
+  for (const sub of allSubcubes(numMatches)) {
+    // enumerate cells this subcube covers
+    let coversOff = false;
+    const covered = new Set();
+    // build the cells of this subcube
+    const dims = sub.map((s) => s);
+    const stack = [[]];
+    while (stack.length) {
+      const partial = stack.pop();
+      if (partial.length === numMatches) {
+        const key = partial.join('|');
+        if (otherCells.has(key)) {
+          coversOff = true;
+          break;
+        }
+        if (targetKeys.has(key)) covered.add(key);
+        continue;
+      }
+      for (const v of dims[partial.length]) stack.push(partial.concat([v]));
+    }
+    if (coversOff) continue;
+    if (covered.size === 0) continue;
+    candidates.push({ sub, covered, cost: subcubeCost(sub) });
+  }
+
+  // Minimum set cover by exact search (branch & bound on # of subcubes), with
+  // cost tie-break. Search space is tiny (<= a few dozen candidates).
+  let best = null;
+  const targetArr = [...targetKeys];
+
+  const search = (remaining, chosen, totalCost) => {
+    if (remaining.size === 0) {
+      if (
+        !best ||
+        chosen.length < best.chosen.length ||
+        (chosen.length === best.chosen.length && totalCost < best.totalCost)
+      ) {
+        best = { chosen: chosen.slice(), totalCost };
+      }
+      return;
+    }
+    if (best && chosen.length >= best.chosen.length) {
+      // can't beat on count; allow equal-count only if it could improve cost.
+      if (chosen.length > best.chosen.length) return;
+      if (chosen.length === best.chosen.length) return; // adding more can't reduce count
+    }
+    // pick an uncovered cell with the fewest covering candidates (MRV)
+    let pivot = null;
+    let pivotCands = null;
+    for (const cell of remaining) {
+      const cands = candidates.filter((c) => c.covered.has(cell));
+      if (pivotCands === null || cands.length < pivotCands.length) {
+        pivot = cell;
+        pivotCands = cands;
+        if (cands.length <= 1) break;
+      }
+    }
+    if (!pivotCands || pivotCands.length === 0) return; // uncoverable
+    // try each candidate covering the pivot
+    for (const cand of pivotCands) {
+      const nextRemaining = new Set(remaining);
+      for (const k of cand.covered) nextRemaining.delete(k);
+      search(nextRemaining, chosen.concat([cand]), totalCost + cand.cost);
+    }
+  };
+  search(new Set(targetArr), [], 0);
+
+  return best ? best.chosen.map((c) => c.sub) : [];
+}
+
+// ---------------------------------------------------------------------------
+// Phrasing helpers
+// ---------------------------------------------------------------------------
+
+/** Convert a coarse home-outcome to the subject team's perspective. */
+function fromSubjectPerspective(coarse, match, code) {
+  if (match.home === code) return coarse;
+  if (match.away === code) return coarse === 'W' ? 'L' : coarse === 'L' ? 'W' : 'D';
+  return coarse;
+}
+
+/**
+ * Render the SUBJECT team's own match (a subset of {W,D,L} in subject
+ * perspective) into a verb phrase naming the opponent.
+ *   {W}    -> "a win over Paraguay"
+ *   {D}    -> "a draw with Paraguay"
+ *   {L}    -> "a loss to Paraguay"
+ *   {W,D}  -> "a win or draw vs Paraguay"   (avoid defeat)
+ *   {D,L}  -> "a draw or loss vs Paraguay"  (fail to win)
+ *   {W,L}  -> "a win or loss vs Paraguay"   (rare)
+ *   full   -> "" (dropped; caller omits)
+ */
+function ownMatchPhrase(set, opp) {
+  const has = (x) => set.has(x);
+  if (set.size === 3) return '';
+  if (set.size === 1) {
+    if (has('W')) return `a win over ${opp}`;
+    if (has('D')) return `a draw with ${opp}`;
+    return `a loss to ${opp}`;
+  }
+  if (has('W') && has('D')) return `a win or draw vs ${opp}`;
+  if (has('D') && has('L')) return `a draw or loss vs ${opp}`;
+  return `a win or loss vs ${opp}`;
+}
+
+/**
+ * Render an OTHER match (subject not playing) as an EVENT phrase, given a subset
+ * of coarse home-outcomes.
+ *   {W}        -> "Czech Republic beat Mexico"
+ *   {L}        -> "Mexico beat Czech Republic"
+ *   {D}        -> "Czech Republic and Mexico draw"
+ *   {W,D} (!L) -> "Czech Republic avoid defeat"      (home not beaten)
+ *   {D,L} (!W) -> "Mexico avoid defeat"               (away not beaten)
+ *   {W,L} (!D) -> "Czech Republic or Mexico win"      (no draw)
+ *   full       -> "" (dropped)
+ */
+function otherMatchPhrase(set, match, nameOf) {
+  const home = nameOf(match.home);
+  const away = nameOf(match.away);
+  if (set.size === 3) return '';
+  if (set.size === 1) {
+    const c = [...set][0];
+    if (c === 'W') return `${home} beat ${away}`;
+    if (c === 'L') return `${away} beat ${home}`;
+    return `${home} and ${away} draw`;
+  }
+  // size 2 -> express as the natural negation of the excluded outcome.
+  if (!set.has('L')) return `${home} avoid defeat`; // {W,D}
+  if (!set.has('W')) return `${away} avoid defeat`; // {D,L}
+  return `${home} or ${away} win`; // {W,L}, no draw
+}
+
+/**
+ * Render ONE subcube (over the relevant matches) into a condition phrase from
+ * the subject team's point of view. Matches set to "any" are dropped. Multiple
+ * surviving conditions are joined with "and". Returns '' if the subcube drops
+ * every match (i.e. the rank is unconditional given the branch).
+ */
+function renderSubcube(subcube, code, unplayed, relevant, nameOf) {
+  const parts = [];
+  for (let i = 0; i < relevant.length; i++) {
+    const m = unplayed[relevant[i]];
+    const homeSet = new Set(subcube[i]);
+    if (homeSet.size === 3) continue; // dropped
+    const subjectPlays = m.home === code || m.away === code;
+    if (subjectPlays) {
+      const subjSet = new Set([...homeSet].map((c) => fromSubjectPerspective(c, m, code)));
+      const opp = nameOf(m.home === code ? m.away : m.home);
+      parts.push(ownMatchPhrase(subjSet, opp));
+    } else {
+      parts.push(otherMatchPhrase(homeSet, m, nameOf));
+    }
+  }
+  return parts.filter(Boolean).join(' and ');
+}
+
+/** Join the subcube clauses for a single rank with "or". When more than one
+ *  clause survives and any clause itself contains "and", parenthesize the
+ *  multi-condition clauses so the top-level "or" can't be misread. */
+function renderRankCover(subcubes, code, unplayed, relevant, nameOf) {
+  const phrases = subcubes
+    .map((sc) => renderSubcube(sc, code, unplayed, relevant, nameOf))
+    .filter((p) => p !== '');
+  // De-dup.
+  const seen = new Set();
+  const uniq = [];
+  for (const p of phrases) {
+    if (!seen.has(p)) {
+      seen.add(p);
+      uniq.push(p);
+    }
+  }
+  if (uniq.length <= 1) return uniq.join(' or ');
+  return uniq.map((p) => (p.includes(' and ') ? `(${p})` : p)).join(' or ');
+}
+
+// ---------------------------------------------------------------------------
+// Per-rank cover construction (coarse, margin-free)
+// ---------------------------------------------------------------------------
+
+/**
+ * For a team whose rank is decided purely by coarse outcomes (no margin flips),
+ * compute the minimal subcube cover for EACH achievable rank.
+ *
+ * @returns Map<rank, subcube[]>
+ */
+function coverByRank(cells, ranks, numMatches) {
+  // rank -> array of coarse tuples
+  const cellsByRank = new Map();
+  const allKeys = new Set();
+  for (const cell of cells.values()) {
+    const r = [...cell.rankSet][0]; // margin-free => singleton
+    allKeys.add(cell.coarse.join('|'));
+    if (!cellsByRank.has(r)) cellsByRank.set(r, []);
+    cellsByRank.get(r).push(cell.coarse);
+  }
+  const result = new Map();
+  for (const r of ranks) {
+    const target = cellsByRank.get(r) || [];
+    if (target.length === 0) continue;
+    const off = new Set([...allKeys].filter((k) => !target.some((t) => t.join('|') === k)));
+    result.set(r, minimalCover(target, off, numMatches));
+  }
+  return result;
+}
+
+// ---------------------------------------------------------------------------
+// Detail builder — REFRAMED prose (best outcome first, then downside)
+// ---------------------------------------------------------------------------
+
+/**
+ * Build a plain-English detail string for a conditional / best-3rd team whose
+ * rank depends on `relevant` matches. Leads with the best reachable rank and
+ * its simplest controllable condition, then states the downside; appends the
+ * deeper fall only when an extra match-result triggers it.
+ *
+ * Aim: one, at most two sentences. Falls back to a compact margin note rather
+ * than a long enumeration if minimization can't shorten things.
+ */
+function describeConditional(code, name, unplayed, scenarios, relevant, nameOf) {
+  const ranks = [...new Set(scenarios.map((s) => s.rankByCode[code]))].sort((a, b) => a - b);
+  const { cells, marginMatters } = buildRelevantCells(code, unplayed, scenarios, relevant);
+  const numMatches = relevant.length;
+
+  const ownIdx = relevant.findIndex(
+    (j) => unplayed[j].home === code || unplayed[j].away === code
+  );
+
+  // Margin-free and the subject plays one of the relevant matches: organize the
+  // statement around the subject's OWN (controllable) result. This is where the
+  // per-outcome minimization pays off — the OTHER match is dropped from any
+  // own-result slice in which it doesn't change the rank.
+  if (!marginMatters && ownIdx >= 0) {
+    return describeByOwnResult(code, ranks, cells, unplayed, relevant, ownIdx, nameOf);
+  }
+
+  // Margin-free, subject doesn't play (rank driven entirely by other matches):
+  // per-rank minimal cover, best rank first.
+  if (!marginMatters) {
+    const covers = coverByRank(cells, ranks, numMatches);
+    return describeByRankCover(code, ranks, covers, unplayed, relevant, nameOf);
+  }
+
+  // Margin matters. Single match the subject plays -> concrete thresholds.
+  if (numMatches === 1) {
+    return describeSingleWithMargin(code, unplayed[relevant[0]], cells, ranks, nameOf);
+  }
+  return describeWithMarginFallback(code, ranks, cells, unplayed, relevant, nameOf);
+}
+
+// ---------------------------------------------------------------------------
+// Own-result-centric renderer (margin-free, subject plays a relevant match)
+// ---------------------------------------------------------------------------
+
+/**
+ * Subject-perspective verb noun phrase for a coarse outcome set, capitalized for
+ * sentence-initial use when `cap` is true.
+ *   {W} -> "a win" / "A win"; {W,D} -> "a win or draw"; etc.
+ */
+function ownResultWord(subjSet, capitalize = false) {
+  let w;
+  if (subjSet.size === 1) {
+    const c = [...subjSet][0];
+    w = c === 'W' ? 'a win' : c === 'D' ? 'a draw' : 'a loss';
+  } else if (subjSet.has('W') && subjSet.has('D')) w = 'a win or draw';
+  else if (subjSet.has('D') && subjSet.has('L')) w = 'a draw or loss';
+  else if (subjSet.has('W') && subjSet.has('L')) w = 'a win or loss';
+  else w = 'any result';
+  return capitalize ? w.charAt(0).toUpperCase() + w.slice(1) : w;
+}
+
+/**
+ * Build the per-own-result slices. For each subject result present (W/D/L), the
+ * "other" matches partition the slice into ranks. We collapse each slice to:
+ *   { subjSet, primaryRank, exceptions: [{rank, otherPhrases}] }
+ * where primaryRank is the slice's DOMINANT rank (no condition needed) and
+ * exceptions are the minority ranks gated by an other-match condition. Slices
+ * that share an identical (primaryRank, no-exception) shape and the same subjSet
+ * neighbourhood are merged by the caller via subjSet union.
+ */
+function sliceByOwnResult(code, cells, unplayed, relevant, ownIdx, nameOf) {
+  const otherIdx = relevant.map((_, i) => i).filter((i) => i !== ownIdx);
+  const ownMatch = unplayed[relevant[ownIdx]];
+
+  // own coarse (home perspective) -> { other coarse tuple -> rank }
+  const byOwn = new Map();
+  for (const cell of cells.values()) {
+    const ownC = cell.coarse[ownIdx];
+    if (!byOwn.has(ownC)) byOwn.set(ownC, []);
+    byOwn.get(ownC).push({ other: otherIdx.map((i) => cell.coarse[i]), rank: [...cell.rankSet][0] });
+  }
+
+  const slices = [];
+  for (const [ownC, entries] of byOwn) {
+    const subjC = fromSubjectPerspective(ownC, ownMatch, code);
+    const rankCount = new Map();
+    for (const e of entries) rankCount.set(e.rank, (rankCount.get(e.rank) || 0) + 1);
+    const ranksHere = [...rankCount.keys()].sort((a, b) => a - b);
+
+    if (ranksHere.length === 1) {
+      slices.push({ subjC, primaryRank: ranksHere[0], exceptions: [] });
+      continue;
+    }
+    // dominant rank = most cells (ties -> the better/lower rank, which is more
+    // newsworthy as the default). Minorities become conditioned exceptions.
+    let dominant = ranksHere[0];
+    let dom = -1;
+    for (const r of ranksHere) {
+      const c = rankCount.get(r);
+      if (c > dom || (c === dom && r < dominant)) {
+        dom = c;
+        dominant = r;
+      }
+    }
+    const exceptions = [];
+    for (const r of ranksHere) {
+      if (r === dominant) continue;
+      // minimal cover of this minority rank within the slice (other matches only)
+      const target = entries.filter((e) => e.rank === r).map((e) => e.other);
+      const off = new Set(
+        entries.filter((e) => e.rank !== r).map((e) => e.other.join('|'))
+      );
+      const cover = minimalCover(target, off, otherIdx.length);
+      const phrases = cover
+        .map((sc) =>
+          otherIdx
+            .map((i, k) => otherMatchPhrase(new Set(sc[k]), unplayed[relevant[i]], nameOf))
+            .filter(Boolean)
+            .join(' and ')
+        )
+        .filter((p) => p !== '');
+      exceptions.push({ rank: r, otherPhrases: phrases });
+    }
+    slices.push({ subjC, primaryRank: dominant, exceptions });
+  }
+  return { slices, ownMatch };
+}
+
+/**
+ * Render the own-result slices into one or two sentences, leading with the best
+ * reachable rank and ending with the worst.
+ */
+function describeByOwnResult(code, ranks, cells, unplayed, relevant, ownIdx, nameOf) {
+  const { slices, ownMatch } = sliceByOwnResult(code, cells, unplayed, relevant, ownIdx, nameOf);
+  const opp = nameOf(ownMatch.home === code ? ownMatch.away : ownMatch.home);
+
+  // Merge slices that have the SAME primaryRank and NO exceptions — their own
+  // results combine ("a win or draw" instead of two clauses).
+  const merged = [];
+  const plain = new Map(); // primaryRank -> Set of subjC (only for exception-free slices)
+  for (const sl of slices) {
+    if (sl.exceptions.length === 0) {
+      if (!plain.has(sl.primaryRank)) plain.set(sl.primaryRank, new Set());
+      plain.get(sl.primaryRank).add(sl.subjC);
+    } else {
+      merged.push(sl);
+    }
+  }
+  for (const [rank, subjCs] of plain) {
+    merged.push({ subjSet: subjCs, primaryRank: rank, exceptions: [] });
+  }
+
+  // Build a clause per slice; sort best-rank-first by the slice's BEST attainable
+  // rank (primary or any exception).
+  const sliceBest = (sl) =>
+    Math.min(sl.primaryRank, ...sl.exceptions.map((e) => e.rank));
+  const sliceWorst = (sl) =>
+    Math.max(sl.primaryRank, ...sl.exceptions.map((e) => e.rank));
+  merged.sort((a, b) => sliceBest(a) - sliceBest(b) || sliceWorst(a) - sliceWorst(b));
+
+  const subjSetOf = (sl) => sl.subjSet || new Set([sl.subjC]);
+
+  const clauses = merged.map((sl, idx) => {
+    const subjSet = subjSetOf(sl);
+    const word = ownResultWord(subjSet, idx > 0); // capitalize follow-on clauses
+    if (sl.exceptions.length === 0) {
+      // "2nd with a win or draw vs South Africa" / for a downside: phrased as the
+      // own result leading.
+      if (idx === 0) return `${ordinal(sl.primaryRank)} with ${ownResultWordPhrase(subjSet, opp)}`;
+      // follow-on: "A loss drops them to 3rd"
+      return `${word} drops them to ${ordinal(sl.primaryRank)}`;
+    }
+    // primary + exceptions:
+    //   lead:      "1st with a win over Brazil — or 2nd if Morocco beat Haiti"
+    //   follow-on: "a loss is 3rd — or 4th if Czech Republic beat Mexico"
+    let s;
+    if (idx === 0) {
+      s = `${ordinal(sl.primaryRank)} with ${ownResultWordPhrase(subjSet, opp)}`;
+    } else {
+      s = `${word} drops them to ${ordinal(sl.primaryRank)}`;
+    }
+    for (const ex of sl.exceptions) {
+      const cond = ex.otherPhrases.join(' or ');
+      s += ` — or ${ordinal(ex.rank)} if ${cond}`;
+    }
+    return s;
+  });
+
+  return clauses.join('; ') + '.';
+}
+
+/** "a win or draw vs South Africa" — own result set with opponent attached. */
+function ownResultWordPhrase(subjSet, opp) {
+  return ownMatchPhrase(subjSet, opp) || 'any result';
+}
+
+/**
+ * Subject does NOT play any relevant match — rank is driven entirely by other
+ * teams' matches. Render best rank first via the per-rank minimal cover.
+ */
+function describeByRankCover(code, ranks, covers, unplayed, relevant, nameOf) {
+  const parts = [];
+  for (const r of ranks) {
+    const p = renderRankCover(covers.get(r) || [], code, unplayed, relevant, nameOf);
+    parts.push(p === '' ? `${ordinal(r)} otherwise` : `${ordinal(r)} if ${p}`);
+  }
+  return parts.join('; ') + '.';
+}
+
+// ---------------------------------------------------------------------------
+// Margin-threshold rendering (single match the subject plays)
+// ---------------------------------------------------------------------------
+
+/**
+ * Single relevant match where goal margin changes the rank. Express coarse
+ * outcomes first, then add margin thresholds inside the cell that needs them.
+ * Concrete thresholds ("if they win by 2+") replace any vague language.
+ */
+function describeSingleWithMargin(code, match, cells, ranks, nameOf) {
+  const subjectPlays = match.home === code || match.away === code;
+  const opp = nameOf(match.home === code ? match.away : match.home);
+  const order = { W: 0, D: 1, L: 2 };
+  const sorted = [...cells.values()].sort((a, b) => order[a.coarse[0]] - order[b.coarse[0]]);
+  const clauses = [];
+  for (const cell of sorted) {
+    const homeCoarse = cell.coarse[0];
+    const subjCoarse = subjectPlays ? fromSubjectPerspective(homeCoarse, match, code) : homeCoarse;
+    if (cell.rankSet.size === 1) {
+      const r = [...cell.rankSet][0];
+      if (subjectPlays) {
+        clauses.push(`${ordinal(r)} with ${ownMatchPhrase(new Set([subjCoarse]), opp)}`);
+      } else {
+        clauses.push(`${ordinal(r)} if ${otherMatchPhrase(new Set([homeCoarse]), match, nameOf)}`);
+      }
+      continue;
+    }
+    // margin splits this coarse cell -> describe by margin band (subject persp.)
+    const byMargin = [...cell.byMargin.entries()]
+      .map(([mk, set]) => ({ margin: Number(mk), rank: [...set][0] }))
+      .sort((a, b) => a.margin - b.margin);
+    const bands = [];
+    for (const e of byMargin) {
+      const last = bands[bands.length - 1];
+      if (last && last.rank === e.rank && e.margin === last.hi + 1) last.hi = e.margin;
+      else bands.push({ lo: e.margin, hi: e.margin, rank: e.rank });
+    }
+    const verb = subjectPlays
+      ? subjCoarse === 'W'
+        ? 'win'
+        : subjCoarse === 'L'
+          ? 'lose'
+          : 'draw'
+      : homeCoarse === 'W'
+        ? 'win'
+        : 'lose';
+    for (const b of bands) {
+      const loMag = Math.abs(b.lo);
+      const hiMag = Math.abs(b.hi);
+      const lo = Math.min(loMag, hiMag);
+      const hi = Math.max(loMag, hiMag);
+      let cond;
+      if (lo === hi) cond = `${verb} by ${lo}`;
+      else if (hi >= MAX_GOALS) cond = `${verb} by ${lo}+`;
+      else cond = `${verb} by ${lo}-${hi}`;
+      const subj = subjectPlays ? 'they' : nameOf(match.home);
+      clauses.push(`${ordinal(b.rank)} if ${subj} ${cond}`);
+    }
+  }
+  return clauses.join('; ') + '.';
+}
+
+/**
+ * Two relevant matches where a goal margin flips the rank inside some coarse
+ * cell — the genuinely hard case. Full enumeration is unreadable, so we state
+ * the best CLEANLY-GUARANTEED outcome tightly, then collapse the rest into a
+ * single compact "...otherwise Nth/Mth on goal difference" tail. Honest and
+ * short; never an over-claim and never a 2-D margin grid.
+ */
+function describeWithMarginFallback(code, ranks, cells, unplayed, relevant, nameOf) {
+  const numMatches = relevant.length;
+
+  // Cells where each rank is the SOLE (coarse-guaranteed) outcome.
+  const cleanByRank = new Map();
+  for (const cell of cells.values()) {
+    if (cell.rankSet.size === 1) {
+      const r = [...cell.rankSet][0];
+      if (!cleanByRank.has(r)) cleanByRank.set(r, []);
+      cleanByRank.get(r).push(cell.coarse);
+    }
+  }
+
+  // Tight cover of a rank's guaranteed cells: every other cell is off.
+  const renderGuaranteed = (tuples) => {
+    if (!tuples || tuples.length === 0) return '';
+    const keep = new Set(tuples.map((t) => t.join('|')));
+    const off = new Set();
+    for (const cell of cells.values()) {
+      const k = cell.coarse.join('|');
+      if (!keep.has(k)) off.add(k);
+    }
+    return renderRankCover(minimalCover(tuples, off, numMatches), code, unplayed, relevant, nameOf);
+  };
+
+  // Render each rank in rank order (best first): a tight clean clause where the
+  // rank is guaranteed, or a compact goal-difference note where it is only ever
+  // margin-decided.
+  const clauses = [];
+  const marginOnly = [];
+  for (const r of ranks) {
+    const g = renderGuaranteed(cleanByRank.get(r));
+    if (g !== '') clauses.push({ rank: r, text: `${ordinal(r)} with ${g}` });
+    else marginOnly.push(r);
+  }
+
+  if (clauses.length === 0) {
+    // Nothing cleanly guaranteed -> entirely a goal-difference matter.
+    return `${ranks.map(ordinal).join('/')} depending on goal difference.`;
+  }
+
+  // Insert margin-only ranks at their rank position with a GD note.
+  for (const r of marginOnly) {
+    clauses.push({ rank: r, text: `${ordinal(r)} on goal difference` });
+  }
+  clauses.sort((a, b) => a.rank - b.rank);
+  return clauses.map((c) => c.text).join('; ') + '.';
+}
+
+// ---------------------------------------------------------------------------
+// "Wins the group" detail (1st still reachable for a clinched top-2 team)
+// ---------------------------------------------------------------------------
+
+/**
+ * Build the detail line for a team that has clinched top-2 but can still win the
+ * group: lead with the path to 1st, then note the simplest way 1st slips to 2nd.
+ */
+function detailForTop(code, name, unplayed, scenarios, relevant, nameOf) {
+  const { cells, marginMatters } = buildRelevantCells(code, unplayed, scenarios, relevant);
+  const ranks = [...new Set(scenarios.map((s) => s.rankByCode[code]))].sort((a, b) => a - b);
+  const numMatches = relevant.length;
+
+  if (!ranks.includes(1)) return null;
+
+  if (!marginMatters) {
+    const covers = coverByRank(cells, ranks, numMatches);
+    const firstPhrase = renderRankCover(covers.get(1) || [], code, unplayed, relevant, nameOf);
+    let lead = firstPhrase === '' ? 'Wins the group' : `Wins the group with ${firstPhrase}`;
+
+    // If 2nd is the only other rank, phrase the slip succinctly.
+    if (ranks.length === 1) return lead + '.';
+
+    const ownIdx = relevant.findIndex(
+      (j) => unplayed[j].home === code || unplayed[j].away === code
+    );
+    // The path to 2nd.
+    const secondSubs = covers.get(2) || [];
+    const secondPhrase = renderRankCover(secondSubs, code, unplayed, relevant, nameOf);
+
+    if (ownIdx >= 0) {
+      // Try clean own-result framing for the slip to 2nd.
+      const ownMatch = unplayed[relevant[ownIdx]];
+      const opp = nameOf(ownMatch.home === code ? ownMatch.away : ownMatch.home);
+      // own subset & other condition for rank 2
+      const ownHomeSet = new Set();
+      const otherPhrases = new Set();
+      let clean = secondSubs.length > 0;
+      for (const sc of secondSubs) {
+        for (const v of sc[ownIdx]) ownHomeSet.add(v);
+        if (new Set(sc[ownIdx]).size === 3) clean = false;
+        for (let i = 0; i < relevant.length; i++) {
+          if (i === ownIdx) continue;
+          const ph = otherMatchPhrase(new Set(sc[i]), unplayed[relevant[i]], nameOf);
+          if (ph) otherPhrases.add(ph);
+        }
+      }
+      if (clean) {
+        const subjSet = new Set(
+          [...ownHomeSet].map((c) => fromSubjectPerspective(c, ownMatch, code))
+        );
+        const ownP = ownMatchPhrase(subjSet, opp);
+        if (otherPhrases.size === 0) {
+          return `${lead}; ${cap(ownP)} sees them finish 2nd.`;
+        }
+        if (otherPhrases.size === 1) {
+          // e.g. "a draw still tops the group unless Sweden beat Japan"
+          return `${lead}; otherwise 2nd if ${[...otherPhrases][0]}.`;
+        }
+      }
+    }
+    // Generic.
+    return `${lead}; 2nd${secondPhrase ? ` if ${secondPhrase}` : ' otherwise'}.`;
+  }
+
+  // Margin case: fall back to single-match margin renderer's 1st clause, or a
+  // compact statement.
+  if (numMatches === 1 && (unplayed[relevant[0]].home === code || unplayed[relevant[0]].away === code)) {
+    return describeSingleWithMargin(code, unplayed[relevant[0]], cells, ranks, nameOf);
+  }
+  return `Wins the group if results elsewhere fall their way (and on goal difference).`;
+}
+
+/** Capitalize the first letter of a phrase. */
+function cap(s) {
+  return s ? s.charAt(0).toUpperCase() + s.slice(1) : s;
+}
+
+// ---------------------------------------------------------------------------
+// Dead-rubber detection
+// ---------------------------------------------------------------------------
+
+/**
+ * A match is a dead rubber if its result cannot change ANY team's within-group
+ * rank. Match j is dead iff it is irrelevant to every team.
+ */
+function deadRubbers(group, unplayed, scenarios) {
+  const dead = [];
+  for (let j = 0; j < unplayed.length; j++) {
+    let mattersToSomeone = false;
+    for (const team of group.teams) {
+      const rel = relevantMatchIndices(team.code, unplayed, scenarios);
+      if (rel.includes(j)) {
+        mattersToSomeone = true;
+        break;
+      }
+    }
+    if (!mattersToSomeone) dead.push(matchKey(unplayed[j]));
+  }
+  return dead;
+}
+
+// ---------------------------------------------------------------------------
+// Headline accuracy
+// ---------------------------------------------------------------------------
+
+/**
+ * "Fate in its own hands" / "controls its own destiny" is only warranted when
+ * the team's OWN result alone determines whether it finishes top-2: there is an
+ * own-result that GUARANTEES top-2 regardless of the other match(es). Otherwise
+ * use a neutral headline.
+ */
+function controlsTop2(code, unplayed, scenarios, relevant) {
+  const ownIdx = relevant.find(
+    (j) => unplayed[j].home === code || unplayed[j].away === code
+  );
+  if (ownIdx === undefined) return false;
+  const ownMatch = unplayed[ownIdx];
+  // Group scenarios by the subject's own coarse result; check if some own result
+  // yields top-2 (rank<=2) in EVERY scenario with that result.
+  const byOwn = new Map(); // 'W'|'D'|'L' -> Set<rank>
+  for (const s of scenarios) {
+    const own = fromSubjectPerspective(s.coarse[ownIdx], ownMatch, code);
+    if (!byOwn.has(own)) byOwn.set(own, new Set());
+    byOwn.get(own).add(s.rankByCode[code]);
+  }
+  for (const set of byOwn.values()) {
+    let allTop2 = true;
+    for (const r of set) if (r > 2) allTop2 = false;
+    if (allTop2) return true;
+  }
+  return false;
+}
+
+function conditionalHeadline(code, allRanks, unplayed, scenarios, relevant) {
+  const hi = Math.max(...allRanks);
+  const controls = controlsTop2(code, unplayed, scenarios, relevant);
+  if (allRanks.has(1)) {
+    return controls
+      ? `Still alive for 1st (could finish as low as ${ordinal(hi)}) — controls its own destiny`
+      : `Still alive for 1st (could finish as low as ${ordinal(hi)})`;
+  }
+  if (allRanks.has(2)) {
+    return controls
+      ? `Can finish as high as 2nd (as low as ${ordinal(hi)}) — fate in its own hands`
+      : `Can still finish 2nd; could fall to ${ordinal(hi)}`;
+  }
+  return `Position still open (${ordinal(Math.min(...allRanks))}–${ordinal(hi)})`;
+}
+
+// ---------------------------------------------------------------------------
+// Top-level
+// ---------------------------------------------------------------------------
+
+/**
+ * Summarize a group's remaining-match scenarios into per-team plain-English
+ * clinch / qualification / elimination statements.
+ *
+ * @param {{name,teams,matches}} group
+ * @param {{maxGoals?:number}} [opts]
+ * @returns {{ teams: Array, deadRubbers: string[] }}
+ */
+function summarizeGroup(group, opts = {}) {
+  const maxGoals = opts.maxGoals ?? MAX_GOALS;
+  const nameOf = (code) => {
+    const t = group.teams.find((x) => x.code === code);
+    return t ? t.name : code;
+  };
+
+  const unplayed = group.matches.filter((m) => !m.played);
+
+  // Fully-played group: every team has a fixed rank.
+  if (unplayed.length === 0) {
+    const standing = computeGroupStanding(group);
+    const teams = standing.map((s) => ({
+      code: s.code,
+      name: s.name,
+      status:
+        s.rank === 1 ? 'won-group' : s.rank === 4 ? 'eliminated' : s.rank === 3 ? 'best-3rd' : 'qualified',
+      headline:
+        s.rank === 1
+          ? 'Clinched 1st — group winner'
+          : s.rank === 4
+            ? 'Eliminated'
+            : s.rank === 3
+              ? 'Finished 3rd — advancing then depends on other groups'
+              : 'Qualified — finished 2nd',
+      detail: null,
+      maxRank: s.rank,
+      minRank: s.rank,
+    }));
+    return { teams, deadRubbers: [] };
+  }
+
+  const { scenarios } = enumerateScenarios(group, maxGoals);
+
+  const teams = group.teams.map((team) => {
+    const code = team.code;
+    const ranks = scenarios.map((s) => s.rankByCode[code]);
+    const minRank = Math.min(...ranks); // best
+    const maxRank = Math.max(...ranks); // worst
+    const allRanks = new Set(ranks);
+
+    // rank == 1 in ALL scenarios -> clinched 1st.
+    if (minRank === 1 && maxRank === 1) {
+      return mk(code, team.name, 'won-group', 'Clinched 1st — group winner', null, maxRank, minRank);
+    }
+
+    // rank == 4 in ALL -> eliminated.
+    if (minRank === 4 && maxRank === 4) {
+      return mk(code, team.name, 'eliminated', 'Eliminated', null, maxRank, minRank);
+    }
+
+    // rank in {1,2} in all scenarios but not always 1 -> clinched top-2.
+    if (maxRank <= 2) {
+      const firstReachable = allRanks.has(1);
+      let detail = null;
+      if (firstReachable) {
+        const relevant = relevantMatchIndices(code, unplayed, scenarios);
+        detail = detailForTop(code, team.name, unplayed, scenarios, relevant, nameOf);
+      }
+      return mk(
+        code,
+        team.name,
+        'qualified',
+        'Qualified — clinched a top-2 place',
+        detail,
+        maxRank,
+        minRank
+      );
+    }
+
+    // best achievable POSITION is 3rd.
+    if (minRank === 3) {
+      let detail = null;
+      if (maxRank > 3) {
+        const relevant = relevantMatchIndices(code, unplayed, scenarios);
+        detail = describeConditional(code, team.name, unplayed, scenarios, relevant, nameOf);
+      }
+      return mk(
+        code,
+        team.name,
+        'best-3rd',
+        'Can finish no higher than 3rd — advancing then depends on other groups',
+        detail,
+        maxRank,
+        minRank
+      );
+    }
+
+    // ---- conditional ----
+    const relevant = relevantMatchIndices(code, unplayed, scenarios);
+    const detail = describeConditional(code, team.name, unplayed, scenarios, relevant, nameOf);
+    const headline = conditionalHeadline(code, allRanks, unplayed, scenarios, relevant);
+    return mk(code, team.name, 'conditional', headline, detail, maxRank, minRank);
+  });
+
+  return { teams, deadRubbers: deadRubbers(group, unplayed, scenarios) };
+}
+
+function mk(code, name, status, headline, detail, maxRank, minRank) {
+  return { code, name, status, headline, detail, maxRank, minRank };
+}
+
+// ---------------------------------------------------------------------------
+// Test-only exports (minimal-cover unit testing).
+// ---------------------------------------------------------------------------
+const __test = {
+  minimalCover,
+  renderSubcube,
+  buildRelevantCells,
+  relevantMatchIndices,
+  enumerateScenarios,
+  coverByRank,
+};
+
+return { summarizeGroup: summarizeGroup, __test: __test };
+})();
+var summarizeGroup = __scnSummaryMod.summarizeGroup, __test = __scnSummaryMod.__test;
+
+/* ===== group-situation.js (groupSituation; pre-final analyzer) ===== */
+
+var __grpSituationMod = (function(){
+// group-situation.js
+// Stage-aware "what's locked / what's needed / what the next round makes
+// official" analyzer for a 4-team World Cup group that is NOT yet at its final
+// round (i.e. teams still have 2+ games left).
+//
+// Pure ES module, browser-safe (no Node-only APIs). May import
+// computeGroupStanding from engine.js for current points/played aggregation.
+//
+// COMPLEMENT to scenario-summary.js: that module handles the final round (1-2
+// unplayed matches). This one answers the questions a fan asks BEFORE the final
+// round: who has clinched/been eliminated, the magic-number points each
+// contender needs, and what the very next round of games can make official.
+//
+// HONESTY CONTRACT (matches the rest of the project):
+//   - WITHIN-GROUP facts only. Reason on POINTS. Top 2 advance; 3rd MAY advance
+//     as a best-third — that is CROSS-GROUP and is NEVER asserted here.
+//   - No drawing of lots (abolished for 2026). Where the top-2/3rd boundary in a
+//     scenario is a POINTS TIE involving the team, we treat it as NOT-yet-settled
+//     and surface it as a "could come down to goal difference" caveat rather than
+//     fabricating a goal-difference outcome.
+//
+// Public API:
+//   groupSituation(group) -> {
+//     teams: [ { code, name, points, played, remaining, status, statusLine,
+//                magicNumber, eliminationThreshold, needLine } ],
+//     nextRound: { matchKeys:[...], date, triggers:[ string ] },
+//     decided: bool
+//   }
+//
+// Data shapes (engine schema):
+//   group = { name, teams:[{code,name,elo}],
+//             matches:[{home,away,homeGoals,awayGoals,played,date,time}] }
+//   home/away are team CODES. A match "key" is `${home}-${away}`.
+
+const TOP_N = 2; // top 2 advance directly
+
+const matchKey = (m) => `${m.home}-${m.away}`;
+
+// ----------------------------------------------------------------------------
+// Points bookkeeping
+// ----------------------------------------------------------------------------
+
+/** Current POINTS and games-played for each team, from PLAYED matches only. */
+function currentPoints(group) {
+  const pts = new Map();
+  const played = new Map();
+  for (const t of group.teams) {
+    pts.set(t.code, 0);
+    played.set(t.code, 0);
+  }
+  for (const m of group.matches) {
+    if (!m.played) continue;
+    if (!pts.has(m.home) || !pts.has(m.away)) continue;
+    played.set(m.home, played.get(m.home) + 1);
+    played.set(m.away, played.get(m.away) + 1);
+    if (m.homeGoals > m.awayGoals) pts.set(m.home, pts.get(m.home) + 3);
+    else if (m.homeGoals < m.awayGoals) pts.set(m.away, pts.get(m.away) + 3);
+    else {
+      pts.set(m.home, pts.get(m.home) + 1);
+      pts.set(m.away, pts.get(m.away) + 1);
+    }
+  }
+  return { pts, played };
+}
+
+const COARSE = ['home', 'draw', 'away']; // outcome of an unplayed match
+
+/** Points delta applied to a points-map for one coarse outcome of a match. */
+function applyOutcome(ptsMap, match, outcome) {
+  if (outcome === 'home') ptsMap.set(match.home, ptsMap.get(match.home) + 3);
+  else if (outcome === 'away') ptsMap.set(match.away, ptsMap.get(match.away) + 3);
+  else {
+    ptsMap.set(match.home, ptsMap.get(match.home) + 1);
+    ptsMap.set(match.away, ptsMap.get(match.away) + 1);
+  }
+}
+
+/**
+ * Enumerate every coarse (W/D/L) combination of a list of unplayed matches.
+ * Yields a fresh final-points Map for each combo (base points + outcome deltas).
+ * k matches -> 3^k combos (k<=6 -> <=729).
+ */
+function* enumeratePoints(basePts, unplayed) {
+  const k = unplayed.length;
+  const total = 3 ** k;
+  for (let n = 0; n < total; n++) {
+    const final = new Map(basePts);
+    let x = n;
+    for (let i = 0; i < k; i++) {
+      applyOutcome(final, unplayed[i], COARSE[x % 3]);
+      x = Math.floor(x / 3);
+    }
+    yield final;
+  }
+}
+
+// ----------------------------------------------------------------------------
+// Points-only top-2 test for ONE final-points map
+// ----------------------------------------------------------------------------
+
+/**
+ * Given a final-points Map (code -> pts), classify a team's standing on POINTS
+ * ALONE. Returns:
+ *   'in'     -> strictly inside top 2 (fewer than TOP_N teams have MORE points,
+ *               and it is not tied with anyone on the cut line below it)
+ *   'tie'    -> on the top-2/3rd boundary as a POINTS TIE involving this team
+ *               (would-be in, but a goal-difference tiebreak could intrude)
+ *   'out'    -> strictly outside top 2 on points
+ *
+ * Cut-line semantics for a 4-team group (top 2 advance):
+ *   - strictlyAbove = teams with MORE points than this team.
+ *   - If strictlyAbove >= TOP_N            -> 'out' (cannot be top 2 here).
+ *   - Else (strictlyAbove < TOP_N): this team is at worst the (strictlyAbove+1)th
+ *     seed before tiebreaks. It is strictly 'in' only if granting EVERY team
+ *     level with it the benefit of the doubt still leaves it inside the top 2,
+ *     i.e. there is no points tie spanning the 2nd/3rd boundary that includes it.
+ *     Concretely: let `equal` = teams with the SAME points (excluding itself).
+ *     The block [strictlyAbove .. strictlyAbove+equal] occupies seeds
+ *     (strictlyAbove+1) .. (strictlyAbove+equal+1). If that block's top seed
+ *     (strictlyAbove+1) <= TOP_N but its bottom seed > TOP_N, the block straddles
+ *     the cut -> 'tie'. If the whole block is within top 2 -> 'in'. If the block
+ *     starts beyond top 2 -> 'out'.
+ */
+function classifyPoints(finalPts, code) {
+  const mine = finalPts.get(code);
+  let strictlyAbove = 0;
+  let equal = 0;
+  for (const [c, p] of finalPts) {
+    if (c === code) continue;
+    if (p > mine) strictlyAbove++;
+    else if (p === mine) equal++;
+  }
+  const topSeed = strictlyAbove + 1;            // best seed this team could hold
+  const bottomSeed = strictlyAbove + equal + 1; // worst seed within its points block
+  if (topSeed > TOP_N) return 'out';            // even best case is below the cut
+  if (bottomSeed <= TOP_N) return 'in';         // whole block clears the cut
+  return 'tie';                                 // block straddles the 2nd/3rd line
+}
+
+/** Best seed (1-based) the team holds on points alone (strictlyAbove + 1). */
+function bestSeed(finalPts, code) {
+  const mine = finalPts.get(code);
+  let strictlyAbove = 0;
+  for (const [c, p] of finalPts) {
+    if (c === code) continue;
+    if (p > mine) strictlyAbove++;
+  }
+  return strictlyAbove + 1;
+}
+
+/**
+ * True if this team is STRICTLY ahead of every other team on points (sole 1st).
+ * Per spec, a points TIE at the top is NOT "won the group" — only a clear,
+ * tiebreak-free lead clinches 1st. So we require every other team to have
+ * strictly FEWER points (no equal-on-points rival at the top).
+ */
+function isSoleTopOnPoints(finalPts, code) {
+  const mine = finalPts.get(code);
+  for (const [c, p] of finalPts) {
+    if (c === code) continue;
+    if (p >= mine) return false; // anyone level-or-above blocks a clean 1st
+  }
+  return true;
+}
+
+// ----------------------------------------------------------------------------
+// Clinch / eliminate tests over ALL remaining combinations
+// ----------------------------------------------------------------------------
+
+/**
+ * Evaluate a team across all combinations of the given unplayed matches.
+ * Returns flags used to derive status:
+ *   clinchedTop2  : 'in' in EVERY combination (never even a tie on the cut).
+ *   wonGroup      : top on points in EVERY combination (no one can pass it).
+ *   eliminated    : 'in'/'tie' never reachable -> top 2 impossible in all combos.
+ *   reachableTie  : at least one combo where it is exactly on the cut-line tie.
+ */
+function evaluateTeam(basePts, unplayed, code) {
+  let clinchedTop2 = true;
+  let wonGroup = true;
+  let canReachTop2 = false; // 'in' OR 'tie' in at least one combo
+  for (const finalPts of enumeratePoints(basePts, unplayed)) {
+    const cls = classifyPoints(finalPts, code);
+    if (cls !== 'in') clinchedTop2 = false;     // a tie or out breaks the clinch
+    if (!isSoleTopOnPoints(finalPts, code)) wonGroup = false;
+    if (cls === 'in' || cls === 'tie') canReachTop2 = true;
+  }
+  return {
+    clinchedTop2,
+    wonGroup,
+    eliminated: !canReachTop2,
+  };
+}
+
+// ----------------------------------------------------------------------------
+// Magic number / elimination threshold (per contender)
+// ----------------------------------------------------------------------------
+
+/**
+ * For a team, compute over its OWN remaining matches:
+ *   magicNumber          : the minimum FINAL points total P such that, IF the
+ *                          team finishes on >= P, it is GUARANTEED top 2 on
+ *                          points regardless of all OTHER results. null if even
+ *                          winning out is not guaranteed-safe (a points tie could
+ *                          still intrude at the max) — flagged via tieAtMagic.
+ *   tieAtMagic           : true if, at the magicNumber total, the guarantee rests
+ *                          on a points tie (could come down to goal difference).
+ *   eliminationThreshold : the smallest FINAL points total at which the team can
+ *                          STILL reach top 2 (in/tie) under some other-results
+ *                          combination. Finishing strictly BELOW this -> out.
+ *   maxFinal             : the maximum final points the team can reach (win out).
+ *
+ * Method: separate the team's OWN remaining matches from the OTHERS'. For each
+ * coarse outcome set of the team's own matches we get a candidate final total
+ * for the team; for each such total we test, across ALL combinations of the
+ * OTHER matches, whether the team is always 'in' (guaranteed-safe), sometimes
+ * only 'tie' (tie-dependent), or can be 'out' (not safe).
+ */
+function magicAndThreshold(basePts, unplayed, code) {
+  const own = unplayed.filter((m) => m.home === code || m.away === code);
+  const others = unplayed.filter((m) => m.home !== code && m.away !== code);
+
+  // Map: team's own-final-points total -> aggregate safety across other combos.
+  // safety: 'safe' (always in), 'tie' (always in-or-tie, at least one tie),
+  //         'unsafe' (some combo out).
+  const byTotal = new Map(); // total -> { everIn:bool, everTie:bool, everOut:bool }
+
+  for (const ownPts of enumeratePoints(basePts, own)) {
+    const myTotal = ownPts.get(code);
+    // Now vary the OTHER matches on top of this own-result state.
+    let everIn = false, everTie = false, everOut = false;
+    for (const finalPts of enumeratePoints(ownPts, others)) {
+      const cls = classifyPoints(finalPts, code);
+      if (cls === 'in') everIn = true;
+      else if (cls === 'tie') everTie = true;
+      else everOut = true;
+    }
+    const agg = byTotal.get(myTotal) || { everIn: false, everTie: false, everOut: false };
+    agg.everIn = agg.everIn || everIn;
+    agg.everTie = agg.everTie || everTie;
+    agg.everOut = agg.everOut || everOut;
+    byTotal.set(myTotal, agg);
+  }
+
+  const totals = [...byTotal.keys()].sort((a, b) => a - b);
+  const maxFinal = totals[totals.length - 1];
+
+  // magicNumber: smallest total whose aggregate is guaranteed-safe (no 'out'
+  // across other combos). If that guarantee includes a tie at the cut, flag it.
+  let magicNumber = null;
+  let tieAtMagic = false;
+  for (const t of totals) {
+    const a = byTotal.get(t);
+    if (!a.everOut) {           // finishing on t (or above, monotone) is safe
+      magicNumber = t;
+      tieAtMagic = a.everTie && !a.everIn ? true : false;
+      // Note: if everIn true and everOut false, it's an unconditional clinch at t;
+      // a stray tie among higher-total branches doesn't taint the magic line.
+      break;
+    }
+  }
+
+  // eliminationThreshold: smallest total at which top 2 is still REACHABLE
+  // (everIn or everTie under some other combo). Below it -> mathematically out.
+  let eliminationThreshold = null;
+  for (const t of totals) {
+    const a = byTotal.get(t);
+    if (a.everIn || a.everTie) {
+      eliminationThreshold = t;
+      break;
+    }
+  }
+
+  return { magicNumber, tieAtMagic, eliminationThreshold, maxFinal, ownCount: own.length };
+}
+
+// ----------------------------------------------------------------------------
+// Next-round identification + triggers
+// ----------------------------------------------------------------------------
+
+/**
+ * The next chronological round = unplayed matches sharing the EARLIEST date.
+ * Tie-break ordering within the round by time (string compare is adequate for
+ * the "HH:MM UTC±N" format only loosely; date is the grouping key that matters).
+ */
+function nextRoundMatches(unplayed) {
+  if (unplayed.length === 0) return [];
+  const dated = unplayed.filter((m) => m.date);
+  const pool = dated.length ? dated : unplayed;
+  let earliest = null;
+  for (const m of pool) {
+    if (earliest === null || (m.date && m.date < earliest)) earliest = m.date;
+  }
+  const round = pool.filter((m) => m.date === earliest);
+  round.sort((a, b) => (a.time || '').localeCompare(b.time || ''));
+  return round;
+}
+
+const ord = (n) => (n === 1 ? '1st' : n === 2 ? '2nd' : n === 3 ? '3rd' : `${n}th`);
+
+/**
+ * Re-run the clinch/eliminate test on the POST-NEXT-ROUND state to generate
+ * AUTOMATIC, VERIFIED trigger strings: what becomes OFFICIAL after the next
+ * round (with later games still to play).
+ *
+ * Approach: enumerate the coarse outcomes of JUST the next-round matches. For
+ * each post-round points state, re-evaluate every team over the STILL-remaining
+ * matches. We collect, per team, the SET of next-round coarse outcomes that
+ * (a) clinch top 2, (b) clinch 1st, or (c) eliminate it — then describe the
+ * trigger in terms of that team's own next-round result when it is the clean
+ * driver, else as a combined condition.
+ */
+function buildTriggers(group, basePts, unplayed, teamMeta) {
+  const round = nextRoundMatches(unplayed);
+  if (round.length === 0) return { matchKeys: [], date: null, triggers: [] };
+
+  const date = round[0].date || null;
+  const roundKeys = new Set(round.map(matchKey));
+  const later = unplayed.filter((m) => !roundKeys.has(matchKey(m)));
+
+  // Enumerate next-round coarse outcomes; for each, compute the post-round base
+  // points and evaluate every team over the LATER matches.
+  const k = round.length;
+  const combos = []; // { outcomes:[{key,outcome}], post:Map, perTeam:{code:{clinch,won,elim}} }
+  for (let n = 0; n < 3 ** k; n++) {
+    const post = new Map(basePts);
+    const outcomes = [];
+    let x = n;
+    for (let i = 0; i < k; i++) {
+      const oc = COARSE[x % 3];
+      applyOutcome(post, round[i], oc);
+      outcomes.push({ match: round[i], outcome: oc });
+      x = Math.floor(x / 3);
+    }
+    const perTeam = {};
+    for (const t of group.teams) {
+      const ev = evaluateTeam(post, later, t.code);
+      perTeam[t.code] = {
+        clinch: ev.clinchedTop2,
+        won: ev.wonGroup,
+        elim: ev.eliminated,
+      };
+    }
+    combos.push({ outcomes, perTeam });
+  }
+
+  // Helper: for a given team and a target predicate (clinch/won/elim), find the
+  // set of next-round combos satisfying it, and try to express it compactly in
+  // terms of that team's OWN next-round result (win/draw/loss), noting any
+  // dependency on the other match.
+  const teamName = (code) => (teamMeta.get(code)?.name) || code;
+
+  // The team's OWN next-round result (win/draw/loss) within a specific combo.
+  // We find the combo entry for the match the team actually plays and translate
+  // THAT match's outcome — never apply another match's outcome to it.
+  const ownResultInCombo = (code, combo) => {
+    for (const o of combo.outcomes) {
+      const m = o.match;
+      if (m.home === code) return o.outcome === 'home' ? 'win' : o.outcome === 'away' ? 'loss' : 'draw';
+      if (m.away === code) return o.outcome === 'away' ? 'win' : o.outcome === 'home' ? 'loss' : 'draw';
+    }
+    return null; // team does not play this round
+  };
+  const playsThisRound = (code) => round.some((r) => r.home === code || r.away === code);
+
+  const triggers = [];
+
+  for (const t of group.teams) {
+    const code = t.code;
+    const meta = teamMeta.get(code);
+    // Already settled before the round? Then nothing NEW triggers for it.
+    if (meta.status === 'won-group' || meta.status === 'qualified' || meta.status === 'eliminated') {
+      continue;
+    }
+
+    // CLINCH-1st trigger (lead with the strongest fact).
+    addTrigger(triggers, code, 'won', combos, round, ownResultInCombo, playsThisRound, teamName, group);
+    // CLINCH top-2 trigger.
+    addTrigger(triggers, code, 'clinch', combos, round, ownResultInCombo, playsThisRound, teamName, group);
+    // ELIMINATION trigger.
+    addTrigger(triggers, code, 'elim', combos, round, ownResultInCombo, playsThisRound, teamName, group);
+  }
+
+  if (triggers.length === 0) {
+    triggers.push('Nothing is settled until the final round.');
+  }
+
+  return { matchKeys: round.map(matchKey), date, triggers };
+}
+
+/**
+ * Build (and push, if true & compact) a single trigger for one team & predicate.
+ * predicate: 'won' (clinch 1st) | 'clinch' (clinch top 2) | 'elim' (eliminated).
+ *
+ * We look at the subset of next-round combos where the predicate holds. If that
+ * subset is exactly characterized by the team's OWN result(s) in the round
+ * (independent of the other match), we phrase it cleanly ("X clinch a top-2 place
+ * with a win or draw"). If it additionally requires the other match to go a
+ * certain way, we phrase the dependency ("X can clinch with a win if Y lose").
+ * If it's true only in scattered combos not cleanly describable, we conservatively
+ * describe it as conditional on both results, listing the own-result and the
+ * required other-match outcome(s). Triggers that never hold are skipped.
+ */
+function addTrigger(out, code, predicate, combos, round, ownResult, playsThisRound, teamName, group) {
+  const holds = (c) => c.perTeam[code][predicate];
+
+  const satisfying = combos.filter(holds);
+  if (satisfying.length === 0) return;            // predicate never triggers next round
+  if (satisfying.length === combos.length) {
+    // Already true in every outcome -> it was already settled (shouldn't reach
+    // here for unsettled teams), skip to avoid noise.
+    return;
+  }
+
+  const name = teamName(code);
+  const verb =
+    predicate === 'won' ? 'clinch top spot' :
+    predicate === 'clinch' ? 'clinch a top-2 place' :
+    'be eliminated';
+
+  // Map each combo to (ownResult, otherKey->otherResultLabel).
+  const otherMatches = round.filter((r) => r.home !== code && r.away !== code);
+
+  // Group satisfying combos by the team's own result (combo-aware; reads the
+  // outcome of the match THIS team plays, not whichever outcome comes last).
+  const byOwn = new Map(); // ownResult -> array of combos
+  for (const c of satisfying) {
+    const key = ownResult(code, c) || 'n/a';
+    if (!byOwn.has(key)) byOwn.set(key, []);
+    byOwn.get(key).push(c);
+  }
+
+  // For each own-result, is the predicate true for ALL other-match outcomes
+  // (i.e. own result alone is sufficient)? Count combos per own-result vs how
+  // many TOTAL combos share that own-result.
+  const totalByOwn = new Map();
+  for (const c of combos) {
+    const key = ownResult(code, c) || 'n/a';
+    totalByOwn.set(key, (totalByOwn.get(key) || 0) + 1);
+  }
+
+  const sufficientOwn = []; // own-results that ALONE guarantee the predicate
+  const conditionalOwn = []; // own-results that only sometimes trigger (need other match)
+  for (const [own, list] of byOwn) {
+    if (list.length === totalByOwn.get(own)) sufficientOwn.push(own);
+    else conditionalOwn.push(own);
+  }
+
+  const resultPhrase = (r) => (r === 'win' ? 'a win' : r === 'draw' ? 'a draw' : 'a loss');
+  const order = { win: 0, draw: 1, loss: 2 };
+
+  // Clean case: own result(s) alone are sufficient, nothing conditional.
+  if (sufficientOwn.length > 0 && conditionalOwn.length === 0 && playsThisRound(code)) {
+    const sorted = sufficientOwn.sort((a, b) => order[a] - order[b]);
+    const phrase = sorted.map(resultPhrase).join(' or ');
+    out.push(`${name} ${verb} with ${phrase}.`);
+    return;
+  }
+
+  // Conditional case: own result needs help from the other match. Describe the
+  // smallest such combo cleanly when there is exactly one own-result that needs a
+  // single other-match condition.
+  if (conditionalOwn.length > 0 && otherMatches.length === 1 && playsThisRound(code)) {
+    const om = otherMatches[0];
+    const describeOther = (outcome) => {
+      if (outcome === 'draw') return `${teamName(om.home)} and ${teamName(om.away)} draw`;
+      const winner = outcome === 'home' ? om.home : om.away;
+      const loser = outcome === 'home' ? om.away : om.home;
+      return `${teamName(winner)} beat ${teamName(loser)}`;
+    };
+    // Take the conditional own-result(s) and, for each, the required other outcomes.
+    const clauses = [];
+    for (const own of conditionalOwn.sort((a, b) => order[a] - order[b])) {
+      const list = byOwn.get(own);
+      const otherOutcomes = new Set();
+      for (const c of list) {
+        for (const o of c.outcomes) {
+          if (o.match === om) otherOutcomes.add(o.outcome);
+        }
+      }
+      const others = [...otherOutcomes].map(describeOther).join(' or ');
+      clauses.push(`with ${resultPhrase(own)} if ${others}`);
+    }
+    // Prepend any unconditional own-results.
+    let lead = '';
+    if (sufficientOwn.length > 0) {
+      const sorted = sufficientOwn.sort((a, b) => order[a] - order[b]);
+      lead = `with ${sorted.map(resultPhrase).join(' or ')}`;
+    }
+    const body = [lead, ...clauses].filter(Boolean).join(', or ');
+    out.push(`${name} can ${verb} ${body}.`);
+    return;
+  }
+
+  // Team does NOT play this round (its fate turns purely on others' results), or
+  // a shape we won't try to pretty-print. Describe it as conditional on the round.
+  if (!playsThisRound(code)) {
+    // Characterize the satisfying combos by the other matches' outcomes.
+    const clauses = satisfying.map((c) =>
+      c.outcomes
+        .map((o) => {
+          if (o.outcome === 'draw') return `${teamName(o.match.home)}-${teamName(o.match.away)} draw`;
+          const w = o.outcome === 'home' ? o.match.home : o.match.away;
+          const l = o.outcome === 'home' ? o.match.away : o.match.home;
+          return `${teamName(w)} beat ${teamName(l)}`;
+        })
+        .join(' & ')
+    );
+    // Only emit if compact (<=2 clauses) to avoid noise.
+    if (clauses.length <= 2) {
+      out.push(`${name} ${verb} if ${clauses.join(' OR ')}.`);
+    }
+    return;
+  }
+  // Fallback: mixed/complex own+other shape we won't enumerate verbosely. Emit a
+  // conservative conditional headline so the fact isn't lost.
+  out.push(`${name} can ${verb} next round (result-dependent).`);
+}
+
+// ----------------------------------------------------------------------------
+// needLine / statusLine phrasing
+// ----------------------------------------------------------------------------
+
+function buildStatusLine(status) {
+  switch (status) {
+    case 'won-group': return 'Clinched 1st';
+    case 'qualified': return 'Through to the R32';
+    case 'eliminated': return 'Eliminated';
+    default: return 'Still alive';
+  }
+}
+
+function buildNeedLine(status, mt, remaining) {
+  if (status === 'won-group') return 'Already won the group.';
+  if (status === 'qualified') return 'Already through to the knockout round.';
+  if (status === 'eliminated') return 'Cannot finish in the top two; eliminated.';
+
+  // Contention: express magic number + elimination threshold.
+  const games = remaining === 1 ? 'last game' : `last ${remaining} games`;
+  const parts = [];
+
+  if (mt.magicNumber != null) {
+    const tieFlag = mt.tieAtMagic ? ' (could come down to goal difference)' : '';
+    parts.push(`Needs ${mt.magicNumber} pts to be safe${tieFlag}`);
+  } else {
+    // Even winning out isn't a guaranteed-safe POINTS total -> the cut may rest
+    // on goal difference at the top reachable total.
+    parts.push(`Can reach a top-2 place but no points total guarantees it (could come down to goal difference)`);
+  }
+
+  if (mt.eliminationThreshold != null) {
+    parts.push(`out if it finishes below ${mt.eliminationThreshold}`);
+  }
+
+  let line = parts.join('; ');
+  // Mention the games-left framing once, naturally.
+  if (mt.magicNumber != null) {
+    line = `Needs ${mt.magicNumber} pts from its ${games} to be safe` +
+      (mt.tieAtMagic ? ' (could come down to goal difference)' : '') +
+      (mt.eliminationThreshold != null ? `; out if it finishes below ${mt.eliminationThreshold}.` : '.');
+  } else {
+    line = line + '.';
+  }
+  return line;
+}
+
+// ----------------------------------------------------------------------------
+// Public entry
+// ----------------------------------------------------------------------------
+
+/**
+ * @param {{name,teams,matches}} group
+ * @returns {{teams:Array, nextRound:{matchKeys,date,triggers}, decided:boolean}}
+ */
+function groupSituation(group) {
+  const { pts, played } = currentPoints(group);
+  const unplayed = group.matches.filter((m) => !m.played);
+
+  const teamMeta = new Map();
+
+  // First pass: status + magic numbers for each team.
+  for (const t of group.teams) {
+    const code = t.code;
+    const remaining = unplayed.filter((m) => m.home === code || m.away === code).length;
+
+    const ev = evaluateTeam(pts, unplayed, code);
+    let status;
+    if (ev.eliminated) status = 'eliminated';
+    else if (ev.wonGroup) status = 'won-group';
+    else if (ev.clinchedTop2) status = 'qualified';
+    else status = 'contention';
+
+    const mt = status === 'contention'
+      ? magicAndThreshold(pts, unplayed, code)
+      : { magicNumber: null, tieAtMagic: false, eliminationThreshold: null, maxFinal: null };
+
+    teamMeta.set(code, {
+      code,
+      name: t.name,
+      points: pts.get(code),
+      played: played.get(code),
+      remaining,
+      status,
+      mt,
+    });
+  }
+
+  // Build next-round triggers (needs statuses already set).
+  const nextRound = buildTriggers(group, pts, unplayed, teamMeta);
+
+  // decided: every team's position settled (no contention left). A group is
+  // "decided" on POINTS when everyone is won-group / qualified / eliminated.
+  const decided = [...teamMeta.values()].every(
+    (m) => m.status !== 'contention'
+  );
+
+  const teams = group.teams.map((t) => {
+    const m = teamMeta.get(t.code);
+    return {
+      code: m.code,
+      name: m.name,
+      points: m.points,
+      played: m.played,
+      remaining: m.remaining,
+      status: m.status,
+      statusLine: buildStatusLine(m.status),
+      magicNumber: m.mt.magicNumber,
+      eliminationThreshold: m.mt.eliminationThreshold,
+      needLine: buildNeedLine(m.status, m.mt, m.remaining),
+    };
+  });
+
+  return { teams, nextRound, decided };
+}
+
+return { groupSituation: groupSituation };
+})();
+var groupSituation = __grpSituationMod.groupSituation;
 
 /* ============================================================================
    WORKER SOURCE (built from a Blob) — runs monteCarlo off the main thread.
@@ -2943,6 +4679,7 @@ function monteCarlo(groups, bracket, opts = {}) {
         code,
         name: nameByCode.get(code),
         winGroup: 0, runnerUp: 0, thirdQualify: 0,
+        g1: 0, g2: 0, g3: 0, g4: 0, // full final group-position distribution
         reachR32: 0, reachR16: 0, reachQF: 0, reachSF: 0, reachFinal: 0, winCup: 0,
       };
     }
@@ -2980,6 +4717,15 @@ function monteCarlo(groups, bracket, opts = {}) {
       else if (role === 'third') C[code].thirdQualify++;
     }
 
+    // full final group-position distribution (1..4), independent of qualification
+    for (const [code, rk] of Object.entries(r.groupRank)) {
+      const c = C[code];
+      if (rk === 1) c.g1++;
+      else if (rk === 2) c.g2++;
+      else if (rk === 3) c.g3++;
+      else c.g4++;
+    }
+
     // furthest round reached (cumulative: reaching SF implies reached R16, etc.)
     for (const [code, idx] of Object.entries(r.reached)) {
       const c = C[code];
@@ -3013,6 +4759,10 @@ function monteCarlo(groups, bracket, opts = {}) {
       pWinGroup: c.winGroup / n,
       pRunnerUp: c.runnerUp / n,
       pThirdQualify: c.thirdQualify / n,
+      pGroup1: c.g1 / n, // full final group-position distribution (Elo model)
+      pGroup2: c.g2 / n,
+      pGroup3: c.g3 / n,
+      pGroup4: c.g4 / n,
       pReachR32: c.reachR32 / n,
       pReachR16: c.reachR16 / n,
       pReachQF: c.reachQF / n,
@@ -3074,6 +4824,1711 @@ function monteCarlo(groups, bracket, opts = {}) {
   return { n, perTeam, perR32Slot, modalBracket, perSlot, modalKnockout };
 }
 
+
+/* ===== scenario-summary.js (summarizeGroup; final-round analyzer) ===== */
+
+var __scnSummaryMod = (function(){
+// scenario-summary.js
+// "Scenario logic simplifier": turn the raw scenario truth-table for a group's
+// remaining match(es) into ESPN-style plain-English clinch / elimination /
+// qualification statements.
+//
+// Pure ES module, browser-safe (imports only from engine.js).
+//
+// Public API:
+//   summarizeGroup(group, opts?) -> {
+//     teams: [ { code, name, status, headline, detail, maxRank, minRank } ... ],
+//     deadRubbers: [ matchKey, ... ]
+//   }
+//
+// status is one of:
+//   'won-group'   rank == 1 in every scenario
+//   'qualified'   rank in {1,2} always, not always 1 (top-2 clinched)
+//   'best-3rd'    max achievable rank == 3 (never 1 or 2, sometimes 3)
+//   'eliminated'  rank == 4 in every scenario
+//   'conditional' everything else (rank still spans across qualifying lines)
+//
+// HONESTY LOCK: within-group rank (1/2/3/4) is deterministic and stated as
+// fact. Whether a 3rd-place finish QUALIFIES, and any knockout opponent, are
+// CROSS-GROUP and are NEVER asserted here.
+//
+// ---------------------------------------------------------------------------
+// CORE IDEA — per-OUTCOME Boolean minimization
+// ---------------------------------------------------------------------------
+// There are 1 or 2 unplayed matches. Treat each as a ternary variable over
+// {W,D,L} (HOME team's perspective). For a team T and a within-group rank r,
+// the set of outcome-cells (a subset of the 3- or 9-cell grid) that produce
+// rank r is a Boolean function. We compute the EXACT minimal cover of that set
+// as a union of "subcubes" (per match: a subset of {W,D,L}, or "any"=dropped),
+// minimizing the number of subcubes and then preferring subcubes that DROP a
+// match. A dropped match disappears from the prose clause — that is the fix for
+// the old per-team-only variable elimination, which still enumerated coupled
+// groups.
+
+const MAX_GOALS = 6;
+const COARSE = ['W', 'D', 'L'];
+
+const matchKey = (m) => \`\${m.home}-\${m.away}\`;
+const ordinal = (n) => (n === 1 ? '1st' : n === 2 ? '2nd' : n === 3 ? '3rd' : \`\${n}th\`);
+
+// ---------------------------------------------------------------------------
+// Enumeration
+// ---------------------------------------------------------------------------
+
+/**
+ * Enumerate every scoreline combination for the unplayed matches, holding
+ * played matches fixed. For each scenario record, per team, its within-group
+ * rank, plus the coarse W/D/L (home perspective) and signed home margin for
+ * each unplayed match.
+ *
+ * @returns {{ unplayed: Array, scenarios: Array<{coarse, margins, rankByCode}> }}
+ */
+function enumerateScenarios(group, maxGoals = MAX_GOALS) {
+  const played = group.matches.filter((m) => m.played);
+  const unplayed = group.matches.filter((m) => !m.played);
+  const scenarios = [];
+
+  const acc = new Array(unplayed.length);
+  const recurse = (idx) => {
+    if (idx === unplayed.length) {
+      const synthetic = played.concat(
+        unplayed.map((m, k) => ({
+          home: m.home,
+          away: m.away,
+          homeGoals: acc[k][0],
+          awayGoals: acc[k][1],
+          played: true,
+        }))
+      );
+      const standing = computeGroupStanding({ ...group, matches: synthetic });
+      const rankByCode = {};
+      for (const t of standing) rankByCode[t.code] = t.rank;
+      const coarse = acc.map(([h, a]) => (h > a ? 'W' : h < a ? 'L' : 'D'));
+      const margins = acc.map(([h, a]) => h - a);
+      scenarios.push({ coarse, margins, rankByCode });
+      return;
+    }
+    for (let h = 0; h <= maxGoals; h++) {
+      for (let a = 0; a <= maxGoals; a++) {
+        acc[idx] = [h, a];
+        recurse(idx + 1);
+      }
+    }
+  };
+  recurse(0);
+
+  return { unplayed, scenarios };
+}
+
+// ---------------------------------------------------------------------------
+// Variable elimination (per-team relevance — coarse first cut)
+// ---------------------------------------------------------------------------
+
+/**
+ * Determine which unplayed matches actually affect this team's rank.
+ *
+ * A match j is RELEVANT to team T if, fixing every other match's full scoreline,
+ * varying match j changes T's rank for some fixing. Tested exactly against the
+ * enumerated scenarios.
+ *
+ * @returns {number[]} indices of relevant matches (sorted)
+ */
+function relevantMatchIndices(code, unplayed, scenarios) {
+  const relevant = [];
+  for (let j = 0; j < unplayed.length; j++) {
+    const groups = new Map(); // key = margins of all matches != j -> Set<rank>
+    for (const s of scenarios) {
+      const otherKey = s.margins.filter((_, k) => k !== j).join(',');
+      if (!groups.has(otherKey)) groups.set(otherKey, new Set());
+      groups.get(otherKey).add(s.rankByCode[code]);
+    }
+    let affects = false;
+    for (const set of groups.values()) {
+      if (set.size > 1) {
+        affects = true;
+        break;
+      }
+    }
+    if (affects) relevant.push(j);
+  }
+  return relevant;
+}
+
+// ---------------------------------------------------------------------------
+// Coarse cell table for a team over its RELEVANT matches
+// ---------------------------------------------------------------------------
+
+/**
+ * Build the coarse-outcome cell table for \`code\` over the \`relevant\` matches.
+ * Each cell is keyed by the tuple of coarse home-outcomes and records:
+ *   coarse: string[]  (one of 'W'|'D'|'L' per relevant match, home perspective)
+ *   rankSet: Set<number>
+ *   byMargin: Map<marginSignature, Set<rank>>   (subject-perspective margins)
+ *
+ * marginMatters is true iff some coarse cell spans >1 rank (a goal margin flips
+ * the result within fixed W/D/L outcomes).
+ */
+function buildRelevantCells(code, unplayed, scenarios, relevant) {
+  const cells = new Map();
+  for (const s of scenarios) {
+    const coarse = relevant.map((j) => s.coarse[j]);
+    const key = coarse.join('|');
+    if (!cells.has(key)) cells.set(key, { coarse, rankSet: new Set(), byMargin: new Map() });
+    const cell = cells.get(key);
+    cell.rankSet.add(s.rankByCode[code]);
+    const marg = relevant
+      .map((j) => {
+        const m = unplayed[j];
+        const hm = s.margins[j];
+        return m.away === code ? -hm : hm;
+      })
+      .join(',');
+    if (!cell.byMargin.has(marg)) cell.byMargin.set(marg, new Set());
+    cell.byMargin.get(marg).add(s.rankByCode[code]);
+  }
+  let marginMatters = false;
+  for (const cell of cells.values()) if (cell.rankSet.size > 1) marginMatters = true;
+  return { cells, marginMatters };
+}
+
+// ===========================================================================
+// MINIMAL COVER  (the core fix)
+// ===========================================================================
+//
+// A "subcube" over N (=1 or 2) ternary match variables is an array of N sets,
+// each a non-empty subset of {W,D,L}. The subcube covers a coarse cell iff each
+// of the cell's coarse outcomes is in the corresponding set. A subcube where a
+// match's set is the full {W,D,L} effectively DROPS that match from the clause.
+//
+// minimalCover(targetCells, otherCells, numMatches):
+//   targetCells : Array<string[]>  coarse tuples that MUST be covered
+//   otherCells  : Set<string>      "off" cells that must NOT be covered
+//                  (cells reachable but belonging to a different rank)
+//   Returns the minimum-cardinality set of valid subcubes whose union is
+//   exactly targetCells, with a tie-break preferring (a) more dropped matches,
+//   then (b) larger 2-of-3 sets over singletons. Exact brute force (search
+//   space is tiny: 7^numMatches candidate subcubes).
+//
+// Validity: a subcube is valid iff it covers no off-cell. We only ever pass
+// off-cells that are reachable; unreachable grid cells (e.g. impossible
+// combos — none here, every W/D/L combo is reachable) are treated as "don't
+// care" by simply not appearing in either set.
+
+/** All 7 non-empty subsets of {W,D,L}, as arrays, richest-to-leanest order. */
+const SUBSETS = (() => {
+  const out = [];
+  for (let mask = 1; mask < 8; mask++) {
+    const s = [];
+    if (mask & 1) s.push('W');
+    if (mask & 2) s.push('D');
+    if (mask & 4) s.push('L');
+    out.push(s);
+  }
+  // sort so the FULL set (size 3 = "any") comes first, then size 2, then size 1
+  out.sort((a, b) => b.length - a.length);
+  return out;
+})();
+
+/** Cartesian product of per-match subset choices -> all candidate subcubes. */
+function allSubcubes(numMatches) {
+  let acc = [[]];
+  for (let i = 0; i < numMatches; i++) {
+    const next = [];
+    for (const partial of acc) for (const s of SUBSETS) next.push(partial.concat([s]));
+    acc = next;
+  }
+  return acc;
+}
+
+/** Does subcube cover coarse cell (array of 'W'|'D'|'L')? */
+function subcubeCovers(subcube, coarse) {
+  for (let i = 0; i < subcube.length; i++) if (!subcube[i].includes(coarse[i])) return false;
+  return true;
+}
+
+/** Cost tuple for a subcube: fewer dropped matches is WORSE in count terms but
+ *  preferred at equal cover size. We score: primary = #non-dropped matches
+ *  (lower better), secondary = total literals = sum of (3 - setSize) (lower
+ *  better, i.e. larger sets preferred). */
+function subcubeCost(subcube) {
+  let nonDropped = 0;
+  let literals = 0;
+  for (const s of subcube) {
+    if (s.length < 3) {
+      nonDropped++;
+      literals += 3 - s.length; // size2 -> 1, size1 -> 2
+    }
+  }
+  return nonDropped * 10 + literals;
+}
+
+/**
+ * Exact minimal cover. Returns Array<subcube>.
+ */
+function minimalCover(targetCells, otherCells, numMatches) {
+  const targetKeys = new Set(targetCells.map((c) => c.join('|')));
+  if (targetKeys.size === 0) return [];
+
+  // Candidate VALID subcubes: cover >=1 target cell, no off cell.
+  const candidates = [];
+  for (const sub of allSubcubes(numMatches)) {
+    // enumerate cells this subcube covers
+    let coversOff = false;
+    const covered = new Set();
+    // build the cells of this subcube
+    const dims = sub.map((s) => s);
+    const stack = [[]];
+    while (stack.length) {
+      const partial = stack.pop();
+      if (partial.length === numMatches) {
+        const key = partial.join('|');
+        if (otherCells.has(key)) {
+          coversOff = true;
+          break;
+        }
+        if (targetKeys.has(key)) covered.add(key);
+        continue;
+      }
+      for (const v of dims[partial.length]) stack.push(partial.concat([v]));
+    }
+    if (coversOff) continue;
+    if (covered.size === 0) continue;
+    candidates.push({ sub, covered, cost: subcubeCost(sub) });
+  }
+
+  // Minimum set cover by exact search (branch & bound on # of subcubes), with
+  // cost tie-break. Search space is tiny (<= a few dozen candidates).
+  let best = null;
+  const targetArr = [...targetKeys];
+
+  const search = (remaining, chosen, totalCost) => {
+    if (remaining.size === 0) {
+      if (
+        !best ||
+        chosen.length < best.chosen.length ||
+        (chosen.length === best.chosen.length && totalCost < best.totalCost)
+      ) {
+        best = { chosen: chosen.slice(), totalCost };
+      }
+      return;
+    }
+    if (best && chosen.length >= best.chosen.length) {
+      // can't beat on count; allow equal-count only if it could improve cost.
+      if (chosen.length > best.chosen.length) return;
+      if (chosen.length === best.chosen.length) return; // adding more can't reduce count
+    }
+    // pick an uncovered cell with the fewest covering candidates (MRV)
+    let pivot = null;
+    let pivotCands = null;
+    for (const cell of remaining) {
+      const cands = candidates.filter((c) => c.covered.has(cell));
+      if (pivotCands === null || cands.length < pivotCands.length) {
+        pivot = cell;
+        pivotCands = cands;
+        if (cands.length <= 1) break;
+      }
+    }
+    if (!pivotCands || pivotCands.length === 0) return; // uncoverable
+    // try each candidate covering the pivot
+    for (const cand of pivotCands) {
+      const nextRemaining = new Set(remaining);
+      for (const k of cand.covered) nextRemaining.delete(k);
+      search(nextRemaining, chosen.concat([cand]), totalCost + cand.cost);
+    }
+  };
+  search(new Set(targetArr), [], 0);
+
+  return best ? best.chosen.map((c) => c.sub) : [];
+}
+
+// ---------------------------------------------------------------------------
+// Phrasing helpers
+// ---------------------------------------------------------------------------
+
+/** Convert a coarse home-outcome to the subject team's perspective. */
+function fromSubjectPerspective(coarse, match, code) {
+  if (match.home === code) return coarse;
+  if (match.away === code) return coarse === 'W' ? 'L' : coarse === 'L' ? 'W' : 'D';
+  return coarse;
+}
+
+/**
+ * Render the SUBJECT team's own match (a subset of {W,D,L} in subject
+ * perspective) into a verb phrase naming the opponent.
+ *   {W}    -> "a win over Paraguay"
+ *   {D}    -> "a draw with Paraguay"
+ *   {L}    -> "a loss to Paraguay"
+ *   {W,D}  -> "a win or draw vs Paraguay"   (avoid defeat)
+ *   {D,L}  -> "a draw or loss vs Paraguay"  (fail to win)
+ *   {W,L}  -> "a win or loss vs Paraguay"   (rare)
+ *   full   -> "" (dropped; caller omits)
+ */
+function ownMatchPhrase(set, opp) {
+  const has = (x) => set.has(x);
+  if (set.size === 3) return '';
+  if (set.size === 1) {
+    if (has('W')) return \`a win over \${opp}\`;
+    if (has('D')) return \`a draw with \${opp}\`;
+    return \`a loss to \${opp}\`;
+  }
+  if (has('W') && has('D')) return \`a win or draw vs \${opp}\`;
+  if (has('D') && has('L')) return \`a draw or loss vs \${opp}\`;
+  return \`a win or loss vs \${opp}\`;
+}
+
+/**
+ * Render an OTHER match (subject not playing) as an EVENT phrase, given a subset
+ * of coarse home-outcomes.
+ *   {W}        -> "Czech Republic beat Mexico"
+ *   {L}        -> "Mexico beat Czech Republic"
+ *   {D}        -> "Czech Republic and Mexico draw"
+ *   {W,D} (!L) -> "Czech Republic avoid defeat"      (home not beaten)
+ *   {D,L} (!W) -> "Mexico avoid defeat"               (away not beaten)
+ *   {W,L} (!D) -> "Czech Republic or Mexico win"      (no draw)
+ *   full       -> "" (dropped)
+ */
+function otherMatchPhrase(set, match, nameOf) {
+  const home = nameOf(match.home);
+  const away = nameOf(match.away);
+  if (set.size === 3) return '';
+  if (set.size === 1) {
+    const c = [...set][0];
+    if (c === 'W') return \`\${home} beat \${away}\`;
+    if (c === 'L') return \`\${away} beat \${home}\`;
+    return \`\${home} and \${away} draw\`;
+  }
+  // size 2 -> express as the natural negation of the excluded outcome.
+  if (!set.has('L')) return \`\${home} avoid defeat\`; // {W,D}
+  if (!set.has('W')) return \`\${away} avoid defeat\`; // {D,L}
+  return \`\${home} or \${away} win\`; // {W,L}, no draw
+}
+
+/**
+ * Render ONE subcube (over the relevant matches) into a condition phrase from
+ * the subject team's point of view. Matches set to "any" are dropped. Multiple
+ * surviving conditions are joined with "and". Returns '' if the subcube drops
+ * every match (i.e. the rank is unconditional given the branch).
+ */
+function renderSubcube(subcube, code, unplayed, relevant, nameOf) {
+  const parts = [];
+  for (let i = 0; i < relevant.length; i++) {
+    const m = unplayed[relevant[i]];
+    const homeSet = new Set(subcube[i]);
+    if (homeSet.size === 3) continue; // dropped
+    const subjectPlays = m.home === code || m.away === code;
+    if (subjectPlays) {
+      const subjSet = new Set([...homeSet].map((c) => fromSubjectPerspective(c, m, code)));
+      const opp = nameOf(m.home === code ? m.away : m.home);
+      parts.push(ownMatchPhrase(subjSet, opp));
+    } else {
+      parts.push(otherMatchPhrase(homeSet, m, nameOf));
+    }
+  }
+  return parts.filter(Boolean).join(' and ');
+}
+
+/** Join the subcube clauses for a single rank with "or". When more than one
+ *  clause survives and any clause itself contains "and", parenthesize the
+ *  multi-condition clauses so the top-level "or" can't be misread. */
+function renderRankCover(subcubes, code, unplayed, relevant, nameOf) {
+  const phrases = subcubes
+    .map((sc) => renderSubcube(sc, code, unplayed, relevant, nameOf))
+    .filter((p) => p !== '');
+  // De-dup.
+  const seen = new Set();
+  const uniq = [];
+  for (const p of phrases) {
+    if (!seen.has(p)) {
+      seen.add(p);
+      uniq.push(p);
+    }
+  }
+  if (uniq.length <= 1) return uniq.join(' or ');
+  return uniq.map((p) => (p.includes(' and ') ? \`(\${p})\` : p)).join(' or ');
+}
+
+// ---------------------------------------------------------------------------
+// Per-rank cover construction (coarse, margin-free)
+// ---------------------------------------------------------------------------
+
+/**
+ * For a team whose rank is decided purely by coarse outcomes (no margin flips),
+ * compute the minimal subcube cover for EACH achievable rank.
+ *
+ * @returns Map<rank, subcube[]>
+ */
+function coverByRank(cells, ranks, numMatches) {
+  // rank -> array of coarse tuples
+  const cellsByRank = new Map();
+  const allKeys = new Set();
+  for (const cell of cells.values()) {
+    const r = [...cell.rankSet][0]; // margin-free => singleton
+    allKeys.add(cell.coarse.join('|'));
+    if (!cellsByRank.has(r)) cellsByRank.set(r, []);
+    cellsByRank.get(r).push(cell.coarse);
+  }
+  const result = new Map();
+  for (const r of ranks) {
+    const target = cellsByRank.get(r) || [];
+    if (target.length === 0) continue;
+    const off = new Set([...allKeys].filter((k) => !target.some((t) => t.join('|') === k)));
+    result.set(r, minimalCover(target, off, numMatches));
+  }
+  return result;
+}
+
+// ---------------------------------------------------------------------------
+// Detail builder — REFRAMED prose (best outcome first, then downside)
+// ---------------------------------------------------------------------------
+
+/**
+ * Build a plain-English detail string for a conditional / best-3rd team whose
+ * rank depends on \`relevant\` matches. Leads with the best reachable rank and
+ * its simplest controllable condition, then states the downside; appends the
+ * deeper fall only when an extra match-result triggers it.
+ *
+ * Aim: one, at most two sentences. Falls back to a compact margin note rather
+ * than a long enumeration if minimization can't shorten things.
+ */
+function describeConditional(code, name, unplayed, scenarios, relevant, nameOf) {
+  const ranks = [...new Set(scenarios.map((s) => s.rankByCode[code]))].sort((a, b) => a - b);
+  const { cells, marginMatters } = buildRelevantCells(code, unplayed, scenarios, relevant);
+  const numMatches = relevant.length;
+
+  const ownIdx = relevant.findIndex(
+    (j) => unplayed[j].home === code || unplayed[j].away === code
+  );
+
+  // Margin-free and the subject plays one of the relevant matches: organize the
+  // statement around the subject's OWN (controllable) result. This is where the
+  // per-outcome minimization pays off — the OTHER match is dropped from any
+  // own-result slice in which it doesn't change the rank.
+  if (!marginMatters && ownIdx >= 0) {
+    return describeByOwnResult(code, ranks, cells, unplayed, relevant, ownIdx, nameOf);
+  }
+
+  // Margin-free, subject doesn't play (rank driven entirely by other matches):
+  // per-rank minimal cover, best rank first.
+  if (!marginMatters) {
+    const covers = coverByRank(cells, ranks, numMatches);
+    return describeByRankCover(code, ranks, covers, unplayed, relevant, nameOf);
+  }
+
+  // Margin matters. Single match the subject plays -> concrete thresholds.
+  if (numMatches === 1) {
+    return describeSingleWithMargin(code, unplayed[relevant[0]], cells, ranks, nameOf);
+  }
+  return describeWithMarginFallback(code, ranks, cells, unplayed, relevant, nameOf);
+}
+
+// ---------------------------------------------------------------------------
+// Own-result-centric renderer (margin-free, subject plays a relevant match)
+// ---------------------------------------------------------------------------
+
+/**
+ * Subject-perspective verb noun phrase for a coarse outcome set, capitalized for
+ * sentence-initial use when \`cap\` is true.
+ *   {W} -> "a win" / "A win"; {W,D} -> "a win or draw"; etc.
+ */
+function ownResultWord(subjSet, capitalize = false) {
+  let w;
+  if (subjSet.size === 1) {
+    const c = [...subjSet][0];
+    w = c === 'W' ? 'a win' : c === 'D' ? 'a draw' : 'a loss';
+  } else if (subjSet.has('W') && subjSet.has('D')) w = 'a win or draw';
+  else if (subjSet.has('D') && subjSet.has('L')) w = 'a draw or loss';
+  else if (subjSet.has('W') && subjSet.has('L')) w = 'a win or loss';
+  else w = 'any result';
+  return capitalize ? w.charAt(0).toUpperCase() + w.slice(1) : w;
+}
+
+/**
+ * Build the per-own-result slices. For each subject result present (W/D/L), the
+ * "other" matches partition the slice into ranks. We collapse each slice to:
+ *   { subjSet, primaryRank, exceptions: [{rank, otherPhrases}] }
+ * where primaryRank is the slice's DOMINANT rank (no condition needed) and
+ * exceptions are the minority ranks gated by an other-match condition. Slices
+ * that share an identical (primaryRank, no-exception) shape and the same subjSet
+ * neighbourhood are merged by the caller via subjSet union.
+ */
+function sliceByOwnResult(code, cells, unplayed, relevant, ownIdx, nameOf) {
+  const otherIdx = relevant.map((_, i) => i).filter((i) => i !== ownIdx);
+  const ownMatch = unplayed[relevant[ownIdx]];
+
+  // own coarse (home perspective) -> { other coarse tuple -> rank }
+  const byOwn = new Map();
+  for (const cell of cells.values()) {
+    const ownC = cell.coarse[ownIdx];
+    if (!byOwn.has(ownC)) byOwn.set(ownC, []);
+    byOwn.get(ownC).push({ other: otherIdx.map((i) => cell.coarse[i]), rank: [...cell.rankSet][0] });
+  }
+
+  const slices = [];
+  for (const [ownC, entries] of byOwn) {
+    const subjC = fromSubjectPerspective(ownC, ownMatch, code);
+    const rankCount = new Map();
+    for (const e of entries) rankCount.set(e.rank, (rankCount.get(e.rank) || 0) + 1);
+    const ranksHere = [...rankCount.keys()].sort((a, b) => a - b);
+
+    if (ranksHere.length === 1) {
+      slices.push({ subjC, primaryRank: ranksHere[0], exceptions: [] });
+      continue;
+    }
+    // dominant rank = most cells (ties -> the better/lower rank, which is more
+    // newsworthy as the default). Minorities become conditioned exceptions.
+    let dominant = ranksHere[0];
+    let dom = -1;
+    for (const r of ranksHere) {
+      const c = rankCount.get(r);
+      if (c > dom || (c === dom && r < dominant)) {
+        dom = c;
+        dominant = r;
+      }
+    }
+    const exceptions = [];
+    for (const r of ranksHere) {
+      if (r === dominant) continue;
+      // minimal cover of this minority rank within the slice (other matches only)
+      const target = entries.filter((e) => e.rank === r).map((e) => e.other);
+      const off = new Set(
+        entries.filter((e) => e.rank !== r).map((e) => e.other.join('|'))
+      );
+      const cover = minimalCover(target, off, otherIdx.length);
+      const phrases = cover
+        .map((sc) =>
+          otherIdx
+            .map((i, k) => otherMatchPhrase(new Set(sc[k]), unplayed[relevant[i]], nameOf))
+            .filter(Boolean)
+            .join(' and ')
+        )
+        .filter((p) => p !== '');
+      exceptions.push({ rank: r, otherPhrases: phrases });
+    }
+    slices.push({ subjC, primaryRank: dominant, exceptions });
+  }
+  return { slices, ownMatch };
+}
+
+/**
+ * Render the own-result slices into one or two sentences, leading with the best
+ * reachable rank and ending with the worst.
+ */
+function describeByOwnResult(code, ranks, cells, unplayed, relevant, ownIdx, nameOf) {
+  const { slices, ownMatch } = sliceByOwnResult(code, cells, unplayed, relevant, ownIdx, nameOf);
+  const opp = nameOf(ownMatch.home === code ? ownMatch.away : ownMatch.home);
+
+  // Merge slices that have the SAME primaryRank and NO exceptions — their own
+  // results combine ("a win or draw" instead of two clauses).
+  const merged = [];
+  const plain = new Map(); // primaryRank -> Set of subjC (only for exception-free slices)
+  for (const sl of slices) {
+    if (sl.exceptions.length === 0) {
+      if (!plain.has(sl.primaryRank)) plain.set(sl.primaryRank, new Set());
+      plain.get(sl.primaryRank).add(sl.subjC);
+    } else {
+      merged.push(sl);
+    }
+  }
+  for (const [rank, subjCs] of plain) {
+    merged.push({ subjSet: subjCs, primaryRank: rank, exceptions: [] });
+  }
+
+  // Build a clause per slice; sort best-rank-first by the slice's BEST attainable
+  // rank (primary or any exception).
+  const sliceBest = (sl) =>
+    Math.min(sl.primaryRank, ...sl.exceptions.map((e) => e.rank));
+  const sliceWorst = (sl) =>
+    Math.max(sl.primaryRank, ...sl.exceptions.map((e) => e.rank));
+  merged.sort((a, b) => sliceBest(a) - sliceBest(b) || sliceWorst(a) - sliceWorst(b));
+
+  const subjSetOf = (sl) => sl.subjSet || new Set([sl.subjC]);
+
+  const clauses = merged.map((sl, idx) => {
+    const subjSet = subjSetOf(sl);
+    const word = ownResultWord(subjSet, idx > 0); // capitalize follow-on clauses
+    if (sl.exceptions.length === 0) {
+      // "2nd with a win or draw vs South Africa" / for a downside: phrased as the
+      // own result leading.
+      if (idx === 0) return \`\${ordinal(sl.primaryRank)} with \${ownResultWordPhrase(subjSet, opp)}\`;
+      // follow-on: "A loss drops them to 3rd"
+      return \`\${word} drops them to \${ordinal(sl.primaryRank)}\`;
+    }
+    // primary + exceptions:
+    //   lead:      "1st with a win over Brazil — or 2nd if Morocco beat Haiti"
+    //   follow-on: "a loss is 3rd — or 4th if Czech Republic beat Mexico"
+    let s;
+    if (idx === 0) {
+      s = \`\${ordinal(sl.primaryRank)} with \${ownResultWordPhrase(subjSet, opp)}\`;
+    } else {
+      s = \`\${word} drops them to \${ordinal(sl.primaryRank)}\`;
+    }
+    for (const ex of sl.exceptions) {
+      const cond = ex.otherPhrases.join(' or ');
+      s += \` — or \${ordinal(ex.rank)} if \${cond}\`;
+    }
+    return s;
+  });
+
+  return clauses.join('; ') + '.';
+}
+
+/** "a win or draw vs South Africa" — own result set with opponent attached. */
+function ownResultWordPhrase(subjSet, opp) {
+  return ownMatchPhrase(subjSet, opp) || 'any result';
+}
+
+/**
+ * Subject does NOT play any relevant match — rank is driven entirely by other
+ * teams' matches. Render best rank first via the per-rank minimal cover.
+ */
+function describeByRankCover(code, ranks, covers, unplayed, relevant, nameOf) {
+  const parts = [];
+  for (const r of ranks) {
+    const p = renderRankCover(covers.get(r) || [], code, unplayed, relevant, nameOf);
+    parts.push(p === '' ? \`\${ordinal(r)} otherwise\` : \`\${ordinal(r)} if \${p}\`);
+  }
+  return parts.join('; ') + '.';
+}
+
+// ---------------------------------------------------------------------------
+// Margin-threshold rendering (single match the subject plays)
+// ---------------------------------------------------------------------------
+
+/**
+ * Single relevant match where goal margin changes the rank. Express coarse
+ * outcomes first, then add margin thresholds inside the cell that needs them.
+ * Concrete thresholds ("if they win by 2+") replace any vague language.
+ */
+function describeSingleWithMargin(code, match, cells, ranks, nameOf) {
+  const subjectPlays = match.home === code || match.away === code;
+  const opp = nameOf(match.home === code ? match.away : match.home);
+  const order = { W: 0, D: 1, L: 2 };
+  const sorted = [...cells.values()].sort((a, b) => order[a.coarse[0]] - order[b.coarse[0]]);
+  const clauses = [];
+  for (const cell of sorted) {
+    const homeCoarse = cell.coarse[0];
+    const subjCoarse = subjectPlays ? fromSubjectPerspective(homeCoarse, match, code) : homeCoarse;
+    if (cell.rankSet.size === 1) {
+      const r = [...cell.rankSet][0];
+      if (subjectPlays) {
+        clauses.push(\`\${ordinal(r)} with \${ownMatchPhrase(new Set([subjCoarse]), opp)}\`);
+      } else {
+        clauses.push(\`\${ordinal(r)} if \${otherMatchPhrase(new Set([homeCoarse]), match, nameOf)}\`);
+      }
+      continue;
+    }
+    // margin splits this coarse cell -> describe by margin band (subject persp.)
+    const byMargin = [...cell.byMargin.entries()]
+      .map(([mk, set]) => ({ margin: Number(mk), rank: [...set][0] }))
+      .sort((a, b) => a.margin - b.margin);
+    const bands = [];
+    for (const e of byMargin) {
+      const last = bands[bands.length - 1];
+      if (last && last.rank === e.rank && e.margin === last.hi + 1) last.hi = e.margin;
+      else bands.push({ lo: e.margin, hi: e.margin, rank: e.rank });
+    }
+    const verb = subjectPlays
+      ? subjCoarse === 'W'
+        ? 'win'
+        : subjCoarse === 'L'
+          ? 'lose'
+          : 'draw'
+      : homeCoarse === 'W'
+        ? 'win'
+        : 'lose';
+    for (const b of bands) {
+      const loMag = Math.abs(b.lo);
+      const hiMag = Math.abs(b.hi);
+      const lo = Math.min(loMag, hiMag);
+      const hi = Math.max(loMag, hiMag);
+      let cond;
+      if (lo === hi) cond = \`\${verb} by \${lo}\`;
+      else if (hi >= MAX_GOALS) cond = \`\${verb} by \${lo}+\`;
+      else cond = \`\${verb} by \${lo}-\${hi}\`;
+      const subj = subjectPlays ? 'they' : nameOf(match.home);
+      clauses.push(\`\${ordinal(b.rank)} if \${subj} \${cond}\`);
+    }
+  }
+  return clauses.join('; ') + '.';
+}
+
+/**
+ * Two relevant matches where a goal margin flips the rank inside some coarse
+ * cell — the genuinely hard case. Full enumeration is unreadable, so we state
+ * the best CLEANLY-GUARANTEED outcome tightly, then collapse the rest into a
+ * single compact "...otherwise Nth/Mth on goal difference" tail. Honest and
+ * short; never an over-claim and never a 2-D margin grid.
+ */
+function describeWithMarginFallback(code, ranks, cells, unplayed, relevant, nameOf) {
+  const numMatches = relevant.length;
+
+  // Cells where each rank is the SOLE (coarse-guaranteed) outcome.
+  const cleanByRank = new Map();
+  for (const cell of cells.values()) {
+    if (cell.rankSet.size === 1) {
+      const r = [...cell.rankSet][0];
+      if (!cleanByRank.has(r)) cleanByRank.set(r, []);
+      cleanByRank.get(r).push(cell.coarse);
+    }
+  }
+
+  // Tight cover of a rank's guaranteed cells: every other cell is off.
+  const renderGuaranteed = (tuples) => {
+    if (!tuples || tuples.length === 0) return '';
+    const keep = new Set(tuples.map((t) => t.join('|')));
+    const off = new Set();
+    for (const cell of cells.values()) {
+      const k = cell.coarse.join('|');
+      if (!keep.has(k)) off.add(k);
+    }
+    return renderRankCover(minimalCover(tuples, off, numMatches), code, unplayed, relevant, nameOf);
+  };
+
+  // Render each rank in rank order (best first): a tight clean clause where the
+  // rank is guaranteed, or a compact goal-difference note where it is only ever
+  // margin-decided.
+  const clauses = [];
+  const marginOnly = [];
+  for (const r of ranks) {
+    const g = renderGuaranteed(cleanByRank.get(r));
+    if (g !== '') clauses.push({ rank: r, text: \`\${ordinal(r)} with \${g}\` });
+    else marginOnly.push(r);
+  }
+
+  if (clauses.length === 0) {
+    // Nothing cleanly guaranteed -> entirely a goal-difference matter.
+    return \`\${ranks.map(ordinal).join('/')} depending on goal difference.\`;
+  }
+
+  // Insert margin-only ranks at their rank position with a GD note.
+  for (const r of marginOnly) {
+    clauses.push({ rank: r, text: \`\${ordinal(r)} on goal difference\` });
+  }
+  clauses.sort((a, b) => a.rank - b.rank);
+  return clauses.map((c) => c.text).join('; ') + '.';
+}
+
+// ---------------------------------------------------------------------------
+// "Wins the group" detail (1st still reachable for a clinched top-2 team)
+// ---------------------------------------------------------------------------
+
+/**
+ * Build the detail line for a team that has clinched top-2 but can still win the
+ * group: lead with the path to 1st, then note the simplest way 1st slips to 2nd.
+ */
+function detailForTop(code, name, unplayed, scenarios, relevant, nameOf) {
+  const { cells, marginMatters } = buildRelevantCells(code, unplayed, scenarios, relevant);
+  const ranks = [...new Set(scenarios.map((s) => s.rankByCode[code]))].sort((a, b) => a - b);
+  const numMatches = relevant.length;
+
+  if (!ranks.includes(1)) return null;
+
+  if (!marginMatters) {
+    const covers = coverByRank(cells, ranks, numMatches);
+    const firstPhrase = renderRankCover(covers.get(1) || [], code, unplayed, relevant, nameOf);
+    let lead = firstPhrase === '' ? 'Wins the group' : \`Wins the group with \${firstPhrase}\`;
+
+    // If 2nd is the only other rank, phrase the slip succinctly.
+    if (ranks.length === 1) return lead + '.';
+
+    const ownIdx = relevant.findIndex(
+      (j) => unplayed[j].home === code || unplayed[j].away === code
+    );
+    // The path to 2nd.
+    const secondSubs = covers.get(2) || [];
+    const secondPhrase = renderRankCover(secondSubs, code, unplayed, relevant, nameOf);
+
+    if (ownIdx >= 0) {
+      // Try clean own-result framing for the slip to 2nd.
+      const ownMatch = unplayed[relevant[ownIdx]];
+      const opp = nameOf(ownMatch.home === code ? ownMatch.away : ownMatch.home);
+      // own subset & other condition for rank 2
+      const ownHomeSet = new Set();
+      const otherPhrases = new Set();
+      let clean = secondSubs.length > 0;
+      for (const sc of secondSubs) {
+        for (const v of sc[ownIdx]) ownHomeSet.add(v);
+        if (new Set(sc[ownIdx]).size === 3) clean = false;
+        for (let i = 0; i < relevant.length; i++) {
+          if (i === ownIdx) continue;
+          const ph = otherMatchPhrase(new Set(sc[i]), unplayed[relevant[i]], nameOf);
+          if (ph) otherPhrases.add(ph);
+        }
+      }
+      if (clean) {
+        const subjSet = new Set(
+          [...ownHomeSet].map((c) => fromSubjectPerspective(c, ownMatch, code))
+        );
+        const ownP = ownMatchPhrase(subjSet, opp);
+        if (otherPhrases.size === 0) {
+          return \`\${lead}; \${cap(ownP)} sees them finish 2nd.\`;
+        }
+        if (otherPhrases.size === 1) {
+          // e.g. "a draw still tops the group unless Sweden beat Japan"
+          return \`\${lead}; otherwise 2nd if \${[...otherPhrases][0]}.\`;
+        }
+      }
+    }
+    // Generic.
+    return \`\${lead}; 2nd\${secondPhrase ? \` if \${secondPhrase}\` : ' otherwise'}.\`;
+  }
+
+  // Margin case: fall back to single-match margin renderer's 1st clause, or a
+  // compact statement.
+  if (numMatches === 1 && (unplayed[relevant[0]].home === code || unplayed[relevant[0]].away === code)) {
+    return describeSingleWithMargin(code, unplayed[relevant[0]], cells, ranks, nameOf);
+  }
+  return \`Wins the group if results elsewhere fall their way (and on goal difference).\`;
+}
+
+/** Capitalize the first letter of a phrase. */
+function cap(s) {
+  return s ? s.charAt(0).toUpperCase() + s.slice(1) : s;
+}
+
+// ---------------------------------------------------------------------------
+// Dead-rubber detection
+// ---------------------------------------------------------------------------
+
+/**
+ * A match is a dead rubber if its result cannot change ANY team's within-group
+ * rank. Match j is dead iff it is irrelevant to every team.
+ */
+function deadRubbers(group, unplayed, scenarios) {
+  const dead = [];
+  for (let j = 0; j < unplayed.length; j++) {
+    let mattersToSomeone = false;
+    for (const team of group.teams) {
+      const rel = relevantMatchIndices(team.code, unplayed, scenarios);
+      if (rel.includes(j)) {
+        mattersToSomeone = true;
+        break;
+      }
+    }
+    if (!mattersToSomeone) dead.push(matchKey(unplayed[j]));
+  }
+  return dead;
+}
+
+// ---------------------------------------------------------------------------
+// Headline accuracy
+// ---------------------------------------------------------------------------
+
+/**
+ * "Fate in its own hands" / "controls its own destiny" is only warranted when
+ * the team's OWN result alone determines whether it finishes top-2: there is an
+ * own-result that GUARANTEES top-2 regardless of the other match(es). Otherwise
+ * use a neutral headline.
+ */
+function controlsTop2(code, unplayed, scenarios, relevant) {
+  const ownIdx = relevant.find(
+    (j) => unplayed[j].home === code || unplayed[j].away === code
+  );
+  if (ownIdx === undefined) return false;
+  const ownMatch = unplayed[ownIdx];
+  // Group scenarios by the subject's own coarse result; check if some own result
+  // yields top-2 (rank<=2) in EVERY scenario with that result.
+  const byOwn = new Map(); // 'W'|'D'|'L' -> Set<rank>
+  for (const s of scenarios) {
+    const own = fromSubjectPerspective(s.coarse[ownIdx], ownMatch, code);
+    if (!byOwn.has(own)) byOwn.set(own, new Set());
+    byOwn.get(own).add(s.rankByCode[code]);
+  }
+  for (const set of byOwn.values()) {
+    let allTop2 = true;
+    for (const r of set) if (r > 2) allTop2 = false;
+    if (allTop2) return true;
+  }
+  return false;
+}
+
+function conditionalHeadline(code, allRanks, unplayed, scenarios, relevant) {
+  const hi = Math.max(...allRanks);
+  const controls = controlsTop2(code, unplayed, scenarios, relevant);
+  if (allRanks.has(1)) {
+    return controls
+      ? \`Still alive for 1st (could finish as low as \${ordinal(hi)}) — controls its own destiny\`
+      : \`Still alive for 1st (could finish as low as \${ordinal(hi)})\`;
+  }
+  if (allRanks.has(2)) {
+    return controls
+      ? \`Can finish as high as 2nd (as low as \${ordinal(hi)}) — fate in its own hands\`
+      : \`Can still finish 2nd; could fall to \${ordinal(hi)}\`;
+  }
+  return \`Position still open (\${ordinal(Math.min(...allRanks))}–\${ordinal(hi)})\`;
+}
+
+// ---------------------------------------------------------------------------
+// Top-level
+// ---------------------------------------------------------------------------
+
+/**
+ * Summarize a group's remaining-match scenarios into per-team plain-English
+ * clinch / qualification / elimination statements.
+ *
+ * @param {{name,teams,matches}} group
+ * @param {{maxGoals?:number}} [opts]
+ * @returns {{ teams: Array, deadRubbers: string[] }}
+ */
+function summarizeGroup(group, opts = {}) {
+  const maxGoals = opts.maxGoals ?? MAX_GOALS;
+  const nameOf = (code) => {
+    const t = group.teams.find((x) => x.code === code);
+    return t ? t.name : code;
+  };
+
+  const unplayed = group.matches.filter((m) => !m.played);
+
+  // Fully-played group: every team has a fixed rank.
+  if (unplayed.length === 0) {
+    const standing = computeGroupStanding(group);
+    const teams = standing.map((s) => ({
+      code: s.code,
+      name: s.name,
+      status:
+        s.rank === 1 ? 'won-group' : s.rank === 4 ? 'eliminated' : s.rank === 3 ? 'best-3rd' : 'qualified',
+      headline:
+        s.rank === 1
+          ? 'Clinched 1st — group winner'
+          : s.rank === 4
+            ? 'Eliminated'
+            : s.rank === 3
+              ? 'Finished 3rd — advancing then depends on other groups'
+              : 'Qualified — finished 2nd',
+      detail: null,
+      maxRank: s.rank,
+      minRank: s.rank,
+    }));
+    return { teams, deadRubbers: [] };
+  }
+
+  const { scenarios } = enumerateScenarios(group, maxGoals);
+
+  const teams = group.teams.map((team) => {
+    const code = team.code;
+    const ranks = scenarios.map((s) => s.rankByCode[code]);
+    const minRank = Math.min(...ranks); // best
+    const maxRank = Math.max(...ranks); // worst
+    const allRanks = new Set(ranks);
+
+    // rank == 1 in ALL scenarios -> clinched 1st.
+    if (minRank === 1 && maxRank === 1) {
+      return mk(code, team.name, 'won-group', 'Clinched 1st — group winner', null, maxRank, minRank);
+    }
+
+    // rank == 4 in ALL -> eliminated.
+    if (minRank === 4 && maxRank === 4) {
+      return mk(code, team.name, 'eliminated', 'Eliminated', null, maxRank, minRank);
+    }
+
+    // rank in {1,2} in all scenarios but not always 1 -> clinched top-2.
+    if (maxRank <= 2) {
+      const firstReachable = allRanks.has(1);
+      let detail = null;
+      if (firstReachable) {
+        const relevant = relevantMatchIndices(code, unplayed, scenarios);
+        detail = detailForTop(code, team.name, unplayed, scenarios, relevant, nameOf);
+      }
+      return mk(
+        code,
+        team.name,
+        'qualified',
+        'Qualified — clinched a top-2 place',
+        detail,
+        maxRank,
+        minRank
+      );
+    }
+
+    // best achievable POSITION is 3rd.
+    if (minRank === 3) {
+      let detail = null;
+      if (maxRank > 3) {
+        const relevant = relevantMatchIndices(code, unplayed, scenarios);
+        detail = describeConditional(code, team.name, unplayed, scenarios, relevant, nameOf);
+      }
+      return mk(
+        code,
+        team.name,
+        'best-3rd',
+        'Can finish no higher than 3rd — advancing then depends on other groups',
+        detail,
+        maxRank,
+        minRank
+      );
+    }
+
+    // ---- conditional ----
+    const relevant = relevantMatchIndices(code, unplayed, scenarios);
+    const detail = describeConditional(code, team.name, unplayed, scenarios, relevant, nameOf);
+    const headline = conditionalHeadline(code, allRanks, unplayed, scenarios, relevant);
+    return mk(code, team.name, 'conditional', headline, detail, maxRank, minRank);
+  });
+
+  return { teams, deadRubbers: deadRubbers(group, unplayed, scenarios) };
+}
+
+function mk(code, name, status, headline, detail, maxRank, minRank) {
+  return { code, name, status, headline, detail, maxRank, minRank };
+}
+
+// ---------------------------------------------------------------------------
+// Test-only exports (minimal-cover unit testing).
+// ---------------------------------------------------------------------------
+const __test = {
+  minimalCover,
+  renderSubcube,
+  buildRelevantCells,
+  relevantMatchIndices,
+  enumerateScenarios,
+  coverByRank,
+};
+
+return { summarizeGroup: summarizeGroup, __test: __test };
+})();
+var summarizeGroup = __scnSummaryMod.summarizeGroup, __test = __scnSummaryMod.__test;
+
+/* ===== group-situation.js (groupSituation; pre-final analyzer) ===== */
+
+var __grpSituationMod = (function(){
+// group-situation.js
+// Stage-aware "what's locked / what's needed / what the next round makes
+// official" analyzer for a 4-team World Cup group that is NOT yet at its final
+// round (i.e. teams still have 2+ games left).
+//
+// Pure ES module, browser-safe (no Node-only APIs). May import
+// computeGroupStanding from engine.js for current points/played aggregation.
+//
+// COMPLEMENT to scenario-summary.js: that module handles the final round (1-2
+// unplayed matches). This one answers the questions a fan asks BEFORE the final
+// round: who has clinched/been eliminated, the magic-number points each
+// contender needs, and what the very next round of games can make official.
+//
+// HONESTY CONTRACT (matches the rest of the project):
+//   - WITHIN-GROUP facts only. Reason on POINTS. Top 2 advance; 3rd MAY advance
+//     as a best-third — that is CROSS-GROUP and is NEVER asserted here.
+//   - No drawing of lots (abolished for 2026). Where the top-2/3rd boundary in a
+//     scenario is a POINTS TIE involving the team, we treat it as NOT-yet-settled
+//     and surface it as a "could come down to goal difference" caveat rather than
+//     fabricating a goal-difference outcome.
+//
+// Public API:
+//   groupSituation(group) -> {
+//     teams: [ { code, name, points, played, remaining, status, statusLine,
+//                magicNumber, eliminationThreshold, needLine } ],
+//     nextRound: { matchKeys:[...], date, triggers:[ string ] },
+//     decided: bool
+//   }
+//
+// Data shapes (engine schema):
+//   group = { name, teams:[{code,name,elo}],
+//             matches:[{home,away,homeGoals,awayGoals,played,date,time}] }
+//   home/away are team CODES. A match "key" is \`\${home}-\${away}\`.
+
+const TOP_N = 2; // top 2 advance directly
+
+const matchKey = (m) => \`\${m.home}-\${m.away}\`;
+
+// ----------------------------------------------------------------------------
+// Points bookkeeping
+// ----------------------------------------------------------------------------
+
+/** Current POINTS and games-played for each team, from PLAYED matches only. */
+function currentPoints(group) {
+  const pts = new Map();
+  const played = new Map();
+  for (const t of group.teams) {
+    pts.set(t.code, 0);
+    played.set(t.code, 0);
+  }
+  for (const m of group.matches) {
+    if (!m.played) continue;
+    if (!pts.has(m.home) || !pts.has(m.away)) continue;
+    played.set(m.home, played.get(m.home) + 1);
+    played.set(m.away, played.get(m.away) + 1);
+    if (m.homeGoals > m.awayGoals) pts.set(m.home, pts.get(m.home) + 3);
+    else if (m.homeGoals < m.awayGoals) pts.set(m.away, pts.get(m.away) + 3);
+    else {
+      pts.set(m.home, pts.get(m.home) + 1);
+      pts.set(m.away, pts.get(m.away) + 1);
+    }
+  }
+  return { pts, played };
+}
+
+const COARSE = ['home', 'draw', 'away']; // outcome of an unplayed match
+
+/** Points delta applied to a points-map for one coarse outcome of a match. */
+function applyOutcome(ptsMap, match, outcome) {
+  if (outcome === 'home') ptsMap.set(match.home, ptsMap.get(match.home) + 3);
+  else if (outcome === 'away') ptsMap.set(match.away, ptsMap.get(match.away) + 3);
+  else {
+    ptsMap.set(match.home, ptsMap.get(match.home) + 1);
+    ptsMap.set(match.away, ptsMap.get(match.away) + 1);
+  }
+}
+
+/**
+ * Enumerate every coarse (W/D/L) combination of a list of unplayed matches.
+ * Yields a fresh final-points Map for each combo (base points + outcome deltas).
+ * k matches -> 3^k combos (k<=6 -> <=729).
+ */
+function* enumeratePoints(basePts, unplayed) {
+  const k = unplayed.length;
+  const total = 3 ** k;
+  for (let n = 0; n < total; n++) {
+    const final = new Map(basePts);
+    let x = n;
+    for (let i = 0; i < k; i++) {
+      applyOutcome(final, unplayed[i], COARSE[x % 3]);
+      x = Math.floor(x / 3);
+    }
+    yield final;
+  }
+}
+
+// ----------------------------------------------------------------------------
+// Points-only top-2 test for ONE final-points map
+// ----------------------------------------------------------------------------
+
+/**
+ * Given a final-points Map (code -> pts), classify a team's standing on POINTS
+ * ALONE. Returns:
+ *   'in'     -> strictly inside top 2 (fewer than TOP_N teams have MORE points,
+ *               and it is not tied with anyone on the cut line below it)
+ *   'tie'    -> on the top-2/3rd boundary as a POINTS TIE involving this team
+ *               (would-be in, but a goal-difference tiebreak could intrude)
+ *   'out'    -> strictly outside top 2 on points
+ *
+ * Cut-line semantics for a 4-team group (top 2 advance):
+ *   - strictlyAbove = teams with MORE points than this team.
+ *   - If strictlyAbove >= TOP_N            -> 'out' (cannot be top 2 here).
+ *   - Else (strictlyAbove < TOP_N): this team is at worst the (strictlyAbove+1)th
+ *     seed before tiebreaks. It is strictly 'in' only if granting EVERY team
+ *     level with it the benefit of the doubt still leaves it inside the top 2,
+ *     i.e. there is no points tie spanning the 2nd/3rd boundary that includes it.
+ *     Concretely: let \`equal\` = teams with the SAME points (excluding itself).
+ *     The block [strictlyAbove .. strictlyAbove+equal] occupies seeds
+ *     (strictlyAbove+1) .. (strictlyAbove+equal+1). If that block's top seed
+ *     (strictlyAbove+1) <= TOP_N but its bottom seed > TOP_N, the block straddles
+ *     the cut -> 'tie'. If the whole block is within top 2 -> 'in'. If the block
+ *     starts beyond top 2 -> 'out'.
+ */
+function classifyPoints(finalPts, code) {
+  const mine = finalPts.get(code);
+  let strictlyAbove = 0;
+  let equal = 0;
+  for (const [c, p] of finalPts) {
+    if (c === code) continue;
+    if (p > mine) strictlyAbove++;
+    else if (p === mine) equal++;
+  }
+  const topSeed = strictlyAbove + 1;            // best seed this team could hold
+  const bottomSeed = strictlyAbove + equal + 1; // worst seed within its points block
+  if (topSeed > TOP_N) return 'out';            // even best case is below the cut
+  if (bottomSeed <= TOP_N) return 'in';         // whole block clears the cut
+  return 'tie';                                 // block straddles the 2nd/3rd line
+}
+
+/** Best seed (1-based) the team holds on points alone (strictlyAbove + 1). */
+function bestSeed(finalPts, code) {
+  const mine = finalPts.get(code);
+  let strictlyAbove = 0;
+  for (const [c, p] of finalPts) {
+    if (c === code) continue;
+    if (p > mine) strictlyAbove++;
+  }
+  return strictlyAbove + 1;
+}
+
+/**
+ * True if this team is STRICTLY ahead of every other team on points (sole 1st).
+ * Per spec, a points TIE at the top is NOT "won the group" — only a clear,
+ * tiebreak-free lead clinches 1st. So we require every other team to have
+ * strictly FEWER points (no equal-on-points rival at the top).
+ */
+function isSoleTopOnPoints(finalPts, code) {
+  const mine = finalPts.get(code);
+  for (const [c, p] of finalPts) {
+    if (c === code) continue;
+    if (p >= mine) return false; // anyone level-or-above blocks a clean 1st
+  }
+  return true;
+}
+
+// ----------------------------------------------------------------------------
+// Clinch / eliminate tests over ALL remaining combinations
+// ----------------------------------------------------------------------------
+
+/**
+ * Evaluate a team across all combinations of the given unplayed matches.
+ * Returns flags used to derive status:
+ *   clinchedTop2  : 'in' in EVERY combination (never even a tie on the cut).
+ *   wonGroup      : top on points in EVERY combination (no one can pass it).
+ *   eliminated    : 'in'/'tie' never reachable -> top 2 impossible in all combos.
+ *   reachableTie  : at least one combo where it is exactly on the cut-line tie.
+ */
+function evaluateTeam(basePts, unplayed, code) {
+  let clinchedTop2 = true;
+  let wonGroup = true;
+  let canReachTop2 = false; // 'in' OR 'tie' in at least one combo
+  for (const finalPts of enumeratePoints(basePts, unplayed)) {
+    const cls = classifyPoints(finalPts, code);
+    if (cls !== 'in') clinchedTop2 = false;     // a tie or out breaks the clinch
+    if (!isSoleTopOnPoints(finalPts, code)) wonGroup = false;
+    if (cls === 'in' || cls === 'tie') canReachTop2 = true;
+  }
+  return {
+    clinchedTop2,
+    wonGroup,
+    eliminated: !canReachTop2,
+  };
+}
+
+// ----------------------------------------------------------------------------
+// Magic number / elimination threshold (per contender)
+// ----------------------------------------------------------------------------
+
+/**
+ * For a team, compute over its OWN remaining matches:
+ *   magicNumber          : the minimum FINAL points total P such that, IF the
+ *                          team finishes on >= P, it is GUARANTEED top 2 on
+ *                          points regardless of all OTHER results. null if even
+ *                          winning out is not guaranteed-safe (a points tie could
+ *                          still intrude at the max) — flagged via tieAtMagic.
+ *   tieAtMagic           : true if, at the magicNumber total, the guarantee rests
+ *                          on a points tie (could come down to goal difference).
+ *   eliminationThreshold : the smallest FINAL points total at which the team can
+ *                          STILL reach top 2 (in/tie) under some other-results
+ *                          combination. Finishing strictly BELOW this -> out.
+ *   maxFinal             : the maximum final points the team can reach (win out).
+ *
+ * Method: separate the team's OWN remaining matches from the OTHERS'. For each
+ * coarse outcome set of the team's own matches we get a candidate final total
+ * for the team; for each such total we test, across ALL combinations of the
+ * OTHER matches, whether the team is always 'in' (guaranteed-safe), sometimes
+ * only 'tie' (tie-dependent), or can be 'out' (not safe).
+ */
+function magicAndThreshold(basePts, unplayed, code) {
+  const own = unplayed.filter((m) => m.home === code || m.away === code);
+  const others = unplayed.filter((m) => m.home !== code && m.away !== code);
+
+  // Map: team's own-final-points total -> aggregate safety across other combos.
+  // safety: 'safe' (always in), 'tie' (always in-or-tie, at least one tie),
+  //         'unsafe' (some combo out).
+  const byTotal = new Map(); // total -> { everIn:bool, everTie:bool, everOut:bool }
+
+  for (const ownPts of enumeratePoints(basePts, own)) {
+    const myTotal = ownPts.get(code);
+    // Now vary the OTHER matches on top of this own-result state.
+    let everIn = false, everTie = false, everOut = false;
+    for (const finalPts of enumeratePoints(ownPts, others)) {
+      const cls = classifyPoints(finalPts, code);
+      if (cls === 'in') everIn = true;
+      else if (cls === 'tie') everTie = true;
+      else everOut = true;
+    }
+    const agg = byTotal.get(myTotal) || { everIn: false, everTie: false, everOut: false };
+    agg.everIn = agg.everIn || everIn;
+    agg.everTie = agg.everTie || everTie;
+    agg.everOut = agg.everOut || everOut;
+    byTotal.set(myTotal, agg);
+  }
+
+  const totals = [...byTotal.keys()].sort((a, b) => a - b);
+  const maxFinal = totals[totals.length - 1];
+
+  // magicNumber: smallest total whose aggregate is guaranteed-safe (no 'out'
+  // across other combos). If that guarantee includes a tie at the cut, flag it.
+  let magicNumber = null;
+  let tieAtMagic = false;
+  for (const t of totals) {
+    const a = byTotal.get(t);
+    if (!a.everOut) {           // finishing on t (or above, monotone) is safe
+      magicNumber = t;
+      tieAtMagic = a.everTie && !a.everIn ? true : false;
+      // Note: if everIn true and everOut false, it's an unconditional clinch at t;
+      // a stray tie among higher-total branches doesn't taint the magic line.
+      break;
+    }
+  }
+
+  // eliminationThreshold: smallest total at which top 2 is still REACHABLE
+  // (everIn or everTie under some other combo). Below it -> mathematically out.
+  let eliminationThreshold = null;
+  for (const t of totals) {
+    const a = byTotal.get(t);
+    if (a.everIn || a.everTie) {
+      eliminationThreshold = t;
+      break;
+    }
+  }
+
+  return { magicNumber, tieAtMagic, eliminationThreshold, maxFinal, ownCount: own.length };
+}
+
+// ----------------------------------------------------------------------------
+// Next-round identification + triggers
+// ----------------------------------------------------------------------------
+
+/**
+ * The next chronological round = unplayed matches sharing the EARLIEST date.
+ * Tie-break ordering within the round by time (string compare is adequate for
+ * the "HH:MM UTC±N" format only loosely; date is the grouping key that matters).
+ */
+function nextRoundMatches(unplayed) {
+  if (unplayed.length === 0) return [];
+  const dated = unplayed.filter((m) => m.date);
+  const pool = dated.length ? dated : unplayed;
+  let earliest = null;
+  for (const m of pool) {
+    if (earliest === null || (m.date && m.date < earliest)) earliest = m.date;
+  }
+  const round = pool.filter((m) => m.date === earliest);
+  round.sort((a, b) => (a.time || '').localeCompare(b.time || ''));
+  return round;
+}
+
+const ord = (n) => (n === 1 ? '1st' : n === 2 ? '2nd' : n === 3 ? '3rd' : \`\${n}th\`);
+
+/**
+ * Re-run the clinch/eliminate test on the POST-NEXT-ROUND state to generate
+ * AUTOMATIC, VERIFIED trigger strings: what becomes OFFICIAL after the next
+ * round (with later games still to play).
+ *
+ * Approach: enumerate the coarse outcomes of JUST the next-round matches. For
+ * each post-round points state, re-evaluate every team over the STILL-remaining
+ * matches. We collect, per team, the SET of next-round coarse outcomes that
+ * (a) clinch top 2, (b) clinch 1st, or (c) eliminate it — then describe the
+ * trigger in terms of that team's own next-round result when it is the clean
+ * driver, else as a combined condition.
+ */
+function buildTriggers(group, basePts, unplayed, teamMeta) {
+  const round = nextRoundMatches(unplayed);
+  if (round.length === 0) return { matchKeys: [], date: null, triggers: [] };
+
+  const date = round[0].date || null;
+  const roundKeys = new Set(round.map(matchKey));
+  const later = unplayed.filter((m) => !roundKeys.has(matchKey(m)));
+
+  // Enumerate next-round coarse outcomes; for each, compute the post-round base
+  // points and evaluate every team over the LATER matches.
+  const k = round.length;
+  const combos = []; // { outcomes:[{key,outcome}], post:Map, perTeam:{code:{clinch,won,elim}} }
+  for (let n = 0; n < 3 ** k; n++) {
+    const post = new Map(basePts);
+    const outcomes = [];
+    let x = n;
+    for (let i = 0; i < k; i++) {
+      const oc = COARSE[x % 3];
+      applyOutcome(post, round[i], oc);
+      outcomes.push({ match: round[i], outcome: oc });
+      x = Math.floor(x / 3);
+    }
+    const perTeam = {};
+    for (const t of group.teams) {
+      const ev = evaluateTeam(post, later, t.code);
+      perTeam[t.code] = {
+        clinch: ev.clinchedTop2,
+        won: ev.wonGroup,
+        elim: ev.eliminated,
+      };
+    }
+    combos.push({ outcomes, perTeam });
+  }
+
+  // Helper: for a given team and a target predicate (clinch/won/elim), find the
+  // set of next-round combos satisfying it, and try to express it compactly in
+  // terms of that team's OWN next-round result (win/draw/loss), noting any
+  // dependency on the other match.
+  const teamName = (code) => (teamMeta.get(code)?.name) || code;
+
+  // The team's OWN next-round result (win/draw/loss) within a specific combo.
+  // We find the combo entry for the match the team actually plays and translate
+  // THAT match's outcome — never apply another match's outcome to it.
+  const ownResultInCombo = (code, combo) => {
+    for (const o of combo.outcomes) {
+      const m = o.match;
+      if (m.home === code) return o.outcome === 'home' ? 'win' : o.outcome === 'away' ? 'loss' : 'draw';
+      if (m.away === code) return o.outcome === 'away' ? 'win' : o.outcome === 'home' ? 'loss' : 'draw';
+    }
+    return null; // team does not play this round
+  };
+  const playsThisRound = (code) => round.some((r) => r.home === code || r.away === code);
+
+  const triggers = [];
+
+  for (const t of group.teams) {
+    const code = t.code;
+    const meta = teamMeta.get(code);
+    // Already settled before the round? Then nothing NEW triggers for it.
+    if (meta.status === 'won-group' || meta.status === 'qualified' || meta.status === 'eliminated') {
+      continue;
+    }
+
+    // CLINCH-1st trigger (lead with the strongest fact).
+    addTrigger(triggers, code, 'won', combos, round, ownResultInCombo, playsThisRound, teamName, group);
+    // CLINCH top-2 trigger.
+    addTrigger(triggers, code, 'clinch', combos, round, ownResultInCombo, playsThisRound, teamName, group);
+    // ELIMINATION trigger.
+    addTrigger(triggers, code, 'elim', combos, round, ownResultInCombo, playsThisRound, teamName, group);
+  }
+
+  if (triggers.length === 0) {
+    triggers.push('Nothing is settled until the final round.');
+  }
+
+  return { matchKeys: round.map(matchKey), date, triggers };
+}
+
+/**
+ * Build (and push, if true & compact) a single trigger for one team & predicate.
+ * predicate: 'won' (clinch 1st) | 'clinch' (clinch top 2) | 'elim' (eliminated).
+ *
+ * We look at the subset of next-round combos where the predicate holds. If that
+ * subset is exactly characterized by the team's OWN result(s) in the round
+ * (independent of the other match), we phrase it cleanly ("X clinch a top-2 place
+ * with a win or draw"). If it additionally requires the other match to go a
+ * certain way, we phrase the dependency ("X can clinch with a win if Y lose").
+ * If it's true only in scattered combos not cleanly describable, we conservatively
+ * describe it as conditional on both results, listing the own-result and the
+ * required other-match outcome(s). Triggers that never hold are skipped.
+ */
+function addTrigger(out, code, predicate, combos, round, ownResult, playsThisRound, teamName, group) {
+  const holds = (c) => c.perTeam[code][predicate];
+
+  const satisfying = combos.filter(holds);
+  if (satisfying.length === 0) return;            // predicate never triggers next round
+  if (satisfying.length === combos.length) {
+    // Already true in every outcome -> it was already settled (shouldn't reach
+    // here for unsettled teams), skip to avoid noise.
+    return;
+  }
+
+  const name = teamName(code);
+  const verb =
+    predicate === 'won' ? 'clinch top spot' :
+    predicate === 'clinch' ? 'clinch a top-2 place' :
+    'be eliminated';
+
+  // Map each combo to (ownResult, otherKey->otherResultLabel).
+  const otherMatches = round.filter((r) => r.home !== code && r.away !== code);
+
+  // Group satisfying combos by the team's own result (combo-aware; reads the
+  // outcome of the match THIS team plays, not whichever outcome comes last).
+  const byOwn = new Map(); // ownResult -> array of combos
+  for (const c of satisfying) {
+    const key = ownResult(code, c) || 'n/a';
+    if (!byOwn.has(key)) byOwn.set(key, []);
+    byOwn.get(key).push(c);
+  }
+
+  // For each own-result, is the predicate true for ALL other-match outcomes
+  // (i.e. own result alone is sufficient)? Count combos per own-result vs how
+  // many TOTAL combos share that own-result.
+  const totalByOwn = new Map();
+  for (const c of combos) {
+    const key = ownResult(code, c) || 'n/a';
+    totalByOwn.set(key, (totalByOwn.get(key) || 0) + 1);
+  }
+
+  const sufficientOwn = []; // own-results that ALONE guarantee the predicate
+  const conditionalOwn = []; // own-results that only sometimes trigger (need other match)
+  for (const [own, list] of byOwn) {
+    if (list.length === totalByOwn.get(own)) sufficientOwn.push(own);
+    else conditionalOwn.push(own);
+  }
+
+  const resultPhrase = (r) => (r === 'win' ? 'a win' : r === 'draw' ? 'a draw' : 'a loss');
+  const order = { win: 0, draw: 1, loss: 2 };
+
+  // Clean case: own result(s) alone are sufficient, nothing conditional.
+  if (sufficientOwn.length > 0 && conditionalOwn.length === 0 && playsThisRound(code)) {
+    const sorted = sufficientOwn.sort((a, b) => order[a] - order[b]);
+    const phrase = sorted.map(resultPhrase).join(' or ');
+    out.push(\`\${name} \${verb} with \${phrase}.\`);
+    return;
+  }
+
+  // Conditional case: own result needs help from the other match. Describe the
+  // smallest such combo cleanly when there is exactly one own-result that needs a
+  // single other-match condition.
+  if (conditionalOwn.length > 0 && otherMatches.length === 1 && playsThisRound(code)) {
+    const om = otherMatches[0];
+    const describeOther = (outcome) => {
+      if (outcome === 'draw') return \`\${teamName(om.home)} and \${teamName(om.away)} draw\`;
+      const winner = outcome === 'home' ? om.home : om.away;
+      const loser = outcome === 'home' ? om.away : om.home;
+      return \`\${teamName(winner)} beat \${teamName(loser)}\`;
+    };
+    // Take the conditional own-result(s) and, for each, the required other outcomes.
+    const clauses = [];
+    for (const own of conditionalOwn.sort((a, b) => order[a] - order[b])) {
+      const list = byOwn.get(own);
+      const otherOutcomes = new Set();
+      for (const c of list) {
+        for (const o of c.outcomes) {
+          if (o.match === om) otherOutcomes.add(o.outcome);
+        }
+      }
+      const others = [...otherOutcomes].map(describeOther).join(' or ');
+      clauses.push(\`with \${resultPhrase(own)} if \${others}\`);
+    }
+    // Prepend any unconditional own-results.
+    let lead = '';
+    if (sufficientOwn.length > 0) {
+      const sorted = sufficientOwn.sort((a, b) => order[a] - order[b]);
+      lead = \`with \${sorted.map(resultPhrase).join(' or ')}\`;
+    }
+    const body = [lead, ...clauses].filter(Boolean).join(', or ');
+    out.push(\`\${name} can \${verb} \${body}.\`);
+    return;
+  }
+
+  // Team does NOT play this round (its fate turns purely on others' results), or
+  // a shape we won't try to pretty-print. Describe it as conditional on the round.
+  if (!playsThisRound(code)) {
+    // Characterize the satisfying combos by the other matches' outcomes.
+    const clauses = satisfying.map((c) =>
+      c.outcomes
+        .map((o) => {
+          if (o.outcome === 'draw') return \`\${teamName(o.match.home)}-\${teamName(o.match.away)} draw\`;
+          const w = o.outcome === 'home' ? o.match.home : o.match.away;
+          const l = o.outcome === 'home' ? o.match.away : o.match.home;
+          return \`\${teamName(w)} beat \${teamName(l)}\`;
+        })
+        .join(' & ')
+    );
+    // Only emit if compact (<=2 clauses) to avoid noise.
+    if (clauses.length <= 2) {
+      out.push(\`\${name} \${verb} if \${clauses.join(' OR ')}.\`);
+    }
+    return;
+  }
+  // Fallback: mixed/complex own+other shape we won't enumerate verbosely. Emit a
+  // conservative conditional headline so the fact isn't lost.
+  out.push(\`\${name} can \${verb} next round (result-dependent).\`);
+}
+
+// ----------------------------------------------------------------------------
+// needLine / statusLine phrasing
+// ----------------------------------------------------------------------------
+
+function buildStatusLine(status) {
+  switch (status) {
+    case 'won-group': return 'Clinched 1st';
+    case 'qualified': return 'Through to the R32';
+    case 'eliminated': return 'Eliminated';
+    default: return 'Still alive';
+  }
+}
+
+function buildNeedLine(status, mt, remaining) {
+  if (status === 'won-group') return 'Already won the group.';
+  if (status === 'qualified') return 'Already through to the knockout round.';
+  if (status === 'eliminated') return 'Cannot finish in the top two; eliminated.';
+
+  // Contention: express magic number + elimination threshold.
+  const games = remaining === 1 ? 'last game' : \`last \${remaining} games\`;
+  const parts = [];
+
+  if (mt.magicNumber != null) {
+    const tieFlag = mt.tieAtMagic ? ' (could come down to goal difference)' : '';
+    parts.push(\`Needs \${mt.magicNumber} pts to be safe\${tieFlag}\`);
+  } else {
+    // Even winning out isn't a guaranteed-safe POINTS total -> the cut may rest
+    // on goal difference at the top reachable total.
+    parts.push(\`Can reach a top-2 place but no points total guarantees it (could come down to goal difference)\`);
+  }
+
+  if (mt.eliminationThreshold != null) {
+    parts.push(\`out if it finishes below \${mt.eliminationThreshold}\`);
+  }
+
+  let line = parts.join('; ');
+  // Mention the games-left framing once, naturally.
+  if (mt.magicNumber != null) {
+    line = \`Needs \${mt.magicNumber} pts from its \${games} to be safe\` +
+      (mt.tieAtMagic ? ' (could come down to goal difference)' : '') +
+      (mt.eliminationThreshold != null ? \`; out if it finishes below \${mt.eliminationThreshold}.\` : '.');
+  } else {
+    line = line + '.';
+  }
+  return line;
+}
+
+// ----------------------------------------------------------------------------
+// Public entry
+// ----------------------------------------------------------------------------
+
+/**
+ * @param {{name,teams,matches}} group
+ * @returns {{teams:Array, nextRound:{matchKeys,date,triggers}, decided:boolean}}
+ */
+function groupSituation(group) {
+  const { pts, played } = currentPoints(group);
+  const unplayed = group.matches.filter((m) => !m.played);
+
+  const teamMeta = new Map();
+
+  // First pass: status + magic numbers for each team.
+  for (const t of group.teams) {
+    const code = t.code;
+    const remaining = unplayed.filter((m) => m.home === code || m.away === code).length;
+
+    const ev = evaluateTeam(pts, unplayed, code);
+    let status;
+    if (ev.eliminated) status = 'eliminated';
+    else if (ev.wonGroup) status = 'won-group';
+    else if (ev.clinchedTop2) status = 'qualified';
+    else status = 'contention';
+
+    const mt = status === 'contention'
+      ? magicAndThreshold(pts, unplayed, code)
+      : { magicNumber: null, tieAtMagic: false, eliminationThreshold: null, maxFinal: null };
+
+    teamMeta.set(code, {
+      code,
+      name: t.name,
+      points: pts.get(code),
+      played: played.get(code),
+      remaining,
+      status,
+      mt,
+    });
+  }
+
+  // Build next-round triggers (needs statuses already set).
+  const nextRound = buildTriggers(group, pts, unplayed, teamMeta);
+
+  // decided: every team's position settled (no contention left). A group is
+  // "decided" on POINTS when everyone is won-group / qualified / eliminated.
+  const decided = [...teamMeta.values()].every(
+    (m) => m.status !== 'contention'
+  );
+
+  const teams = group.teams.map((t) => {
+    const m = teamMeta.get(t.code);
+    return {
+      code: m.code,
+      name: m.name,
+      points: m.points,
+      played: m.played,
+      remaining: m.remaining,
+      status: m.status,
+      statusLine: buildStatusLine(m.status),
+      magicNumber: m.mt.magicNumber,
+      eliminationThreshold: m.mt.eliminationThreshold,
+      needLine: buildNeedLine(m.status, m.mt, m.remaining),
+    };
+  });
+
+  return { teams, nextRound, decided };
+}
+
+return { groupSituation: groupSituation };
+})();
+var groupSituation = __grpSituationMod.groupSituation;
 
 self.onmessage = function (e) {
   var d = e.data;
@@ -3278,8 +6733,11 @@ self.onmessage = function (e) {
     root.appendChild(about());
 
     // kick a projection if needed (poster mode computes synchronously up front,
-    // so we never schedule the async worker there — capture must see a full bracket)
-    if(!POSTER && state.mode==='projected' && state.tab!=='scenario' && !state.mc && !state.simming){
+    // so we never schedule the async worker there — capture must see a full bracket).
+    // The scenario tab also wants mc (for the per-team Elo P1-4 distribution), so
+    // it no longer opts out — it renders the deterministic content immediately and
+    // backfills the Elo line when the sim returns.
+    if(!POSTER && state.mode==='projected' && !state.mc && !state.simming){
       runProjection();
     }
   }
@@ -3827,70 +7285,182 @@ self.onmessage = function (e) {
   }
 
   // ---------------- SCENARIO CALCULATOR ----------------
+  // Stage-aware, group-at-a-time view. One selector (the group). Everything for
+  // that group renders automatically based on how many matches are still unplayed:
+  //   0 unplayed         -> "Group complete" + final standings table.
+  //   1-2 unplayed (final round) -> summarizeGroup(): per-team headline + detail,
+  //                          plus any dead-rubber note.
+  //   3+ unplayed (pre-final)    -> groupSituation(): per-team statusLine + needLine,
+  //                          plus a "Next round" trigger block.
+  // EVERY stage also shows each team's Elo-model finish distribution P(1st..4th),
+  // sourced from the Monte-Carlo mc.perTeam (backfilled when the sim returns).
+
+  // Reflect group overrides in My-Picks mode (so edited scores change the
+  // scenario); in Projected mode it reflects the real feed.
+  function scenarioGroups(){ return groupsForCompute(); }
+
+  // Map code -> mc.perTeam entry (Elo finish distribution), or null if no sim yet.
+  function eloDistByCode(){
+    if(!state.mc || !state.mc.perTeam) return null;
+    var m={}; state.mc.perTeam.forEach(function(e){ m[e.code]=e; }); return m;
+  }
+
+  // Render one compact "Elo model: 1st x% · 2nd y% · 3rd z% · 4th w%" line for a
+  // team, or a placeholder while the sim is still running.
+  function eloLine(code, dist){
+    var d=document.createElement('div'); d.className='scn-elo';
+    if(!dist){ d.innerHTML='<span class="lbl">Elo model</span> <span class="muted tiny">computing finish distribution…</span>'; return d; }
+    var e=dist[code];
+    if(!e){ d.innerHTML='<span class="lbl">Elo model</span> <span class="muted tiny">n/a</span>'; return d; }
+    var r=function(p){ return Math.round((p||0)*100); };
+    var p1=r(e.pGroup1),p2=r(e.pGroup2),p3=r(e.pGroup3),p4=r(e.pGroup4);
+    // 4-segment stacked bar + a compact numeric legend underneath.
+    var segs=[['#34d27b',p1,'1st'],['#4ea1ff',p2,'2nd'],['#f0b429',p3,'3rd'],['#ef5e5e',p4,'4th']];
+    var bar='<span class="scn-bar">'+segs.map(function(s){
+      return s[1]>0?'<span class="seg" style="width:'+s[1]+'%;background:'+s[0]+'" title="'+s[2]+' '+s[1]+'%"></span>':''; }).join('')+'</span>';
+    var legend=segs.map(function(s){
+      return '<span class="lg"><i style="background:'+s[0]+'"></i>'+s[2]+' '+s[1]+'%</span>'; }).join(' · ');
+    d.innerHTML='<span class="lbl">Elo model</span>'+bar+'<div class="scn-legend">'+legend+'</div>';
+    return d;
+  }
+
+  function teamHeader(code, name){
+    var h=document.createElement('div'); h.className='h';
+    h.innerHTML='<span class="cd" style="color:'+accentFor(code)+'">'+code+'</span> <span class="nm">'+esc(name)+'</span>';
+    return h;
+  }
+
   function renderScenario(){
     var sec=document.createElement('div'); sec.className='section active';
-    var gs=baseGroups; // scenarios always against the real feed
+    var gs=scenarioGroups();
+
     var callout=document.createElement('div'); callout.className='callout';
-    callout.innerHTML='These are <b>within-group positions</b> (1st/2nd/3rd/4th) and are <b>deterministic</b>. They do <b>not</b> assert 3rd-place qualification or knockout opponents — those are cross-group and shown probabilistically in the bracket.';
+    callout.innerHTML='Within-group positions (1st/2nd/3rd/4th) shown as <b>clinch / eliminate / needs</b> lines are <b>deterministic facts</b>. The <b>Elo model</b> row is this projector’s <i>probabilistic</i> view of where each team finishes — a model estimate, not a guarantee. Finishing 3rd is stated as fact; whether a 3rd-place team <b>advances</b> is cross-group and is never asserted here.';
     sec.appendChild(callout);
 
-    // controls: group select + match select
-    var ctrls=document.createElement('div'); ctrls.className='scn-controls';
-    var gsel=document.createElement('select');
-    gs.forEach(function(g){ var o=document.createElement('option'); o.value=letterOf(g); o.textContent=g.name; gsel.appendChild(o); });
-    if(!state.scnGroup) state.scnGroup=letterOf(gs[0]);
-    gsel.value=state.scnGroup;
-    var msel=document.createElement('select');
-    ctrls.appendChild(document.createTextNode('Group: ')); ctrls.appendChild(gsel);
-    ctrls.appendChild(document.createTextNode(' Match: ')); ctrls.appendChild(msel);
-    sec.appendChild(ctrls);
-
-    var out=document.createElement('div'); sec.appendChild(out);
-
-    function curGroup(){ return gs.filter(function(g){return letterOf(g)===state.scnGroup;})[0]; }
-    function key(m){ return m.home+'-'+m.away; }
-
-    function refillMatches(){
-      msel.innerHTML='';
-      var g=curGroup();
-      var unplayed=g.matches.filter(function(m){return !m.played;});
-      if(!unplayed.length){ var o=document.createElement('option'); o.textContent='(all matches played)'; o.value=''; msel.appendChild(o); return; }
-      // detect simultaneous final pair (same date+time) -> not available in feed times here,
-      // so we approximate: if exactly 2 unplayed remain in the group, offer joint mode.
-      unplayed.forEach(function(m){ var o=document.createElement('option'); o.value=key(m); o.textContent=m.home+' v '+m.away; msel.appendChild(o); });
-      if(unplayed.length===2){ var oj=document.createElement('option'); oj.value='JOINT'; oj.textContent='Final round — BOTH games (joint)'; msel.appendChild(oj); msel.value='JOINT'; }
+    // ---- group selector: a row of A–L chips ----
+    if(!state.scnGroup){
+      // default to the first final-round group (1-2 unplayed), else group A.
+      var def=null;
+      gs.forEach(function(g){
+        var u=g.matches.filter(function(m){return !m.played;}).length;
+        if(def===null && u>=1 && u<=2) def=letterOf(g);
+      });
+      state.scnGroup=def||letterOf(gs[0]);
     }
+    var chips=document.createElement('div'); chips.className='scn-chips';
+    gs.forEach(function(g){
+      var L=letterOf(g);
+      var b=document.createElement('button'); b.className='gchip'+(state.scnGroup===L?' on':'');
+      b.textContent=L;
+      b.onclick=function(){ state.scnGroup=L; render(); };
+      chips.appendChild(b);
+    });
+    sec.appendChild(chips);
 
-    function compute(){
-      out.innerHTML='';
-      var g=curGroup();
-      var unplayed=g.matches.filter(function(m){return !m.played;});
-      if(!unplayed.length){ out.innerHTML='<div class="scn-card muted">All matches in '+esc(g.name)+' are played — the group is decided.</div>'; return; }
-      var keys;
-      if(msel.value==='JOINT'){ keys=unplayed.slice(0,2).map(key); }
-      else if(msel.value){ keys=[msel.value]; }
-      else { keys=[key(unplayed[0])]; }
-      var grid;
-      try{ grid=scenarioGrid(g, keys, 6); }
-      catch(e){ out.innerHTML='<div class="scn-card muted">Scenario unavailable: '+esc(e.message)+'</div>'; return; }
-      var card=document.createElement('div'); card.className='scn-card';
-      var head=document.createElement('div'); head.className='scn-note';
-      head.innerHTML=(keys.length===2?'Joint final-round scenario for both remaining matches: '
-        :'Scenario for the next match: ')+'<b>'+esc(grid.matches.join('  +  '))+'</b>';
-      card.appendChild(head);
-      g.teams.forEach(function(team){
-        var s=grid.teams[team.code]; if(!s) return;
+    var g=gs.filter(function(x){return letterOf(x)===state.scnGroup;})[0];
+    if(!g){ return sec; }
+
+    var dist=eloDistByCode();
+    // Standing order for the whole group (deterministic, drives team ordering).
+    var standing=computeGroupStanding(g);
+    var orderIdx={}; standing.forEach(function(s,i){ orderIdx[s.code]=i; });
+    var orderedTeams=g.teams.slice().sort(function(a,b){
+      return (orderIdx[a.code]==null?99:orderIdx[a.code])-(orderIdx[b.code]==null?99:orderIdx[b.code]);
+    });
+
+    var unplayed=g.matches.filter(function(m){return !m.played;});
+    var card=document.createElement('div'); card.className='scn-card';
+
+    var head=document.createElement('div'); head.className='scn-stage';
+    var nUn=unplayed.length;
+    head.innerHTML='<b>'+esc(g.name)+'</b> · '+
+      (nUn===0?'group complete':nUn+' match'+(nUn===1?'':'es')+' to play'+
+        (nUn<=2?' — final round':''));
+    card.appendChild(head);
+
+    if(nUn===0){
+      // ---- STAGE: complete -> final standings table ----
+      var note=document.createElement('div'); note.className='scn-note';
+      note.textContent='Group complete — final standings:';
+      card.appendChild(note);
+      var t=document.createElement('table'); t.style.marginBottom='6px';
+      t.innerHTML='<thead><tr><th>#</th><th>Team</th><th>P</th><th>W</th><th>D</th><th>L</th><th>GF</th><th>GA</th><th>GD</th><th>Pts</th></tr></thead>';
+      var tb=document.createElement('tbody');
+      standing.forEach(function(s){
+        var tr=document.createElement('tr'); if(s.rank<=2) tr.className='q'+s.rank;
+        tr.innerHTML='<td>'+s.rank+'</td>'+
+          '<td><span style="color:'+accentFor(s.code)+';font-weight:700">'+s.code+'</span> <span class="muted tiny">'+esc(s.name)+'</span></td>'+
+          '<td>'+s.played+'</td><td>'+s.won+'</td><td>'+s.drawn+'</td><td>'+s.lost+'</td>'+
+          '<td>'+s.gf+'</td><td>'+s.ga+'</td><td>'+(s.gd>0?'+':'')+s.gd+'</td><td><b>'+s.points+'</b></td>';
+        tb.appendChild(tr);
+      });
+      t.appendChild(tb); card.appendChild(t);
+      // Elo finish row per team (in standing order).
+      orderedTeams.forEach(function(team){
         var row=document.createElement('div'); row.className='scn-team';
-        row.innerHTML='<div class="h"><span class="cd" style="color:'+accentFor(team.code)+'">'+team.code+'</span> <span class="nm">'+esc(team.name)+'</span></div>'+
-          '<div class="desc">'+esc(grid.describe(team.code))+'</div>';
+        row.appendChild(teamHeader(team.code, team.name));
+        row.appendChild(eloLine(team.code, dist));
         card.appendChild(row);
       });
-      out.appendChild(card);
+
+    } else if(nUn<=2){
+      // ---- STAGE: final round (1-2 unplayed) -> summarizeGroup ----
+      var sum;
+      try{ sum=summarizeGroup(g); }
+      catch(e){ var er=document.createElement('div'); er.className='muted tiny'; er.textContent='Final-round summary unavailable: '+esc(e.message); card.appendChild(er); sec.appendChild(card); return sec; }
+      var byCode={}; sum.teams.forEach(function(t){ byCode[t.code]=t; });
+      orderedTeams.forEach(function(team){
+        var s=byCode[team.code]; if(!s) return;
+        var row=document.createElement('div'); row.className='scn-team';
+        row.appendChild(teamHeader(team.code, team.name));
+        var hl=document.createElement('div'); hl.className='scn-headline'; hl.textContent=s.headline; row.appendChild(hl);
+        if(s.detail){ var dt=document.createElement('div'); dt.className='desc'; dt.textContent=s.detail; row.appendChild(dt); }
+        row.appendChild(eloLine(team.code, dist));
+        card.appendChild(row);
+      });
+      if(sum.deadRubbers && sum.deadRubbers.length){
+        var dr=document.createElement('div'); dr.className='scn-note';
+        dr.innerHTML=sum.deadRubbers.map(function(k){
+          var p=k.split('-'); return 'Dead rubber: '+esc(p[0])+' v '+esc(p[1])+' — result can’t change any position.';
+        }).join('<br>');
+        card.appendChild(dr);
+      }
+
+    } else {
+      // ---- STAGE: pre-final (3+ unplayed) -> groupSituation ----
+      var sit;
+      try{ sit=groupSituation(g); }
+      catch(e){ var er2=document.createElement('div'); er2.className='muted tiny'; er2.textContent='Group situation unavailable: '+esc(e.message); card.appendChild(er2); sec.appendChild(card); return sec; }
+      var byC={}; sit.teams.forEach(function(t){ byC[t.code]=t; });
+      orderedTeams.forEach(function(team){
+        var s=byC[team.code]; if(!s) return;
+        var row=document.createElement('div'); row.className='scn-team';
+        row.appendChild(teamHeader(team.code, team.name));
+        var hl=document.createElement('div'); hl.className='scn-headline';
+        hl.textContent=s.statusLine+' · '+s.points+' pts ('+s.played+' played)';
+        row.appendChild(hl);
+        var nl=document.createElement('div'); nl.className='desc'; nl.textContent=s.needLine; row.appendChild(nl);
+        row.appendChild(eloLine(team.code, dist));
+        card.appendChild(row);
+      });
+      // Next round block.
+      var nr=sit.nextRound;
+      if(nr && nr.triggers && nr.triggers.length){
+        var nb=document.createElement('div'); nb.className='scn-next';
+        var nh=document.createElement('div'); nh.className='scn-note';
+        nh.innerHTML='<b>Next round'+(nr.date?' ('+esc(nr.date)+')':'')+'</b>'+(sit.decided?' — group already decided on points':'')+':';
+        nb.appendChild(nh);
+        var ul=document.createElement('ul'); ul.className='scn-triggers';
+        nr.triggers.forEach(function(tr){ var li=document.createElement('li'); li.textContent=tr; ul.appendChild(li); });
+        nb.appendChild(ul);
+        card.appendChild(nb);
+      } else if(sit.decided){
+        var nd=document.createElement('div'); nd.className='scn-note'; nd.textContent='Group already decided on points.'; card.appendChild(nd);
+      }
     }
 
-    gsel.onchange=function(){ state.scnGroup=gsel.value; refillMatches(); compute(); };
-    msel.onchange=compute;
-    refillMatches(); compute();
+    sec.appendChild(card);
     return sec;
   }
 
