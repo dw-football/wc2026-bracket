@@ -1,0 +1,3551 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>2026 World Cup Bracket Projector</title>
+<style>
+
+:root{
+  --bg:#0f1115; --panel:#171a21; --panel2:#1d212b; --line:#2a2f3a;
+  --txt:#e7eaf0; --dim:#9aa3b2; --dim2:#6b7280;
+  --accent:#4ea1ff; --good:#34d27b; --warn:#f0b429; --bad:#ef5e5e;
+  --qual:#13351f; --qualline:#1f6b3a;
+  --chip:#222733;
+  --r32:#3a6ea5; --r16:#5a7d3a; --qf:#8a5a2a; --sf:#7a3a6a; --fin:#a04040;
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0;background:var(--bg);color:var(--txt);
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  font-size:15px;line-height:1.4;overflow-x:hidden;-webkit-text-size-adjust:100%}
+a{color:var(--accent)}
+#app{max-width:1280px;margin:0 auto;padding:12px 14px 80px}
+h1{font-size:20px;margin:0 0 2px}
+h2{font-size:16px;margin:18px 0 8px;font-weight:650}
+.muted{color:var(--dim)}
+.tiny{font-size:12px}
+.fresh{background:var(--panel);border:1px solid var(--line);border-radius:10px;
+  padding:10px 12px;margin:8px 0 12px;font-size:13px}
+.fresh b{color:var(--txt)}
+.fresh .note{color:var(--warn);margin-top:4px;font-size:12px}
+.row{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.spacer{flex:1}
+
+/* tabs + toggles */
+.tabbar{display:flex;gap:6px;flex-wrap:wrap;margin:6px 0 4px}
+.tab{background:var(--panel);border:1px solid var(--line);color:var(--dim);
+  padding:7px 12px;border-radius:8px;cursor:pointer;font-size:13px}
+.tab.active{background:var(--panel2);color:var(--txt);border-color:var(--accent)}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:8px;overflow:hidden}
+.seg button{background:var(--panel);color:var(--dim);border:0;padding:7px 14px;
+  cursor:pointer;font-size:13px}
+.seg button.on{background:var(--accent);color:#06203f;font-weight:650}
+.btn{background:var(--panel2);border:1px solid var(--line);color:var(--txt);
+  padding:6px 12px;border-radius:8px;cursor:pointer;font-size:13px}
+.btn:hover{border-color:var(--accent)}
+.btn.warn{border-color:var(--warn)}
+
+.section{display:none}
+.section.active{display:block}
+
+/* bracket */
+.bracket-wrap{overflow-x:auto;overflow-y:hidden;-webkit-overflow-scrolling:touch;
+  border:1px solid var(--line);border-radius:10px;background:var(--panel);padding:10px}
+.bracket{display:flex;gap:18px;min-width:1040px;align-items:stretch}
+.col{display:flex;flex-direction:column;justify-content:space-around;min-width:150px}
+.col h3{font-size:12px;text-transform:uppercase;letter-spacing:.05em;color:var(--dim);
+  margin:0 0 6px;text-align:center}
+.col.final-col{justify-content:center}
+.match{background:var(--panel2);border:1px solid var(--line);border-radius:8px;
+  margin:6px 0;overflow:hidden}
+.match .mhdr{font-size:10px;color:var(--dim2);padding:2px 7px;border-bottom:1px solid var(--line)}
+.slot{display:flex;align-items:center;gap:6px;padding:6px 8px;cursor:pointer;
+  border-bottom:1px solid var(--line);position:relative}
+.slot:last-child{border-bottom:0}
+.slot:hover{background:#232836}
+.slot .accent{width:3px;align-self:stretch;border-radius:2px;background:var(--dim2);
+  position:absolute;left:0;top:0;bottom:0}
+.slot .code{font-weight:700;font-size:13px;min-width:34px;padding-left:6px}
+.slot .nm{color:var(--dim);font-size:11px;flex:1;white-space:nowrap;overflow:hidden;
+  text-overflow:ellipsis}
+.slot .p{font-size:12px;color:var(--accent);font-variant-numeric:tabular-nums}
+.slot.known .p{color:var(--good)}
+.slot.picked{background:#15294a}
+.slot.winner-row{box-shadow:inset 0 0 0 1px var(--qualline)}
+.slot.empty .code{color:var(--dim2)}
+
+/* candidate popover */
+.pop{position:fixed;z-index:50;background:var(--panel2);border:1px solid var(--accent);
+  border-radius:10px;padding:8px;min-width:200px;max-width:80vw;
+  box-shadow:0 10px 40px rgba(0,0,0,.6)}
+.pop h4{margin:0 0 6px;font-size:12px;color:var(--dim)}
+.pop .cand{display:flex;gap:8px;align-items:center;padding:5px 6px;border-radius:6px;cursor:pointer}
+.pop .cand:hover{background:#2a3242}
+.pop .cand .code{font-weight:700;min-width:38px}
+.pop .cand .nm{flex:1;color:var(--dim);font-size:12px}
+.pop .cand .p{color:var(--accent);font-variant-numeric:tabular-nums}
+.pop .x{position:absolute;top:4px;right:8px;color:var(--dim);cursor:pointer;font-size:16px}
+
+/* group tables */
+.groups-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(330px,1fr));gap:12px}
+.gcard{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:8px 10px}
+.gcard h3{margin:2px 0 6px;font-size:14px}
+table{width:100%;border-collapse:collapse;font-size:12.5px}
+th,td{padding:4px 5px;text-align:right}
+th:nth-child(2),td:nth-child(2){text-align:left}
+th{color:var(--dim);font-weight:600;border-bottom:1px solid var(--line)}
+td{border-bottom:1px solid #20242e}
+tr.q1 td,tr.q2 td{background:var(--qual)}
+tr.q1 td:first-child,tr.q2 td:first-child{box-shadow:inset 3px 0 0 var(--qualline)}
+.lots{color:var(--warn);cursor:help}
+.thirds{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:8px 12px;margin-top:8px}
+.thirds .cut{border-top:2px dashed var(--warn);margin:4px 0;position:relative}
+.thirds .cut span{position:absolute;right:0;top:-9px;background:var(--panel);
+  color:var(--warn);font-size:10px;padding:0 4px}
+.thirds .trow{display:flex;gap:8px;padding:3px 4px;font-size:12.5px;border-bottom:1px solid #20242e}
+.thirds .trow.qual{color:var(--good)}
+.thirds .trow .g{min-width:62px;color:var(--dim)}
+.thirds .trow .cd{font-weight:700;min-width:40px}
+.thirds .trow .st{flex:1;text-align:right;color:var(--dim);font-variant-numeric:tabular-nums}
+
+/* score editor */
+.editor{display:flex;align-items:center;gap:4px;font-size:12px;margin:3px 0;
+  padding:3px 5px;background:var(--panel2);border-radius:6px}
+.editor .vs{color:var(--dim)}
+.editor .stepper{display:inline-flex;align-items:center;border:1px solid var(--line);border-radius:6px}
+.editor .stepper button{background:var(--panel);border:0;color:var(--txt);width:22px;height:24px;cursor:pointer;font-size:14px}
+.editor .stepper input{width:26px;height:24px;background:#0c0e12;border:0;color:var(--txt);text-align:center;font-size:13px}
+.editor .lbl{min-width:34px;font-weight:700}
+.editor.played{opacity:.85}
+.editor .tag{font-size:10px;color:var(--dim2)}
+.manual-add{margin-top:6px}
+.manual-add input.team{width:70px}
+
+/* scenario */
+.scn-controls{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:10px}
+select,input[type=number],input[type=text]{background:#0c0e12;color:var(--txt);
+  border:1px solid var(--line);border-radius:6px;padding:6px 8px;font-size:13px}
+.scn-card{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:10px 12px}
+.scn-team{padding:8px 6px;border-bottom:1px solid #20242e}
+.scn-team:last-child{border-bottom:0}
+.scn-team .h{display:flex;gap:8px;align-items:baseline}
+.scn-team .h .cd{font-weight:700}
+.scn-team .h .nm{color:var(--dim);font-size:12px}
+.scn-team .desc{color:var(--txt);font-size:13px;margin-top:3px}
+.scn-note{color:var(--warn);font-size:12px;margin:8px 0}
+.callout{background:#11151c;border-left:3px solid var(--accent);padding:8px 10px;border-radius:0 8px 8px 0;font-size:13px;color:var(--dim);margin:6px 0}
+
+details.about{margin-top:18px;background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:8px 12px}
+details.about summary{cursor:pointer;color:var(--dim);font-size:13px}
+details.about p{font-size:12.5px;color:var(--dim);margin:8px 0}
+
+.simstate{display:inline-flex;align-items:center;gap:8px;color:var(--dim);font-size:13px}
+.spinner{width:14px;height:14px;border:2px solid var(--line);border-top-color:var(--accent);
+  border-radius:50%;animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+@media(max-width:680px){
+  #app{padding:10px 10px 80px}
+  .groups-grid{grid-template-columns:1fr}
+  h1{font-size:18px}
+}
+
+</style>
+</head>
+<body>
+<div id="app"></div>
+
+<script>
+"use strict";
+/* ============================================================================
+   BAKED DATA
+   ========================================================================== */
+var __ALLOCATION__ = {"EFGHIJKL":{"1A":"E","1B":"J","1D":"I","1E":"F","1G":"H","1I":"G","1K":"L","1L":"K"},"DFGHIJKL":{"1A":"H","1B":"G","1D":"I","1E":"D","1G":"J","1I":"F","1K":"L","1L":"K"},"DEGHIJKL":{"1A":"E","1B":"J","1D":"I","1E":"D","1G":"H","1I":"G","1K":"L","1L":"K"},"DEFHIJKL":{"1A":"E","1B":"J","1D":"I","1E":"D","1G":"H","1I":"F","1K":"L","1L":"K"},"DEFGIJKL":{"1A":"E","1B":"G","1D":"I","1E":"D","1G":"J","1I":"F","1K":"L","1L":"K"},"DEFGHJKL":{"1A":"E","1B":"G","1D":"J","1E":"D","1G":"H","1I":"F","1K":"L","1L":"K"},"DEFGHIKL":{"1A":"E","1B":"G","1D":"I","1E":"D","1G":"H","1I":"F","1K":"L","1L":"K"},"DEFGHIJL":{"1A":"E","1B":"G","1D":"J","1E":"D","1G":"H","1I":"F","1K":"L","1L":"I"},"DEFGHIJK":{"1A":"E","1B":"G","1D":"J","1E":"D","1G":"H","1I":"F","1K":"I","1L":"K"},"CFGHIJKL":{"1A":"H","1B":"G","1D":"I","1E":"C","1G":"J","1I":"F","1K":"L","1L":"K"},"CEGHIJKL":{"1A":"E","1B":"J","1D":"I","1E":"C","1G":"H","1I":"G","1K":"L","1L":"K"},"CEFHIJKL":{"1A":"E","1B":"J","1D":"I","1E":"C","1G":"H","1I":"F","1K":"L","1L":"K"},"CEFGIJKL":{"1A":"E","1B":"G","1D":"I","1E":"C","1G":"J","1I":"F","1K":"L","1L":"K"},"CEFGHJKL":{"1A":"E","1B":"G","1D":"J","1E":"C","1G":"H","1I":"F","1K":"L","1L":"K"},"CEFGHIKL":{"1A":"E","1B":"G","1D":"I","1E":"C","1G":"H","1I":"F","1K":"L","1L":"K"},"CEFGHIJL":{"1A":"E","1B":"G","1D":"J","1E":"C","1G":"H","1I":"F","1K":"L","1L":"I"},"CEFGHIJK":{"1A":"E","1B":"G","1D":"J","1E":"C","1G":"H","1I":"F","1K":"I","1L":"K"},"CDGHIJKL":{"1A":"H","1B":"G","1D":"I","1E":"C","1G":"J","1I":"D","1K":"L","1L":"K"},"CDFHIJKL":{"1A":"C","1B":"J","1D":"I","1E":"D","1G":"H","1I":"F","1K":"L","1L":"K"},"CDFGIJKL":{"1A":"C","1B":"G","1D":"I","1E":"D","1G":"J","1I":"F","1K":"L","1L":"K"},"CDFGHJKL":{"1A":"C","1B":"G","1D":"J","1E":"D","1G":"H","1I":"F","1K":"L","1L":"K"},"CDFGHIKL":{"1A":"C","1B":"G","1D":"I","1E":"D","1G":"H","1I":"F","1K":"L","1L":"K"},"CDFGHIJL":{"1A":"C","1B":"G","1D":"J","1E":"D","1G":"H","1I":"F","1K":"L","1L":"I"},"CDFGHIJK":{"1A":"C","1B":"G","1D":"J","1E":"D","1G":"H","1I":"F","1K":"I","1L":"K"},"CDEHIJKL":{"1A":"E","1B":"J","1D":"I","1E":"C","1G":"H","1I":"D","1K":"L","1L":"K"},"CDEGIJKL":{"1A":"E","1B":"G","1D":"I","1E":"C","1G":"J","1I":"D","1K":"L","1L":"K"},"CDEGHJKL":{"1A":"E","1B":"G","1D":"J","1E":"C","1G":"H","1I":"D","1K":"L","1L":"K"},"CDEGHIKL":{"1A":"E","1B":"G","1D":"I","1E":"C","1G":"H","1I":"D","1K":"L","1L":"K"},"CDEGHIJL":{"1A":"E","1B":"G","1D":"J","1E":"C","1G":"H","1I":"D","1K":"L","1L":"I"},"CDEGHIJK":{"1A":"E","1B":"G","1D":"J","1E":"C","1G":"H","1I":"D","1K":"I","1L":"K"},"CDEFIJKL":{"1A":"C","1B":"J","1D":"E","1E":"D","1G":"I","1I":"F","1K":"L","1L":"K"},"CDEFHJKL":{"1A":"C","1B":"J","1D":"E","1E":"D","1G":"H","1I":"F","1K":"L","1L":"K"},"CDEFHIKL":{"1A":"C","1B":"E","1D":"I","1E":"D","1G":"H","1I":"F","1K":"L","1L":"K"},"CDEFHIJL":{"1A":"C","1B":"J","1D":"E","1E":"D","1G":"H","1I":"F","1K":"L","1L":"I"},"CDEFHIJK":{"1A":"C","1B":"J","1D":"E","1E":"D","1G":"H","1I":"F","1K":"I","1L":"K"},"CDEFGJKL":{"1A":"C","1B":"G","1D":"E","1E":"D","1G":"J","1I":"F","1K":"L","1L":"K"},"CDEFGIKL":{"1A":"C","1B":"G","1D":"E","1E":"D","1G":"I","1I":"F","1K":"L","1L":"K"},"CDEFGIJL":{"1A":"C","1B":"G","1D":"E","1E":"D","1G":"J","1I":"F","1K":"L","1L":"I"},"CDEFGIJK":{"1A":"C","1B":"G","1D":"E","1E":"D","1G":"J","1I":"F","1K":"I","1L":"K"},"CDEFGHKL":{"1A":"C","1B":"G","1D":"E","1E":"D","1G":"H","1I":"F","1K":"L","1L":"K"},"CDEFGHJL":{"1A":"C","1B":"G","1D":"J","1E":"D","1G":"H","1I":"F","1K":"L","1L":"E"},"CDEFGHJK":{"1A":"C","1B":"G","1D":"J","1E":"D","1G":"H","1I":"F","1K":"E","1L":"K"},"CDEFGHIL":{"1A":"C","1B":"G","1D":"E","1E":"D","1G":"H","1I":"F","1K":"L","1L":"I"},"CDEFGHIK":{"1A":"C","1B":"G","1D":"E","1E":"D","1G":"H","1I":"F","1K":"I","1L":"K"},"CDEFGHIJ":{"1A":"C","1B":"G","1D":"J","1E":"D","1G":"H","1I":"F","1K":"E","1L":"I"},"BFGHIJKL":{"1A":"H","1B":"J","1D":"B","1E":"F","1G":"I","1I":"G","1K":"L","1L":"K"},"BEGHIJKL":{"1A":"E","1B":"J","1D":"I","1E":"B","1G":"H","1I":"G","1K":"L","1L":"K"},"BEFHIJKL":{"1A":"E","1B":"J","1D":"B","1E":"F","1G":"I","1I":"H","1K":"L","1L":"K"},"BEFGIJKL":{"1A":"E","1B":"J","1D":"B","1E":"F","1G":"I","1I":"G","1K":"L","1L":"K"},"BEFGHJKL":{"1A":"E","1B":"J","1D":"B","1E":"F","1G":"H","1I":"G","1K":"L","1L":"K"},"BEFGHIKL":{"1A":"E","1B":"G","1D":"B","1E":"F","1G":"I","1I":"H","1K":"L","1L":"K"},"BEFGHIJL":{"1A":"E","1B":"J","1D":"B","1E":"F","1G":"H","1I":"G","1K":"L","1L":"I"},"BEFGHIJK":{"1A":"E","1B":"J","1D":"B","1E":"F","1G":"H","1I":"G","1K":"I","1L":"K"},"BDGHIJKL":{"1A":"H","1B":"J","1D":"B","1E":"D","1G":"I","1I":"G","1K":"L","1L":"K"},"BDFHIJKL":{"1A":"H","1B":"J","1D":"B","1E":"D","1G":"I","1I":"F","1K":"L","1L":"K"},"BDFGIJKL":{"1A":"I","1B":"G","1D":"B","1E":"D","1G":"J","1I":"F","1K":"L","1L":"K"},"BDFGHJKL":{"1A":"H","1B":"G","1D":"B","1E":"D","1G":"J","1I":"F","1K":"L","1L":"K"},"BDFGHIKL":{"1A":"H","1B":"G","1D":"B","1E":"D","1G":"I","1I":"F","1K":"L","1L":"K"},"BDFGHIJL":{"1A":"H","1B":"G","1D":"B","1E":"D","1G":"J","1I":"F","1K":"L","1L":"I"},"BDFGHIJK":{"1A":"H","1B":"G","1D":"B","1E":"D","1G":"J","1I":"F","1K":"I","1L":"K"},"BDEHIJKL":{"1A":"E","1B":"J","1D":"B","1E":"D","1G":"I","1I":"H","1K":"L","1L":"K"},"BDEGIJKL":{"1A":"E","1B":"J","1D":"B","1E":"D","1G":"I","1I":"G","1K":"L","1L":"K"},"BDEGHJKL":{"1A":"E","1B":"J","1D":"B","1E":"D","1G":"H","1I":"G","1K":"L","1L":"K"},"BDEGHIKL":{"1A":"E","1B":"G","1D":"B","1E":"D","1G":"I","1I":"H","1K":"L","1L":"K"},"BDEGHIJL":{"1A":"E","1B":"J","1D":"B","1E":"D","1G":"H","1I":"G","1K":"L","1L":"I"},"BDEGHIJK":{"1A":"E","1B":"J","1D":"B","1E":"D","1G":"H","1I":"G","1K":"I","1L":"K"},"BDEFIJKL":{"1A":"E","1B":"J","1D":"B","1E":"D","1G":"I","1I":"F","1K":"L","1L":"K"},"BDEFHJKL":{"1A":"E","1B":"J","1D":"B","1E":"D","1G":"H","1I":"F","1K":"L","1L":"K"},"BDEFHIKL":{"1A":"E","1B":"I","1D":"B","1E":"D","1G":"H","1I":"F","1K":"L","1L":"K"},"BDEFHIJL":{"1A":"E","1B":"J","1D":"B","1E":"D","1G":"H","1I":"F","1K":"L","1L":"I"},"BDEFHIJK":{"1A":"E","1B":"J","1D":"B","1E":"D","1G":"H","1I":"F","1K":"I","1L":"K"},"BDEFGJKL":{"1A":"E","1B":"G","1D":"B","1E":"D","1G":"J","1I":"F","1K":"L","1L":"K"},"BDEFGIKL":{"1A":"E","1B":"G","1D":"B","1E":"D","1G":"I","1I":"F","1K":"L","1L":"K"},"BDEFGIJL":{"1A":"E","1B":"G","1D":"B","1E":"D","1G":"J","1I":"F","1K":"L","1L":"I"},"BDEFGIJK":{"1A":"E","1B":"G","1D":"B","1E":"D","1G":"J","1I":"F","1K":"I","1L":"K"},"BDEFGHKL":{"1A":"E","1B":"G","1D":"B","1E":"D","1G":"H","1I":"F","1K":"L","1L":"K"},"BDEFGHJL":{"1A":"H","1B":"G","1D":"B","1E":"D","1G":"J","1I":"F","1K":"L","1L":"E"},"BDEFGHJK":{"1A":"H","1B":"G","1D":"B","1E":"D","1G":"J","1I":"F","1K":"E","1L":"K"},"BDEFGHIL":{"1A":"E","1B":"G","1D":"B","1E":"D","1G":"H","1I":"F","1K":"L","1L":"I"},"BDEFGHIK":{"1A":"E","1B":"G","1D":"B","1E":"D","1G":"H","1I":"F","1K":"I","1L":"K"},"BDEFGHIJ":{"1A":"H","1B":"G","1D":"B","1E":"D","1G":"J","1I":"F","1K":"E","1L":"I"},"BCGHIJKL":{"1A":"H","1B":"J","1D":"B","1E":"C","1G":"I","1I":"G","1K":"L","1L":"K"},"BCFHIJKL":{"1A":"H","1B":"J","1D":"B","1E":"C","1G":"I","1I":"F","1K":"L","1L":"K"},"BCFGIJKL":{"1A":"I","1B":"G","1D":"B","1E":"C","1G":"J","1I":"F","1K":"L","1L":"K"},"BCFGHJKL":{"1A":"H","1B":"G","1D":"B","1E":"C","1G":"J","1I":"F","1K":"L","1L":"K"},"BCFGHIKL":{"1A":"H","1B":"G","1D":"B","1E":"C","1G":"I","1I":"F","1K":"L","1L":"K"},"BCFGHIJL":{"1A":"H","1B":"G","1D":"B","1E":"C","1G":"J","1I":"F","1K":"L","1L":"I"},"BCFGHIJK":{"1A":"H","1B":"G","1D":"B","1E":"C","1G":"J","1I":"F","1K":"I","1L":"K"},"BCEHIJKL":{"1A":"E","1B":"J","1D":"B","1E":"C","1G":"I","1I":"H","1K":"L","1L":"K"},"BCEGIJKL":{"1A":"E","1B":"J","1D":"B","1E":"C","1G":"I","1I":"G","1K":"L","1L":"K"},"BCEGHJKL":{"1A":"E","1B":"J","1D":"B","1E":"C","1G":"H","1I":"G","1K":"L","1L":"K"},"BCEGHIKL":{"1A":"E","1B":"G","1D":"B","1E":"C","1G":"I","1I":"H","1K":"L","1L":"K"},"BCEGHIJL":{"1A":"E","1B":"J","1D":"B","1E":"C","1G":"H","1I":"G","1K":"L","1L":"I"},"BCEGHIJK":{"1A":"E","1B":"J","1D":"B","1E":"C","1G":"H","1I":"G","1K":"I","1L":"K"},"BCEFIJKL":{"1A":"E","1B":"J","1D":"B","1E":"C","1G":"I","1I":"F","1K":"L","1L":"K"},"BCEFHJKL":{"1A":"E","1B":"J","1D":"B","1E":"C","1G":"H","1I":"F","1K":"L","1L":"K"},"BCEFHIKL":{"1A":"E","1B":"I","1D":"B","1E":"C","1G":"H","1I":"F","1K":"L","1L":"K"},"BCEFHIJL":{"1A":"E","1B":"J","1D":"B","1E":"C","1G":"H","1I":"F","1K":"L","1L":"I"},"BCEFHIJK":{"1A":"E","1B":"J","1D":"B","1E":"C","1G":"H","1I":"F","1K":"I","1L":"K"},"BCEFGJKL":{"1A":"E","1B":"G","1D":"B","1E":"C","1G":"J","1I":"F","1K":"L","1L":"K"},"BCEFGIKL":{"1A":"E","1B":"G","1D":"B","1E":"C","1G":"I","1I":"F","1K":"L","1L":"K"},"BCEFGIJL":{"1A":"E","1B":"G","1D":"B","1E":"C","1G":"J","1I":"F","1K":"L","1L":"I"},"BCEFGIJK":{"1A":"E","1B":"G","1D":"B","1E":"C","1G":"J","1I":"F","1K":"I","1L":"K"},"BCEFGHKL":{"1A":"E","1B":"G","1D":"B","1E":"C","1G":"H","1I":"F","1K":"L","1L":"K"},"BCEFGHJL":{"1A":"H","1B":"G","1D":"B","1E":"C","1G":"J","1I":"F","1K":"L","1L":"E"},"BCEFGHJK":{"1A":"H","1B":"G","1D":"B","1E":"C","1G":"J","1I":"F","1K":"E","1L":"K"},"BCEFGHIL":{"1A":"E","1B":"G","1D":"B","1E":"C","1G":"H","1I":"F","1K":"L","1L":"I"},"BCEFGHIK":{"1A":"E","1B":"G","1D":"B","1E":"C","1G":"H","1I":"F","1K":"I","1L":"K"},"BCEFGHIJ":{"1A":"H","1B":"G","1D":"B","1E":"C","1G":"J","1I":"F","1K":"E","1L":"I"},"BCDHIJKL":{"1A":"H","1B":"J","1D":"B","1E":"C","1G":"I","1I":"D","1K":"L","1L":"K"},"BCDGIJKL":{"1A":"I","1B":"G","1D":"B","1E":"C","1G":"J","1I":"D","1K":"L","1L":"K"},"BCDGHJKL":{"1A":"H","1B":"G","1D":"B","1E":"C","1G":"J","1I":"D","1K":"L","1L":"K"},"BCDGHIKL":{"1A":"H","1B":"G","1D":"B","1E":"C","1G":"I","1I":"D","1K":"L","1L":"K"},"BCDGHIJL":{"1A":"H","1B":"G","1D":"B","1E":"C","1G":"J","1I":"D","1K":"L","1L":"I"},"BCDGHIJK":{"1A":"H","1B":"G","1D":"B","1E":"C","1G":"J","1I":"D","1K":"I","1L":"K"},"BCDFIJKL":{"1A":"C","1B":"J","1D":"B","1E":"D","1G":"I","1I":"F","1K":"L","1L":"K"},"BCDFHJKL":{"1A":"C","1B":"J","1D":"B","1E":"D","1G":"H","1I":"F","1K":"L","1L":"K"},"BCDFHIKL":{"1A":"C","1B":"I","1D":"B","1E":"D","1G":"H","1I":"F","1K":"L","1L":"K"},"BCDFHIJL":{"1A":"C","1B":"J","1D":"B","1E":"D","1G":"H","1I":"F","1K":"L","1L":"I"},"BCDFHIJK":{"1A":"C","1B":"J","1D":"B","1E":"D","1G":"H","1I":"F","1K":"I","1L":"K"},"BCDFGJKL":{"1A":"C","1B":"G","1D":"B","1E":"D","1G":"J","1I":"F","1K":"L","1L":"K"},"BCDFGIKL":{"1A":"C","1B":"G","1D":"B","1E":"D","1G":"I","1I":"F","1K":"L","1L":"K"},"BCDFGIJL":{"1A":"C","1B":"G","1D":"B","1E":"D","1G":"J","1I":"F","1K":"L","1L":"I"},"BCDFGIJK":{"1A":"C","1B":"G","1D":"B","1E":"D","1G":"J","1I":"F","1K":"I","1L":"K"},"BCDFGHKL":{"1A":"C","1B":"G","1D":"B","1E":"D","1G":"H","1I":"F","1K":"L","1L":"K"},"BCDFGHJL":{"1A":"C","1B":"G","1D":"B","1E":"D","1G":"H","1I":"F","1K":"L","1L":"J"},"BCDFGHJK":{"1A":"H","1B":"G","1D":"B","1E":"C","1G":"J","1I":"F","1K":"D","1L":"K"},"BCDFGHIL":{"1A":"C","1B":"G","1D":"B","1E":"D","1G":"H","1I":"F","1K":"L","1L":"I"},"BCDFGHIK":{"1A":"C","1B":"G","1D":"B","1E":"D","1G":"H","1I":"F","1K":"I","1L":"K"},"BCDFGHIJ":{"1A":"H","1B":"G","1D":"B","1E":"C","1G":"J","1I":"F","1K":"D","1L":"I"},"BCDEIJKL":{"1A":"E","1B":"J","1D":"B","1E":"C","1G":"I","1I":"D","1K":"L","1L":"K"},"BCDEHJKL":{"1A":"E","1B":"J","1D":"B","1E":"C","1G":"H","1I":"D","1K":"L","1L":"K"},"BCDEHIKL":{"1A":"E","1B":"I","1D":"B","1E":"C","1G":"H","1I":"D","1K":"L","1L":"K"},"BCDEHIJL":{"1A":"E","1B":"J","1D":"B","1E":"C","1G":"H","1I":"D","1K":"L","1L":"I"},"BCDEHIJK":{"1A":"E","1B":"J","1D":"B","1E":"C","1G":"H","1I":"D","1K":"I","1L":"K"},"BCDEGJKL":{"1A":"E","1B":"G","1D":"B","1E":"C","1G":"J","1I":"D","1K":"L","1L":"K"},"BCDEGIKL":{"1A":"E","1B":"G","1D":"B","1E":"C","1G":"I","1I":"D","1K":"L","1L":"K"},"BCDEGIJL":{"1A":"E","1B":"G","1D":"B","1E":"C","1G":"J","1I":"D","1K":"L","1L":"I"},"BCDEGIJK":{"1A":"E","1B":"G","1D":"B","1E":"C","1G":"J","1I":"D","1K":"I","1L":"K"},"BCDEGHKL":{"1A":"E","1B":"G","1D":"B","1E":"C","1G":"H","1I":"D","1K":"L","1L":"K"},"BCDEGHJL":{"1A":"H","1B":"G","1D":"B","1E":"C","1G":"J","1I":"D","1K":"L","1L":"E"},"BCDEGHJK":{"1A":"H","1B":"G","1D":"B","1E":"C","1G":"J","1I":"D","1K":"E","1L":"K"},"BCDEGHIL":{"1A":"E","1B":"G","1D":"B","1E":"C","1G":"H","1I":"D","1K":"L","1L":"I"},"BCDEGHIK":{"1A":"E","1B":"G","1D":"B","1E":"C","1G":"H","1I":"D","1K":"I","1L":"K"},"BCDEGHIJ":{"1A":"H","1B":"G","1D":"B","1E":"C","1G":"J","1I":"D","1K":"E","1L":"I"},"BCDEFJKL":{"1A":"C","1B":"J","1D":"B","1E":"D","1G":"E","1I":"F","1K":"L","1L":"K"},"BCDEFIKL":{"1A":"C","1B":"E","1D":"B","1E":"D","1G":"I","1I":"F","1K":"L","1L":"K"},"BCDEFIJL":{"1A":"C","1B":"J","1D":"B","1E":"D","1G":"E","1I":"F","1K":"L","1L":"I"},"BCDEFIJK":{"1A":"C","1B":"J","1D":"B","1E":"D","1G":"E","1I":"F","1K":"I","1L":"K"},"BCDEFHKL":{"1A":"C","1B":"E","1D":"B","1E":"D","1G":"H","1I":"F","1K":"L","1L":"K"},"BCDEFHJL":{"1A":"C","1B":"J","1D":"B","1E":"D","1G":"H","1I":"F","1K":"L","1L":"E"},"BCDEFHJK":{"1A":"C","1B":"J","1D":"B","1E":"D","1G":"H","1I":"F","1K":"E","1L":"K"},"BCDEFHIL":{"1A":"C","1B":"E","1D":"B","1E":"D","1G":"H","1I":"F","1K":"L","1L":"I"},"BCDEFHIK":{"1A":"C","1B":"E","1D":"B","1E":"D","1G":"H","1I":"F","1K":"I","1L":"K"},"BCDEFHIJ":{"1A":"C","1B":"J","1D":"B","1E":"D","1G":"H","1I":"F","1K":"E","1L":"I"},"BCDEFGKL":{"1A":"C","1B":"G","1D":"B","1E":"D","1G":"E","1I":"F","1K":"L","1L":"K"},"BCDEFGJL":{"1A":"C","1B":"G","1D":"B","1E":"D","1G":"J","1I":"F","1K":"L","1L":"E"},"BCDEFGJK":{"1A":"C","1B":"G","1D":"B","1E":"D","1G":"J","1I":"F","1K":"E","1L":"K"},"BCDEFGIL":{"1A":"C","1B":"G","1D":"B","1E":"D","1G":"E","1I":"F","1K":"L","1L":"I"},"BCDEFGIK":{"1A":"C","1B":"G","1D":"B","1E":"D","1G":"E","1I":"F","1K":"I","1L":"K"},"BCDEFGIJ":{"1A":"C","1B":"G","1D":"B","1E":"D","1G":"J","1I":"F","1K":"E","1L":"I"},"BCDEFGHL":{"1A":"C","1B":"G","1D":"B","1E":"D","1G":"H","1I":"F","1K":"L","1L":"E"},"BCDEFGHK":{"1A":"C","1B":"G","1D":"B","1E":"D","1G":"H","1I":"F","1K":"E","1L":"K"},"BCDEFGHJ":{"1A":"H","1B":"G","1D":"B","1E":"C","1G":"J","1I":"F","1K":"D","1L":"E"},"BCDEFGHI":{"1A":"C","1B":"G","1D":"B","1E":"D","1G":"H","1I":"F","1K":"E","1L":"I"},"AFGHIJKL":{"1A":"H","1B":"J","1D":"I","1E":"F","1G":"A","1I":"G","1K":"L","1L":"K"},"AEGHIJKL":{"1A":"E","1B":"J","1D":"I","1E":"A","1G":"H","1I":"G","1K":"L","1L":"K"},"AEFHIJKL":{"1A":"E","1B":"J","1D":"I","1E":"F","1G":"A","1I":"H","1K":"L","1L":"K"},"AEFGIJKL":{"1A":"E","1B":"J","1D":"I","1E":"F","1G":"A","1I":"G","1K":"L","1L":"K"},"AEFGHJKL":{"1A":"E","1B":"G","1D":"J","1E":"F","1G":"A","1I":"H","1K":"L","1L":"K"},"AEFGHIKL":{"1A":"E","1B":"G","1D":"I","1E":"F","1G":"A","1I":"H","1K":"L","1L":"K"},"AEFGHIJL":{"1A":"E","1B":"G","1D":"J","1E":"F","1G":"A","1I":"H","1K":"L","1L":"I"},"AEFGHIJK":{"1A":"E","1B":"G","1D":"J","1E":"F","1G":"A","1I":"H","1K":"I","1L":"K"},"ADGHIJKL":{"1A":"H","1B":"J","1D":"I","1E":"D","1G":"A","1I":"G","1K":"L","1L":"K"},"ADFHIJKL":{"1A":"H","1B":"J","1D":"I","1E":"D","1G":"A","1I":"F","1K":"L","1L":"K"},"ADFGIJKL":{"1A":"I","1B":"G","1D":"J","1E":"D","1G":"A","1I":"F","1K":"L","1L":"K"},"ADFGHJKL":{"1A":"H","1B":"G","1D":"J","1E":"D","1G":"A","1I":"F","1K":"L","1L":"K"},"ADFGHIKL":{"1A":"H","1B":"G","1D":"I","1E":"D","1G":"A","1I":"F","1K":"L","1L":"K"},"ADFGHIJL":{"1A":"H","1B":"G","1D":"J","1E":"D","1G":"A","1I":"F","1K":"L","1L":"I"},"ADFGHIJK":{"1A":"H","1B":"G","1D":"J","1E":"D","1G":"A","1I":"F","1K":"I","1L":"K"},"ADEHIJKL":{"1A":"E","1B":"J","1D":"I","1E":"D","1G":"A","1I":"H","1K":"L","1L":"K"},"ADEGIJKL":{"1A":"E","1B":"J","1D":"I","1E":"D","1G":"A","1I":"G","1K":"L","1L":"K"},"ADEGHJKL":{"1A":"E","1B":"G","1D":"J","1E":"D","1G":"A","1I":"H","1K":"L","1L":"K"},"ADEGHIKL":{"1A":"E","1B":"G","1D":"I","1E":"D","1G":"A","1I":"H","1K":"L","1L":"K"},"ADEGHIJL":{"1A":"E","1B":"G","1D":"J","1E":"D","1G":"A","1I":"H","1K":"L","1L":"I"},"ADEGHIJK":{"1A":"E","1B":"G","1D":"J","1E":"D","1G":"A","1I":"H","1K":"I","1L":"K"},"ADEFIJKL":{"1A":"E","1B":"J","1D":"I","1E":"D","1G":"A","1I":"F","1K":"L","1L":"K"},"ADEFHJKL":{"1A":"H","1B":"J","1D":"E","1E":"D","1G":"A","1I":"F","1K":"L","1L":"K"},"ADEFHIKL":{"1A":"H","1B":"E","1D":"I","1E":"D","1G":"A","1I":"F","1K":"L","1L":"K"},"ADEFHIJL":{"1A":"H","1B":"J","1D":"E","1E":"D","1G":"A","1I":"F","1K":"L","1L":"I"},"ADEFHIJK":{"1A":"H","1B":"J","1D":"E","1E":"D","1G":"A","1I":"F","1K":"I","1L":"K"},"ADEFGJKL":{"1A":"E","1B":"G","1D":"J","1E":"D","1G":"A","1I":"F","1K":"L","1L":"K"},"ADEFGIKL":{"1A":"E","1B":"G","1D":"I","1E":"D","1G":"A","1I":"F","1K":"L","1L":"K"},"ADEFGIJL":{"1A":"E","1B":"G","1D":"J","1E":"D","1G":"A","1I":"F","1K":"L","1L":"I"},"ADEFGIJK":{"1A":"E","1B":"G","1D":"J","1E":"D","1G":"A","1I":"F","1K":"I","1L":"K"},"ADEFGHKL":{"1A":"H","1B":"G","1D":"E","1E":"D","1G":"A","1I":"F","1K":"L","1L":"K"},"ADEFGHJL":{"1A":"H","1B":"G","1D":"J","1E":"D","1G":"A","1I":"F","1K":"L","1L":"E"},"ADEFGHJK":{"1A":"H","1B":"G","1D":"J","1E":"D","1G":"A","1I":"F","1K":"E","1L":"K"},"ADEFGHIL":{"1A":"H","1B":"G","1D":"E","1E":"D","1G":"A","1I":"F","1K":"L","1L":"I"},"ADEFGHIK":{"1A":"H","1B":"G","1D":"E","1E":"D","1G":"A","1I":"F","1K":"I","1L":"K"},"ADEFGHIJ":{"1A":"H","1B":"G","1D":"J","1E":"D","1G":"A","1I":"F","1K":"E","1L":"I"},"ACGHIJKL":{"1A":"H","1B":"J","1D":"I","1E":"C","1G":"A","1I":"G","1K":"L","1L":"K"},"ACFHIJKL":{"1A":"H","1B":"J","1D":"I","1E":"C","1G":"A","1I":"F","1K":"L","1L":"K"},"ACFGIJKL":{"1A":"I","1B":"G","1D":"J","1E":"C","1G":"A","1I":"F","1K":"L","1L":"K"},"ACFGHJKL":{"1A":"H","1B":"G","1D":"J","1E":"C","1G":"A","1I":"F","1K":"L","1L":"K"},"ACFGHIKL":{"1A":"H","1B":"G","1D":"I","1E":"C","1G":"A","1I":"F","1K":"L","1L":"K"},"ACFGHIJL":{"1A":"H","1B":"G","1D":"J","1E":"C","1G":"A","1I":"F","1K":"L","1L":"I"},"ACFGHIJK":{"1A":"H","1B":"G","1D":"J","1E":"C","1G":"A","1I":"F","1K":"I","1L":"K"},"ACEHIJKL":{"1A":"E","1B":"J","1D":"I","1E":"C","1G":"A","1I":"H","1K":"L","1L":"K"},"ACEGIJKL":{"1A":"E","1B":"J","1D":"I","1E":"C","1G":"A","1I":"G","1K":"L","1L":"K"},"ACEGHJKL":{"1A":"E","1B":"G","1D":"J","1E":"C","1G":"A","1I":"H","1K":"L","1L":"K"},"ACEGHIKL":{"1A":"E","1B":"G","1D":"I","1E":"C","1G":"A","1I":"H","1K":"L","1L":"K"},"ACEGHIJL":{"1A":"E","1B":"G","1D":"J","1E":"C","1G":"A","1I":"H","1K":"L","1L":"I"},"ACEGHIJK":{"1A":"E","1B":"G","1D":"J","1E":"C","1G":"A","1I":"H","1K":"I","1L":"K"},"ACEFIJKL":{"1A":"E","1B":"J","1D":"I","1E":"C","1G":"A","1I":"F","1K":"L","1L":"K"},"ACEFHJKL":{"1A":"H","1B":"J","1D":"E","1E":"C","1G":"A","1I":"F","1K":"L","1L":"K"},"ACEFHIKL":{"1A":"H","1B":"E","1D":"I","1E":"C","1G":"A","1I":"F","1K":"L","1L":"K"},"ACEFHIJL":{"1A":"H","1B":"J","1D":"E","1E":"C","1G":"A","1I":"F","1K":"L","1L":"I"},"ACEFHIJK":{"1A":"H","1B":"J","1D":"E","1E":"C","1G":"A","1I":"F","1K":"I","1L":"K"},"ACEFGJKL":{"1A":"E","1B":"G","1D":"J","1E":"C","1G":"A","1I":"F","1K":"L","1L":"K"},"ACEFGIKL":{"1A":"E","1B":"G","1D":"I","1E":"C","1G":"A","1I":"F","1K":"L","1L":"K"},"ACEFGIJL":{"1A":"E","1B":"G","1D":"J","1E":"C","1G":"A","1I":"F","1K":"L","1L":"I"},"ACEFGIJK":{"1A":"E","1B":"G","1D":"J","1E":"C","1G":"A","1I":"F","1K":"I","1L":"K"},"ACEFGHKL":{"1A":"H","1B":"G","1D":"E","1E":"C","1G":"A","1I":"F","1K":"L","1L":"K"},"ACEFGHJL":{"1A":"H","1B":"G","1D":"J","1E":"C","1G":"A","1I":"F","1K":"L","1L":"E"},"ACEFGHJK":{"1A":"H","1B":"G","1D":"J","1E":"C","1G":"A","1I":"F","1K":"E","1L":"K"},"ACEFGHIL":{"1A":"H","1B":"G","1D":"E","1E":"C","1G":"A","1I":"F","1K":"L","1L":"I"},"ACEFGHIK":{"1A":"H","1B":"G","1D":"E","1E":"C","1G":"A","1I":"F","1K":"I","1L":"K"},"ACEFGHIJ":{"1A":"H","1B":"G","1D":"J","1E":"C","1G":"A","1I":"F","1K":"E","1L":"I"},"ACDHIJKL":{"1A":"H","1B":"J","1D":"I","1E":"C","1G":"A","1I":"D","1K":"L","1L":"K"},"ACDGIJKL":{"1A":"I","1B":"G","1D":"J","1E":"C","1G":"A","1I":"D","1K":"L","1L":"K"},"ACDGHJKL":{"1A":"H","1B":"G","1D":"J","1E":"C","1G":"A","1I":"D","1K":"L","1L":"K"},"ACDGHIKL":{"1A":"H","1B":"G","1D":"I","1E":"C","1G":"A","1I":"D","1K":"L","1L":"K"},"ACDGHIJL":{"1A":"H","1B":"G","1D":"J","1E":"C","1G":"A","1I":"D","1K":"L","1L":"I"},"ACDGHIJK":{"1A":"H","1B":"G","1D":"J","1E":"C","1G":"A","1I":"D","1K":"I","1L":"K"},"ACDFIJKL":{"1A":"C","1B":"J","1D":"I","1E":"D","1G":"A","1I":"F","1K":"L","1L":"K"},"ACDFHJKL":{"1A":"H","1B":"J","1D":"F","1E":"C","1G":"A","1I":"D","1K":"L","1L":"K"},"ACDFHIKL":{"1A":"H","1B":"F","1D":"I","1E":"C","1G":"A","1I":"D","1K":"L","1L":"K"},"ACDFHIJL":{"1A":"H","1B":"J","1D":"F","1E":"C","1G":"A","1I":"D","1K":"L","1L":"I"},"ACDFHIJK":{"1A":"H","1B":"J","1D":"F","1E":"C","1G":"A","1I":"D","1K":"I","1L":"K"},"ACDFGJKL":{"1A":"C","1B":"G","1D":"J","1E":"D","1G":"A","1I":"F","1K":"L","1L":"K"},"ACDFGIKL":{"1A":"C","1B":"G","1D":"I","1E":"D","1G":"A","1I":"F","1K":"L","1L":"K"},"ACDFGIJL":{"1A":"C","1B":"G","1D":"J","1E":"D","1G":"A","1I":"F","1K":"L","1L":"I"},"ACDFGIJK":{"1A":"C","1B":"G","1D":"J","1E":"D","1G":"A","1I":"F","1K":"I","1L":"K"},"ACDFGHKL":{"1A":"H","1B":"G","1D":"F","1E":"C","1G":"A","1I":"D","1K":"L","1L":"K"},"ACDFGHJL":{"1A":"C","1B":"G","1D":"J","1E":"D","1G":"A","1I":"F","1K":"L","1L":"H"},"ACDFGHJK":{"1A":"H","1B":"G","1D":"J","1E":"C","1G":"A","1I":"F","1K":"D","1L":"K"},"ACDFGHIL":{"1A":"H","1B":"G","1D":"F","1E":"C","1G":"A","1I":"D","1K":"L","1L":"I"},"ACDFGHIK":{"1A":"H","1B":"G","1D":"F","1E":"C","1G":"A","1I":"D","1K":"I","1L":"K"},"ACDFGHIJ":{"1A":"H","1B":"G","1D":"J","1E":"C","1G":"A","1I":"F","1K":"D","1L":"I"},"ACDEIJKL":{"1A":"E","1B":"J","1D":"I","1E":"C","1G":"A","1I":"D","1K":"L","1L":"K"},"ACDEHJKL":{"1A":"H","1B":"J","1D":"E","1E":"C","1G":"A","1I":"D","1K":"L","1L":"K"},"ACDEHIKL":{"1A":"H","1B":"E","1D":"I","1E":"C","1G":"A","1I":"D","1K":"L","1L":"K"},"ACDEHIJL":{"1A":"H","1B":"J","1D":"E","1E":"C","1G":"A","1I":"D","1K":"L","1L":"I"},"ACDEHIJK":{"1A":"H","1B":"J","1D":"E","1E":"C","1G":"A","1I":"D","1K":"I","1L":"K"},"ACDEGJKL":{"1A":"E","1B":"G","1D":"J","1E":"C","1G":"A","1I":"D","1K":"L","1L":"K"},"ACDEGIKL":{"1A":"E","1B":"G","1D":"I","1E":"C","1G":"A","1I":"D","1K":"L","1L":"K"},"ACDEGIJL":{"1A":"E","1B":"G","1D":"J","1E":"C","1G":"A","1I":"D","1K":"L","1L":"I"},"ACDEGIJK":{"1A":"E","1B":"G","1D":"J","1E":"C","1G":"A","1I":"D","1K":"I","1L":"K"},"ACDEGHKL":{"1A":"H","1B":"G","1D":"E","1E":"C","1G":"A","1I":"D","1K":"L","1L":"K"},"ACDEGHJL":{"1A":"H","1B":"G","1D":"J","1E":"C","1G":"A","1I":"D","1K":"L","1L":"E"},"ACDEGHJK":{"1A":"H","1B":"G","1D":"J","1E":"C","1G":"A","1I":"D","1K":"E","1L":"K"},"ACDEGHIL":{"1A":"H","1B":"G","1D":"E","1E":"C","1G":"A","1I":"D","1K":"L","1L":"I"},"ACDEGHIK":{"1A":"H","1B":"G","1D":"E","1E":"C","1G":"A","1I":"D","1K":"I","1L":"K"},"ACDEGHIJ":{"1A":"H","1B":"G","1D":"J","1E":"C","1G":"A","1I":"D","1K":"E","1L":"I"},"ACDEFJKL":{"1A":"C","1B":"J","1D":"E","1E":"D","1G":"A","1I":"F","1K":"L","1L":"K"},"ACDEFIKL":{"1A":"C","1B":"E","1D":"I","1E":"D","1G":"A","1I":"F","1K":"L","1L":"K"},"ACDEFIJL":{"1A":"C","1B":"J","1D":"E","1E":"D","1G":"A","1I":"F","1K":"L","1L":"I"},"ACDEFIJK":{"1A":"C","1B":"J","1D":"E","1E":"D","1G":"A","1I":"F","1K":"I","1L":"K"},"ACDEFHKL":{"1A":"H","1B":"E","1D":"F","1E":"C","1G":"A","1I":"D","1K":"L","1L":"K"},"ACDEFHJL":{"1A":"H","1B":"J","1D":"F","1E":"C","1G":"A","1I":"D","1K":"L","1L":"E"},"ACDEFHJK":{"1A":"H","1B":"J","1D":"E","1E":"C","1G":"A","1I":"F","1K":"D","1L":"K"},"ACDEFHIL":{"1A":"H","1B":"E","1D":"F","1E":"C","1G":"A","1I":"D","1K":"L","1L":"I"},"ACDEFHIK":{"1A":"H","1B":"E","1D":"F","1E":"C","1G":"A","1I":"D","1K":"I","1L":"K"},"ACDEFHIJ":{"1A":"H","1B":"J","1D":"E","1E":"C","1G":"A","1I":"F","1K":"D","1L":"I"},"ACDEFGKL":{"1A":"C","1B":"G","1D":"E","1E":"D","1G":"A","1I":"F","1K":"L","1L":"K"},"ACDEFGJL":{"1A":"C","1B":"G","1D":"J","1E":"D","1G":"A","1I":"F","1K":"L","1L":"E"},"ACDEFGJK":{"1A":"C","1B":"G","1D":"J","1E":"D","1G":"A","1I":"F","1K":"E","1L":"K"},"ACDEFGIL":{"1A":"C","1B":"G","1D":"E","1E":"D","1G":"A","1I":"F","1K":"L","1L":"I"},"ACDEFGIK":{"1A":"C","1B":"G","1D":"E","1E":"D","1G":"A","1I":"F","1K":"I","1L":"K"},"ACDEFGIJ":{"1A":"C","1B":"G","1D":"J","1E":"D","1G":"A","1I":"F","1K":"E","1L":"I"},"ACDEFGHL":{"1A":"H","1B":"G","1D":"F","1E":"C","1G":"A","1I":"D","1K":"L","1L":"E"},"ACDEFGHK":{"1A":"H","1B":"G","1D":"E","1E":"C","1G":"A","1I":"F","1K":"D","1L":"K"},"ACDEFGHJ":{"1A":"H","1B":"G","1D":"J","1E":"C","1G":"A","1I":"F","1K":"D","1L":"E"},"ACDEFGHI":{"1A":"H","1B":"G","1D":"E","1E":"C","1G":"A","1I":"F","1K":"D","1L":"I"},"ABGHIJKL":{"1A":"H","1B":"J","1D":"B","1E":"A","1G":"I","1I":"G","1K":"L","1L":"K"},"ABFHIJKL":{"1A":"H","1B":"J","1D":"B","1E":"A","1G":"I","1I":"F","1K":"L","1L":"K"},"ABFGIJKL":{"1A":"I","1B":"J","1D":"B","1E":"F","1G":"A","1I":"G","1K":"L","1L":"K"},"ABFGHJKL":{"1A":"H","1B":"J","1D":"B","1E":"F","1G":"A","1I":"G","1K":"L","1L":"K"},"ABFGHIKL":{"1A":"H","1B":"G","1D":"B","1E":"A","1G":"I","1I":"F","1K":"L","1L":"K"},"ABFGHIJL":{"1A":"H","1B":"J","1D":"B","1E":"F","1G":"A","1I":"G","1K":"L","1L":"I"},"ABFGHIJK":{"1A":"H","1B":"J","1D":"B","1E":"F","1G":"A","1I":"G","1K":"I","1L":"K"},"ABEHIJKL":{"1A":"E","1B":"J","1D":"B","1E":"A","1G":"I","1I":"H","1K":"L","1L":"K"},"ABEGIJKL":{"1A":"E","1B":"J","1D":"B","1E":"A","1G":"I","1I":"G","1K":"L","1L":"K"},"ABEGHJKL":{"1A":"E","1B":"J","1D":"B","1E":"A","1G":"H","1I":"G","1K":"L","1L":"K"},"ABEGHIKL":{"1A":"E","1B":"G","1D":"B","1E":"A","1G":"I","1I":"H","1K":"L","1L":"K"},"ABEGHIJL":{"1A":"E","1B":"J","1D":"B","1E":"A","1G":"H","1I":"G","1K":"L","1L":"I"},"ABEGHIJK":{"1A":"E","1B":"J","1D":"B","1E":"A","1G":"H","1I":"G","1K":"I","1L":"K"},"ABEFIJKL":{"1A":"E","1B":"J","1D":"B","1E":"A","1G":"I","1I":"F","1K":"L","1L":"K"},"ABEFHJKL":{"1A":"E","1B":"J","1D":"B","1E":"F","1G":"A","1I":"H","1K":"L","1L":"K"},"ABEFHIKL":{"1A":"E","1B":"I","1D":"B","1E":"F","1G":"A","1I":"H","1K":"L","1L":"K"},"ABEFHIJL":{"1A":"E","1B":"J","1D":"B","1E":"F","1G":"A","1I":"H","1K":"L","1L":"I"},"ABEFHIJK":{"1A":"E","1B":"J","1D":"B","1E":"F","1G":"A","1I":"H","1K":"I","1L":"K"},"ABEFGJKL":{"1A":"E","1B":"J","1D":"B","1E":"F","1G":"A","1I":"G","1K":"L","1L":"K"},"ABEFGIKL":{"1A":"E","1B":"G","1D":"B","1E":"A","1G":"I","1I":"F","1K":"L","1L":"K"},"ABEFGIJL":{"1A":"E","1B":"J","1D":"B","1E":"F","1G":"A","1I":"G","1K":"L","1L":"I"},"ABEFGIJK":{"1A":"E","1B":"J","1D":"B","1E":"F","1G":"A","1I":"G","1K":"I","1L":"K"},"ABEFGHKL":{"1A":"E","1B":"G","1D":"B","1E":"F","1G":"A","1I":"H","1K":"L","1L":"K"},"ABEFGHJL":{"1A":"H","1B":"J","1D":"B","1E":"F","1G":"A","1I":"G","1K":"L","1L":"E"},"ABEFGHJK":{"1A":"H","1B":"J","1D":"B","1E":"F","1G":"A","1I":"G","1K":"E","1L":"K"},"ABEFGHIL":{"1A":"E","1B":"G","1D":"B","1E":"F","1G":"A","1I":"H","1K":"L","1L":"I"},"ABEFGHIK":{"1A":"E","1B":"G","1D":"B","1E":"F","1G":"A","1I":"H","1K":"I","1L":"K"},"ABEFGHIJ":{"1A":"H","1B":"J","1D":"B","1E":"F","1G":"A","1I":"G","1K":"E","1L":"I"},"ABDHIJKL":{"1A":"I","1B":"J","1D":"B","1E":"D","1G":"A","1I":"H","1K":"L","1L":"K"},"ABDGIJKL":{"1A":"I","1B":"J","1D":"B","1E":"D","1G":"A","1I":"G","1K":"L","1L":"K"},"ABDGHJKL":{"1A":"H","1B":"J","1D":"B","1E":"D","1G":"A","1I":"G","1K":"L","1L":"K"},"ABDGHIKL":{"1A":"I","1B":"G","1D":"B","1E":"D","1G":"A","1I":"H","1K":"L","1L":"K"},"ABDGHIJL":{"1A":"H","1B":"J","1D":"B","1E":"D","1G":"A","1I":"G","1K":"L","1L":"I"},"ABDGHIJK":{"1A":"H","1B":"J","1D":"B","1E":"D","1G":"A","1I":"G","1K":"I","1L":"K"},"ABDFIJKL":{"1A":"I","1B":"J","1D":"B","1E":"D","1G":"A","1I":"F","1K":"L","1L":"K"},"ABDFHJKL":{"1A":"H","1B":"J","1D":"B","1E":"D","1G":"A","1I":"F","1K":"L","1L":"K"},"ABDFHIKL":{"1A":"H","1B":"I","1D":"B","1E":"D","1G":"A","1I":"F","1K":"L","1L":"K"},"ABDFHIJL":{"1A":"H","1B":"J","1D":"B","1E":"D","1G":"A","1I":"F","1K":"L","1L":"I"},"ABDFHIJK":{"1A":"H","1B":"J","1D":"B","1E":"D","1G":"A","1I":"F","1K":"I","1L":"K"},"ABDFGJKL":{"1A":"F","1B":"J","1D":"B","1E":"D","1G":"A","1I":"G","1K":"L","1L":"K"},"ABDFGIKL":{"1A":"I","1B":"G","1D":"B","1E":"D","1G":"A","1I":"F","1K":"L","1L":"K"},"ABDFGIJL":{"1A":"F","1B":"J","1D":"B","1E":"D","1G":"A","1I":"G","1K":"L","1L":"I"},"ABDFGIJK":{"1A":"F","1B":"J","1D":"B","1E":"D","1G":"A","1I":"G","1K":"I","1L":"K"},"ABDFGHKL":{"1A":"H","1B":"G","1D":"B","1E":"D","1G":"A","1I":"F","1K":"L","1L":"K"},"ABDFGHJL":{"1A":"H","1B":"G","1D":"B","1E":"D","1G":"A","1I":"F","1K":"L","1L":"J"},"ABDFGHJK":{"1A":"H","1B":"G","1D":"B","1E":"D","1G":"A","1I":"F","1K":"J","1L":"K"},"ABDFGHIL":{"1A":"H","1B":"G","1D":"B","1E":"D","1G":"A","1I":"F","1K":"L","1L":"I"},"ABDFGHIK":{"1A":"H","1B":"G","1D":"B","1E":"D","1G":"A","1I":"F","1K":"I","1L":"K"},"ABDFGHIJ":{"1A":"H","1B":"G","1D":"B","1E":"D","1G":"A","1I":"F","1K":"I","1L":"J"},"ABDEIJKL":{"1A":"E","1B":"J","1D":"B","1E":"A","1G":"I","1I":"D","1K":"L","1L":"K"},"ABDEHJKL":{"1A":"E","1B":"J","1D":"B","1E":"D","1G":"A","1I":"H","1K":"L","1L":"K"},"ABDEHIKL":{"1A":"E","1B":"I","1D":"B","1E":"D","1G":"A","1I":"H","1K":"L","1L":"K"},"ABDEHIJL":{"1A":"E","1B":"J","1D":"B","1E":"D","1G":"A","1I":"H","1K":"L","1L":"I"},"ABDEHIJK":{"1A":"E","1B":"J","1D":"B","1E":"D","1G":"A","1I":"H","1K":"I","1L":"K"},"ABDEGJKL":{"1A":"E","1B":"J","1D":"B","1E":"D","1G":"A","1I":"G","1K":"L","1L":"K"},"ABDEGIKL":{"1A":"E","1B":"G","1D":"B","1E":"A","1G":"I","1I":"D","1K":"L","1L":"K"},"ABDEGIJL":{"1A":"E","1B":"J","1D":"B","1E":"D","1G":"A","1I":"G","1K":"L","1L":"I"},"ABDEGIJK":{"1A":"E","1B":"J","1D":"B","1E":"D","1G":"A","1I":"G","1K":"I","1L":"K"},"ABDEGHKL":{"1A":"E","1B":"G","1D":"B","1E":"D","1G":"A","1I":"H","1K":"L","1L":"K"},"ABDEGHJL":{"1A":"H","1B":"J","1D":"B","1E":"D","1G":"A","1I":"G","1K":"L","1L":"E"},"ABDEGHJK":{"1A":"H","1B":"J","1D":"B","1E":"D","1G":"A","1I":"G","1K":"E","1L":"K"},"ABDEGHIL":{"1A":"E","1B":"G","1D":"B","1E":"D","1G":"A","1I":"H","1K":"L","1L":"I"},"ABDEGHIK":{"1A":"E","1B":"G","1D":"B","1E":"D","1G":"A","1I":"H","1K":"I","1L":"K"},"ABDEGHIJ":{"1A":"H","1B":"J","1D":"B","1E":"D","1G":"A","1I":"G","1K":"E","1L":"I"},"ABDEFJKL":{"1A":"E","1B":"J","1D":"B","1E":"D","1G":"A","1I":"F","1K":"L","1L":"K"},"ABDEFIKL":{"1A":"E","1B":"I","1D":"B","1E":"D","1G":"A","1I":"F","1K":"L","1L":"K"},"ABDEFIJL":{"1A":"E","1B":"J","1D":"B","1E":"D","1G":"A","1I":"F","1K":"L","1L":"I"},"ABDEFIJK":{"1A":"E","1B":"J","1D":"B","1E":"D","1G":"A","1I":"F","1K":"I","1L":"K"},"ABDEFHKL":{"1A":"H","1B":"E","1D":"B","1E":"D","1G":"A","1I":"F","1K":"L","1L":"K"},"ABDEFHJL":{"1A":"H","1B":"J","1D":"B","1E":"D","1G":"A","1I":"F","1K":"L","1L":"E"},"ABDEFHJK":{"1A":"H","1B":"J","1D":"B","1E":"D","1G":"A","1I":"F","1K":"E","1L":"K"},"ABDEFHIL":{"1A":"H","1B":"E","1D":"B","1E":"D","1G":"A","1I":"F","1K":"L","1L":"I"},"ABDEFHIK":{"1A":"H","1B":"E","1D":"B","1E":"D","1G":"A","1I":"F","1K":"I","1L":"K"},"ABDEFHIJ":{"1A":"H","1B":"J","1D":"B","1E":"D","1G":"A","1I":"F","1K":"E","1L":"I"},"ABDEFGKL":{"1A":"E","1B":"G","1D":"B","1E":"D","1G":"A","1I":"F","1K":"L","1L":"K"},"ABDEFGJL":{"1A":"E","1B":"G","1D":"B","1E":"D","1G":"A","1I":"F","1K":"L","1L":"J"},"ABDEFGJK":{"1A":"E","1B":"G","1D":"B","1E":"D","1G":"A","1I":"F","1K":"J","1L":"K"},"ABDEFGIL":{"1A":"E","1B":"G","1D":"B","1E":"D","1G":"A","1I":"F","1K":"L","1L":"I"},"ABDEFGIK":{"1A":"E","1B":"G","1D":"B","1E":"D","1G":"A","1I":"F","1K":"I","1L":"K"},"ABDEFGIJ":{"1A":"E","1B":"G","1D":"B","1E":"D","1G":"A","1I":"F","1K":"I","1L":"J"},"ABDEFGHL":{"1A":"H","1B":"G","1D":"B","1E":"D","1G":"A","1I":"F","1K":"L","1L":"E"},"ABDEFGHK":{"1A":"H","1B":"G","1D":"B","1E":"D","1G":"A","1I":"F","1K":"E","1L":"K"},"ABDEFGHJ":{"1A":"H","1B":"G","1D":"B","1E":"D","1G":"A","1I":"F","1K":"E","1L":"J"},"ABDEFGHI":{"1A":"H","1B":"G","1D":"B","1E":"D","1G":"A","1I":"F","1K":"E","1L":"I"},"ABCHIJKL":{"1A":"I","1B":"J","1D":"B","1E":"C","1G":"A","1I":"H","1K":"L","1L":"K"},"ABCGIJKL":{"1A":"I","1B":"J","1D":"B","1E":"C","1G":"A","1I":"G","1K":"L","1L":"K"},"ABCGHJKL":{"1A":"H","1B":"J","1D":"B","1E":"C","1G":"A","1I":"G","1K":"L","1L":"K"},"ABCGHIKL":{"1A":"I","1B":"G","1D":"B","1E":"C","1G":"A","1I":"H","1K":"L","1L":"K"},"ABCGHIJL":{"1A":"H","1B":"J","1D":"B","1E":"C","1G":"A","1I":"G","1K":"L","1L":"I"},"ABCGHIJK":{"1A":"H","1B":"J","1D":"B","1E":"C","1G":"A","1I":"G","1K":"I","1L":"K"},"ABCFIJKL":{"1A":"I","1B":"J","1D":"B","1E":"C","1G":"A","1I":"F","1K":"L","1L":"K"},"ABCFHJKL":{"1A":"H","1B":"J","1D":"B","1E":"C","1G":"A","1I":"F","1K":"L","1L":"K"},"ABCFHIKL":{"1A":"H","1B":"I","1D":"B","1E":"C","1G":"A","1I":"F","1K":"L","1L":"K"},"ABCFHIJL":{"1A":"H","1B":"J","1D":"B","1E":"C","1G":"A","1I":"F","1K":"L","1L":"I"},"ABCFHIJK":{"1A":"H","1B":"J","1D":"B","1E":"C","1G":"A","1I":"F","1K":"I","1L":"K"},"ABCFGJKL":{"1A":"C","1B":"J","1D":"B","1E":"F","1G":"A","1I":"G","1K":"L","1L":"K"},"ABCFGIKL":{"1A":"I","1B":"G","1D":"B","1E":"C","1G":"A","1I":"F","1K":"L","1L":"K"},"ABCFGIJL":{"1A":"C","1B":"J","1D":"B","1E":"F","1G":"A","1I":"G","1K":"L","1L":"I"},"ABCFGIJK":{"1A":"C","1B":"J","1D":"B","1E":"F","1G":"A","1I":"G","1K":"I","1L":"K"},"ABCFGHKL":{"1A":"H","1B":"G","1D":"B","1E":"C","1G":"A","1I":"F","1K":"L","1L":"K"},"ABCFGHJL":{"1A":"H","1B":"G","1D":"B","1E":"C","1G":"A","1I":"F","1K":"L","1L":"J"},"ABCFGHJK":{"1A":"H","1B":"G","1D":"B","1E":"C","1G":"A","1I":"F","1K":"J","1L":"K"},"ABCFGHIL":{"1A":"H","1B":"G","1D":"B","1E":"C","1G":"A","1I":"F","1K":"L","1L":"I"},"ABCFGHIK":{"1A":"H","1B":"G","1D":"B","1E":"C","1G":"A","1I":"F","1K":"I","1L":"K"},"ABCFGHIJ":{"1A":"H","1B":"G","1D":"B","1E":"C","1G":"A","1I":"F","1K":"I","1L":"J"},"ABCEIJKL":{"1A":"E","1B":"J","1D":"B","1E":"A","1G":"I","1I":"C","1K":"L","1L":"K"},"ABCEHJKL":{"1A":"E","1B":"J","1D":"B","1E":"C","1G":"A","1I":"H","1K":"L","1L":"K"},"ABCEHIKL":{"1A":"E","1B":"I","1D":"B","1E":"C","1G":"A","1I":"H","1K":"L","1L":"K"},"ABCEHIJL":{"1A":"E","1B":"J","1D":"B","1E":"C","1G":"A","1I":"H","1K":"L","1L":"I"},"ABCEHIJK":{"1A":"E","1B":"J","1D":"B","1E":"C","1G":"A","1I":"H","1K":"I","1L":"K"},"ABCEGJKL":{"1A":"E","1B":"J","1D":"B","1E":"C","1G":"A","1I":"G","1K":"L","1L":"K"},"ABCEGIKL":{"1A":"E","1B":"G","1D":"B","1E":"A","1G":"I","1I":"C","1K":"L","1L":"K"},"ABCEGIJL":{"1A":"E","1B":"J","1D":"B","1E":"C","1G":"A","1I":"G","1K":"L","1L":"I"},"ABCEGIJK":{"1A":"E","1B":"J","1D":"B","1E":"C","1G":"A","1I":"G","1K":"I","1L":"K"},"ABCEGHKL":{"1A":"E","1B":"G","1D":"B","1E":"C","1G":"A","1I":"H","1K":"L","1L":"K"},"ABCEGHJL":{"1A":"H","1B":"J","1D":"B","1E":"C","1G":"A","1I":"G","1K":"L","1L":"E"},"ABCEGHJK":{"1A":"H","1B":"J","1D":"B","1E":"C","1G":"A","1I":"G","1K":"E","1L":"K"},"ABCEGHIL":{"1A":"E","1B":"G","1D":"B","1E":"C","1G":"A","1I":"H","1K":"L","1L":"I"},"ABCEGHIK":{"1A":"E","1B":"G","1D":"B","1E":"C","1G":"A","1I":"H","1K":"I","1L":"K"},"ABCEGHIJ":{"1A":"H","1B":"J","1D":"B","1E":"C","1G":"A","1I":"G","1K":"E","1L":"I"},"ABCEFJKL":{"1A":"E","1B":"J","1D":"B","1E":"C","1G":"A","1I":"F","1K":"L","1L":"K"},"ABCEFIKL":{"1A":"E","1B":"I","1D":"B","1E":"C","1G":"A","1I":"F","1K":"L","1L":"K"},"ABCEFIJL":{"1A":"E","1B":"J","1D":"B","1E":"C","1G":"A","1I":"F","1K":"L","1L":"I"},"ABCEFIJK":{"1A":"E","1B":"J","1D":"B","1E":"C","1G":"A","1I":"F","1K":"I","1L":"K"},"ABCEFHKL":{"1A":"H","1B":"E","1D":"B","1E":"C","1G":"A","1I":"F","1K":"L","1L":"K"},"ABCEFHJL":{"1A":"H","1B":"J","1D":"B","1E":"C","1G":"A","1I":"F","1K":"L","1L":"E"},"ABCEFHJK":{"1A":"H","1B":"J","1D":"B","1E":"C","1G":"A","1I":"F","1K":"E","1L":"K"},"ABCEFHIL":{"1A":"H","1B":"E","1D":"B","1E":"C","1G":"A","1I":"F","1K":"L","1L":"I"},"ABCEFHIK":{"1A":"H","1B":"E","1D":"B","1E":"C","1G":"A","1I":"F","1K":"I","1L":"K"},"ABCEFHIJ":{"1A":"H","1B":"J","1D":"B","1E":"C","1G":"A","1I":"F","1K":"E","1L":"I"},"ABCEFGKL":{"1A":"E","1B":"G","1D":"B","1E":"C","1G":"A","1I":"F","1K":"L","1L":"K"},"ABCEFGJL":{"1A":"E","1B":"G","1D":"B","1E":"C","1G":"A","1I":"F","1K":"L","1L":"J"},"ABCEFGJK":{"1A":"E","1B":"G","1D":"B","1E":"C","1G":"A","1I":"F","1K":"J","1L":"K"},"ABCEFGIL":{"1A":"E","1B":"G","1D":"B","1E":"C","1G":"A","1I":"F","1K":"L","1L":"I"},"ABCEFGIK":{"1A":"E","1B":"G","1D":"B","1E":"C","1G":"A","1I":"F","1K":"I","1L":"K"},"ABCEFGIJ":{"1A":"E","1B":"G","1D":"B","1E":"C","1G":"A","1I":"F","1K":"I","1L":"J"},"ABCEFGHL":{"1A":"H","1B":"G","1D":"B","1E":"C","1G":"A","1I":"F","1K":"L","1L":"E"},"ABCEFGHK":{"1A":"H","1B":"G","1D":"B","1E":"C","1G":"A","1I":"F","1K":"E","1L":"K"},"ABCEFGHJ":{"1A":"H","1B":"G","1D":"B","1E":"C","1G":"A","1I":"F","1K":"E","1L":"J"},"ABCEFGHI":{"1A":"H","1B":"G","1D":"B","1E":"C","1G":"A","1I":"F","1K":"E","1L":"I"},"ABCDIJKL":{"1A":"I","1B":"J","1D":"B","1E":"C","1G":"A","1I":"D","1K":"L","1L":"K"},"ABCDHJKL":{"1A":"H","1B":"J","1D":"B","1E":"C","1G":"A","1I":"D","1K":"L","1L":"K"},"ABCDHIKL":{"1A":"H","1B":"I","1D":"B","1E":"C","1G":"A","1I":"D","1K":"L","1L":"K"},"ABCDHIJL":{"1A":"H","1B":"J","1D":"B","1E":"C","1G":"A","1I":"D","1K":"L","1L":"I"},"ABCDHIJK":{"1A":"H","1B":"J","1D":"B","1E":"C","1G":"A","1I":"D","1K":"I","1L":"K"},"ABCDGJKL":{"1A":"C","1B":"J","1D":"B","1E":"D","1G":"A","1I":"G","1K":"L","1L":"K"},"ABCDGIKL":{"1A":"I","1B":"G","1D":"B","1E":"C","1G":"A","1I":"D","1K":"L","1L":"K"},"ABCDGIJL":{"1A":"C","1B":"J","1D":"B","1E":"D","1G":"A","1I":"G","1K":"L","1L":"I"},"ABCDGIJK":{"1A":"C","1B":"J","1D":"B","1E":"D","1G":"A","1I":"G","1K":"I","1L":"K"},"ABCDGHKL":{"1A":"H","1B":"G","1D":"B","1E":"C","1G":"A","1I":"D","1K":"L","1L":"K"},"ABCDGHJL":{"1A":"H","1B":"G","1D":"B","1E":"C","1G":"A","1I":"D","1K":"L","1L":"J"},"ABCDGHJK":{"1A":"H","1B":"G","1D":"B","1E":"C","1G":"A","1I":"D","1K":"J","1L":"K"},"ABCDGHIL":{"1A":"H","1B":"G","1D":"B","1E":"C","1G":"A","1I":"D","1K":"L","1L":"I"},"ABCDGHIK":{"1A":"H","1B":"G","1D":"B","1E":"C","1G":"A","1I":"D","1K":"I","1L":"K"},"ABCDGHIJ":{"1A":"H","1B":"G","1D":"B","1E":"C","1G":"A","1I":"D","1K":"I","1L":"J"},"ABCDFJKL":{"1A":"C","1B":"J","1D":"B","1E":"D","1G":"A","1I":"F","1K":"L","1L":"K"},"ABCDFIKL":{"1A":"C","1B":"I","1D":"B","1E":"D","1G":"A","1I":"F","1K":"L","1L":"K"},"ABCDFIJL":{"1A":"C","1B":"J","1D":"B","1E":"D","1G":"A","1I":"F","1K":"L","1L":"I"},"ABCDFIJK":{"1A":"C","1B":"J","1D":"B","1E":"D","1G":"A","1I":"F","1K":"I","1L":"K"},"ABCDFHKL":{"1A":"H","1B":"F","1D":"B","1E":"C","1G":"A","1I":"D","1K":"L","1L":"K"},"ABCDFHJL":{"1A":"C","1B":"J","1D":"B","1E":"D","1G":"A","1I":"F","1K":"L","1L":"H"},"ABCDFHJK":{"1A":"H","1B":"J","1D":"B","1E":"C","1G":"A","1I":"F","1K":"D","1L":"K"},"ABCDFHIL":{"1A":"H","1B":"F","1D":"B","1E":"C","1G":"A","1I":"D","1K":"L","1L":"I"},"ABCDFHIK":{"1A":"H","1B":"F","1D":"B","1E":"C","1G":"A","1I":"D","1K":"I","1L":"K"},"ABCDFHIJ":{"1A":"H","1B":"J","1D":"B","1E":"C","1G":"A","1I":"F","1K":"D","1L":"I"},"ABCDFGKL":{"1A":"C","1B":"G","1D":"B","1E":"D","1G":"A","1I":"F","1K":"L","1L":"K"},"ABCDFGJL":{"1A":"C","1B":"G","1D":"B","1E":"D","1G":"A","1I":"F","1K":"L","1L":"J"},"ABCDFGJK":{"1A":"C","1B":"G","1D":"B","1E":"D","1G":"A","1I":"F","1K":"J","1L":"K"},"ABCDFGIL":{"1A":"C","1B":"G","1D":"B","1E":"D","1G":"A","1I":"F","1K":"L","1L":"I"},"ABCDFGIK":{"1A":"C","1B":"G","1D":"B","1E":"D","1G":"A","1I":"F","1K":"I","1L":"K"},"ABCDFGIJ":{"1A":"C","1B":"G","1D":"B","1E":"D","1G":"A","1I":"F","1K":"I","1L":"J"},"ABCDFGHL":{"1A":"C","1B":"G","1D":"B","1E":"D","1G":"A","1I":"F","1K":"L","1L":"H"},"ABCDFGHK":{"1A":"H","1B":"G","1D":"B","1E":"C","1G":"A","1I":"F","1K":"D","1L":"K"},"ABCDFGHJ":{"1A":"H","1B":"G","1D":"B","1E":"C","1G":"A","1I":"F","1K":"D","1L":"J"},"ABCDFGHI":{"1A":"H","1B":"G","1D":"B","1E":"C","1G":"A","1I":"F","1K":"D","1L":"I"},"ABCDEJKL":{"1A":"E","1B":"J","1D":"B","1E":"C","1G":"A","1I":"D","1K":"L","1L":"K"},"ABCDEIKL":{"1A":"E","1B":"I","1D":"B","1E":"C","1G":"A","1I":"D","1K":"L","1L":"K"},"ABCDEIJL":{"1A":"E","1B":"J","1D":"B","1E":"C","1G":"A","1I":"D","1K":"L","1L":"I"},"ABCDEIJK":{"1A":"E","1B":"J","1D":"B","1E":"C","1G":"A","1I":"D","1K":"I","1L":"K"},"ABCDEHKL":{"1A":"H","1B":"E","1D":"B","1E":"C","1G":"A","1I":"D","1K":"L","1L":"K"},"ABCDEHJL":{"1A":"H","1B":"J","1D":"B","1E":"C","1G":"A","1I":"D","1K":"L","1L":"E"},"ABCDEHJK":{"1A":"H","1B":"J","1D":"B","1E":"C","1G":"A","1I":"D","1K":"E","1L":"K"},"ABCDEHIL":{"1A":"H","1B":"E","1D":"B","1E":"C","1G":"A","1I":"D","1K":"L","1L":"I"},"ABCDEHIK":{"1A":"H","1B":"E","1D":"B","1E":"C","1G":"A","1I":"D","1K":"I","1L":"K"},"ABCDEHIJ":{"1A":"H","1B":"J","1D":"B","1E":"C","1G":"A","1I":"D","1K":"E","1L":"I"},"ABCDEGKL":{"1A":"E","1B":"G","1D":"B","1E":"C","1G":"A","1I":"D","1K":"L","1L":"K"},"ABCDEGJL":{"1A":"E","1B":"G","1D":"B","1E":"C","1G":"A","1I":"D","1K":"L","1L":"J"},"ABCDEGJK":{"1A":"E","1B":"G","1D":"B","1E":"C","1G":"A","1I":"D","1K":"J","1L":"K"},"ABCDEGIL":{"1A":"E","1B":"G","1D":"B","1E":"C","1G":"A","1I":"D","1K":"L","1L":"I"},"ABCDEGIK":{"1A":"E","1B":"G","1D":"B","1E":"C","1G":"A","1I":"D","1K":"I","1L":"K"},"ABCDEGIJ":{"1A":"E","1B":"G","1D":"B","1E":"C","1G":"A","1I":"D","1K":"I","1L":"J"},"ABCDEGHL":{"1A":"H","1B":"G","1D":"B","1E":"C","1G":"A","1I":"D","1K":"L","1L":"E"},"ABCDEGHK":{"1A":"H","1B":"G","1D":"B","1E":"C","1G":"A","1I":"D","1K":"E","1L":"K"},"ABCDEGHJ":{"1A":"H","1B":"G","1D":"B","1E":"C","1G":"A","1I":"D","1K":"E","1L":"J"},"ABCDEGHI":{"1A":"H","1B":"G","1D":"B","1E":"C","1G":"A","1I":"D","1K":"E","1L":"I"},"ABCDEFKL":{"1A":"C","1B":"E","1D":"B","1E":"D","1G":"A","1I":"F","1K":"L","1L":"K"},"ABCDEFJL":{"1A":"C","1B":"J","1D":"B","1E":"D","1G":"A","1I":"F","1K":"L","1L":"E"},"ABCDEFJK":{"1A":"C","1B":"J","1D":"B","1E":"D","1G":"A","1I":"F","1K":"E","1L":"K"},"ABCDEFIL":{"1A":"C","1B":"E","1D":"B","1E":"D","1G":"A","1I":"F","1K":"L","1L":"I"},"ABCDEFIK":{"1A":"C","1B":"E","1D":"B","1E":"D","1G":"A","1I":"F","1K":"I","1L":"K"},"ABCDEFIJ":{"1A":"C","1B":"J","1D":"B","1E":"D","1G":"A","1I":"F","1K":"E","1L":"I"},"ABCDEFHL":{"1A":"H","1B":"F","1D":"B","1E":"C","1G":"A","1I":"D","1K":"L","1L":"E"},"ABCDEFHK":{"1A":"H","1B":"E","1D":"B","1E":"C","1G":"A","1I":"F","1K":"D","1L":"K"},"ABCDEFHJ":{"1A":"H","1B":"J","1D":"B","1E":"C","1G":"A","1I":"F","1K":"D","1L":"E"},"ABCDEFHI":{"1A":"H","1B":"E","1D":"B","1E":"C","1G":"A","1I":"F","1K":"D","1L":"I"},"ABCDEFGL":{"1A":"C","1B":"G","1D":"B","1E":"D","1G":"A","1I":"F","1K":"L","1L":"E"},"ABCDEFGK":{"1A":"C","1B":"G","1D":"B","1E":"D","1G":"A","1I":"F","1K":"E","1L":"K"},"ABCDEFGJ":{"1A":"C","1B":"G","1D":"B","1E":"D","1G":"A","1I":"F","1K":"E","1L":"J"},"ABCDEFGI":{"1A":"C","1B":"G","1D":"B","1E":"D","1G":"A","1I":"F","1K":"E","1L":"I"},"ABCDEFGH":{"1A":"H","1B":"G","1D":"B","1E":"C","1G":"A","1I":"F","1K":"D","1L":"E"}};
+var __APP_DATA__ = {
+  teams: [{"name":"Spain","code":"ESP","elo":2129},{"name":"Argentina","code":"ARG","elo":2128},{"name":"France","code":"FRA","elo":2084},{"name":"England","code":"ENG","elo":2055},{"name":"Colombia","code":"COL","elo":1998},{"name":"Brazil","code":"BRA","elo":1986},{"name":"Netherlands","code":"NED","elo":1972},{"name":"Portugal","code":"POR","elo":1967},{"name":"Germany","code":"GER","elo":1954},{"name":"Norway","code":"NOR","elo":1929},{"name":"Japan","code":"JPN","elo":1925},{"name":"Mexico","code":"MEX","elo":1896},{"name":"Switzerland","code":"SUI","elo":1885},{"name":"Croatia","code":"CRO","elo":1881},{"name":"Belgium","code":"BEL","elo":1879},{"name":"Uruguay","code":"URU","elo":1870},{"name":"Morocco","code":"MAR","elo":1866},{"name":"Ecuador","code":"ECU","elo":1864},{"name":"Austria","code":"AUT","elo":1857},{"name":"Senegal","code":"SEN","elo":1839},{"name":"USA","code":"USA","elo":1820},{"name":"Paraguay","code":"PAR","elo":1816},{"name":"Turkey","code":"TUR","elo":1813},{"name":"Australia","code":"AUS","elo":1799},{"name":"Canada","code":"CAN","elo":1777},{"name":"South Korea","code":"KOR","elo":1771},{"name":"Scotland","code":"SCO","elo":1768},{"name":"Algeria","code":"ALG","elo":1759},{"name":"Iran","code":"IRN","elo":1756},{"name":"Ivory Coast","code":"CIV","elo":1728},{"name":"Sweden","code":"SWE","elo":1727},{"name":"Egypt","code":"EGY","elo":1711},{"name":"Uzbekistan","code":"UZB","elo":1698},{"name":"Czech Republic","code":"CZE","elo":1696},{"name":"Panama","code":"PAN","elo":1683},{"name":"DR Congo","code":"COD","elo":1674},{"name":"Jordan","code":"JOR","elo":1653},{"name":"Cape Verde","code":"CPV","elo":1606},{"name":"Saudi Arabia","code":"KSA","elo":1598},{"name":"Bosnia & Herzegovina","code":"BIH","elo":1596},{"name":"Iraq","code":"IRQ","elo":1592},{"name":"New Zealand","code":"NZL","elo":1578},{"name":"Tunisia","code":"TUN","elo":1570},{"name":"Ghana","code":"GHA","elo":1557},{"name":"Haiti","code":"HAI","elo":1528},{"name":"South Africa","code":"RSA","elo":1527},{"name":"Curaçao","code":"CUW","elo":1453},{"name":"Qatar","code":"QAT","elo":1437}],
+  bracket: {"source":"R32 + Annex C: Wikipedia raw wikitext, INDEPENDENTLY CONFIRMED against FIFA official regulations PDF + openfootball + ESPN/CBS/Fox (R32 byte-identical; allocation 495/495 exact). R16 matches 91-94 CORRECTED 2026-06-21: Wikipedia had them transposed (M91/M93 and M92/M94 swapped), which misrouted R16 winners into the wrong SF half; fixed to openfootball/ESPN/CBS/Fox venue-anchored order (M91=W76/W78, M92=W79/W80, M93=W83/W84, M94=W81/W82).","thirdPlaceSlotLabels":["1A","1B","1D","1E","1G","1I","1K","1L"],"rounds":{"R32":[{"match":73,"home":{"type":"runnerup","group":"A"},"away":{"type":"runnerup","group":"B"}},{"match":74,"home":{"type":"winner","group":"E"},"away":{"type":"third","from":["A","B","C","D","F"]}},{"match":75,"home":{"type":"winner","group":"F"},"away":{"type":"runnerup","group":"C"}},{"match":76,"home":{"type":"winner","group":"C"},"away":{"type":"runnerup","group":"F"}},{"match":77,"home":{"type":"winner","group":"I"},"away":{"type":"third","from":["C","D","F","G","H"]}},{"match":78,"home":{"type":"runnerup","group":"E"},"away":{"type":"runnerup","group":"I"}},{"match":79,"home":{"type":"winner","group":"A"},"away":{"type":"third","from":["C","E","F","H","I"]}},{"match":80,"home":{"type":"winner","group":"L"},"away":{"type":"third","from":["E","H","I","J","K"]}},{"match":81,"home":{"type":"winner","group":"D"},"away":{"type":"third","from":["B","E","F","I","J"]}},{"match":82,"home":{"type":"winner","group":"G"},"away":{"type":"third","from":["A","E","H","I","J"]}},{"match":83,"home":{"type":"runnerup","group":"K"},"away":{"type":"runnerup","group":"L"}},{"match":84,"home":{"type":"winner","group":"H"},"away":{"type":"runnerup","group":"J"}},{"match":85,"home":{"type":"winner","group":"B"},"away":{"type":"third","from":["E","F","G","I","J"]}},{"match":86,"home":{"type":"winner","group":"J"},"away":{"type":"runnerup","group":"H"}},{"match":87,"home":{"type":"winner","group":"K"},"away":{"type":"third","from":["D","E","I","J","L"]}},{"match":88,"home":{"type":"runnerup","group":"D"},"away":{"type":"runnerup","group":"G"}}],"R16":[{"match":89,"home":{"type":"winnerOf","match":74},"away":{"type":"winnerOf","match":77}},{"match":90,"home":{"type":"winnerOf","match":73},"away":{"type":"winnerOf","match":75}},{"match":91,"home":{"type":"winnerOf","match":76},"away":{"type":"winnerOf","match":78}},{"match":92,"home":{"type":"winnerOf","match":79},"away":{"type":"winnerOf","match":80}},{"match":93,"home":{"type":"winnerOf","match":83},"away":{"type":"winnerOf","match":84}},{"match":94,"home":{"type":"winnerOf","match":81},"away":{"type":"winnerOf","match":82}},{"match":95,"home":{"type":"winnerOf","match":86},"away":{"type":"winnerOf","match":88}},{"match":96,"home":{"type":"winnerOf","match":85},"away":{"type":"winnerOf","match":87}}],"QF":[{"match":97,"home":{"type":"winnerOf","match":89},"away":{"type":"winnerOf","match":90}},{"match":98,"home":{"type":"winnerOf","match":93},"away":{"type":"winnerOf","match":94}},{"match":99,"home":{"type":"winnerOf","match":91},"away":{"type":"winnerOf","match":92}},{"match":100,"home":{"type":"winnerOf","match":95},"away":{"type":"winnerOf","match":96}}],"SF":[{"match":101,"home":{"type":"winnerOf","match":97},"away":{"type":"winnerOf","match":98}},{"match":102,"home":{"type":"winnerOf","match":99},"away":{"type":"winnerOf","match":100}}],"ThirdPlace":[{"match":103,"home":{"type":"loserOf","match":101},"away":{"type":"loserOf","match":102}}],"Final":[{"match":104,"home":{"type":"winnerOf","match":101},"away":{"type":"winnerOf","match":102}}]}},
+  groups: [{"name":"Group A","teams":[{"code":"CZE","name":"Czech Republic","elo":1696},{"code":"KOR","name":"South Korea","elo":1771},{"code":"MEX","name":"Mexico","elo":1896},{"code":"RSA","name":"South Africa","elo":1527}],"matches":[{"home":"MEX","away":"RSA","homeGoals":2,"awayGoals":0,"played":true},{"home":"KOR","away":"CZE","homeGoals":2,"awayGoals":1,"played":true},{"home":"CZE","away":"RSA","homeGoals":1,"awayGoals":1,"played":true},{"home":"MEX","away":"KOR","homeGoals":1,"awayGoals":0,"played":true},{"home":"CZE","away":"MEX","homeGoals":null,"awayGoals":null,"played":false},{"home":"RSA","away":"KOR","homeGoals":null,"awayGoals":null,"played":false}]},{"name":"Group B","teams":[{"code":"BIH","name":"Bosnia & Herzegovina","elo":1596},{"code":"CAN","name":"Canada","elo":1777},{"code":"QAT","name":"Qatar","elo":1437},{"code":"SUI","name":"Switzerland","elo":1885}],"matches":[{"home":"CAN","away":"BIH","homeGoals":1,"awayGoals":1,"played":true},{"home":"QAT","away":"SUI","homeGoals":1,"awayGoals":1,"played":true},{"home":"SUI","away":"BIH","homeGoals":4,"awayGoals":1,"played":true},{"home":"CAN","away":"QAT","homeGoals":6,"awayGoals":0,"played":true},{"home":"SUI","away":"CAN","homeGoals":null,"awayGoals":null,"played":false},{"home":"BIH","away":"QAT","homeGoals":null,"awayGoals":null,"played":false}]},{"name":"Group C","teams":[{"code":"BRA","name":"Brazil","elo":1986},{"code":"HAI","name":"Haiti","elo":1528},{"code":"MAR","name":"Morocco","elo":1866},{"code":"SCO","name":"Scotland","elo":1768}],"matches":[{"home":"BRA","away":"MAR","homeGoals":1,"awayGoals":1,"played":true},{"home":"HAI","away":"SCO","homeGoals":0,"awayGoals":1,"played":true},{"home":"SCO","away":"MAR","homeGoals":0,"awayGoals":1,"played":true},{"home":"BRA","away":"HAI","homeGoals":3,"awayGoals":0,"played":true},{"home":"SCO","away":"BRA","homeGoals":null,"awayGoals":null,"played":false},{"home":"MAR","away":"HAI","homeGoals":null,"awayGoals":null,"played":false}]},{"name":"Group D","teams":[{"code":"AUS","name":"Australia","elo":1799},{"code":"PAR","name":"Paraguay","elo":1816},{"code":"TUR","name":"Turkey","elo":1813},{"code":"USA","name":"USA","elo":1820}],"matches":[{"home":"USA","away":"PAR","homeGoals":4,"awayGoals":1,"played":true},{"home":"AUS","away":"TUR","homeGoals":2,"awayGoals":0,"played":true},{"home":"USA","away":"AUS","homeGoals":2,"awayGoals":0,"played":true},{"home":"TUR","away":"PAR","homeGoals":0,"awayGoals":1,"played":true},{"home":"TUR","away":"USA","homeGoals":null,"awayGoals":null,"played":false},{"home":"PAR","away":"AUS","homeGoals":null,"awayGoals":null,"played":false}]},{"name":"Group E","teams":[{"code":"CIV","name":"Ivory Coast","elo":1728},{"code":"CUW","name":"Curaçao","elo":1453},{"code":"ECU","name":"Ecuador","elo":1864},{"code":"GER","name":"Germany","elo":1954}],"matches":[{"home":"GER","away":"CUW","homeGoals":7,"awayGoals":1,"played":true},{"home":"CIV","away":"ECU","homeGoals":1,"awayGoals":0,"played":true},{"home":"GER","away":"CIV","homeGoals":2,"awayGoals":1,"played":true},{"home":"ECU","away":"CUW","homeGoals":0,"awayGoals":0,"played":true},{"home":"CUW","away":"CIV","homeGoals":null,"awayGoals":null,"played":false},{"home":"ECU","away":"GER","homeGoals":null,"awayGoals":null,"played":false}]},{"name":"Group F","teams":[{"code":"JPN","name":"Japan","elo":1925},{"code":"NED","name":"Netherlands","elo":1972},{"code":"SWE","name":"Sweden","elo":1727},{"code":"TUN","name":"Tunisia","elo":1570}],"matches":[{"home":"NED","away":"JPN","homeGoals":2,"awayGoals":2,"played":true},{"home":"SWE","away":"TUN","homeGoals":5,"awayGoals":1,"played":true},{"home":"NED","away":"SWE","homeGoals":5,"awayGoals":1,"played":true},{"home":"TUN","away":"JPN","homeGoals":0,"awayGoals":4,"played":true},{"home":"JPN","away":"SWE","homeGoals":null,"awayGoals":null,"played":false},{"home":"TUN","away":"NED","homeGoals":null,"awayGoals":null,"played":false}]},{"name":"Group G","teams":[{"code":"BEL","name":"Belgium","elo":1879},{"code":"EGY","name":"Egypt","elo":1711},{"code":"IRN","name":"Iran","elo":1756},{"code":"NZL","name":"New Zealand","elo":1578}],"matches":[{"home":"BEL","away":"EGY","homeGoals":1,"awayGoals":1,"played":true},{"home":"IRN","away":"NZL","homeGoals":2,"awayGoals":2,"played":true},{"home":"BEL","away":"IRN","homeGoals":null,"awayGoals":null,"played":false},{"home":"NZL","away":"EGY","homeGoals":null,"awayGoals":null,"played":false},{"home":"EGY","away":"IRN","homeGoals":null,"awayGoals":null,"played":false},{"home":"NZL","away":"BEL","homeGoals":null,"awayGoals":null,"played":false}]},{"name":"Group H","teams":[{"code":"CPV","name":"Cape Verde","elo":1606},{"code":"ESP","name":"Spain","elo":2129},{"code":"KSA","name":"Saudi Arabia","elo":1598},{"code":"URU","name":"Uruguay","elo":1870}],"matches":[{"home":"ESP","away":"CPV","homeGoals":0,"awayGoals":0,"played":true},{"home":"KSA","away":"URU","homeGoals":1,"awayGoals":1,"played":true},{"home":"ESP","away":"KSA","homeGoals":4,"awayGoals":0,"played":true},{"home":"URU","away":"CPV","homeGoals":null,"awayGoals":null,"played":false},{"home":"CPV","away":"KSA","homeGoals":null,"awayGoals":null,"played":false},{"home":"URU","away":"ESP","homeGoals":null,"awayGoals":null,"played":false}]},{"name":"Group I","teams":[{"code":"FRA","name":"France","elo":2084},{"code":"IRQ","name":"Iraq","elo":1592},{"code":"NOR","name":"Norway","elo":1929},{"code":"SEN","name":"Senegal","elo":1839}],"matches":[{"home":"FRA","away":"SEN","homeGoals":3,"awayGoals":1,"played":true},{"home":"IRQ","away":"NOR","homeGoals":1,"awayGoals":4,"played":true},{"home":"FRA","away":"IRQ","homeGoals":null,"awayGoals":null,"played":false},{"home":"NOR","away":"SEN","homeGoals":null,"awayGoals":null,"played":false},{"home":"NOR","away":"FRA","homeGoals":null,"awayGoals":null,"played":false},{"home":"SEN","away":"IRQ","homeGoals":null,"awayGoals":null,"played":false}]},{"name":"Group J","teams":[{"code":"ALG","name":"Algeria","elo":1759},{"code":"ARG","name":"Argentina","elo":2128},{"code":"AUT","name":"Austria","elo":1857},{"code":"JOR","name":"Jordan","elo":1653}],"matches":[{"home":"ARG","away":"ALG","homeGoals":3,"awayGoals":0,"played":true},{"home":"AUT","away":"JOR","homeGoals":3,"awayGoals":1,"played":true},{"home":"ARG","away":"AUT","homeGoals":null,"awayGoals":null,"played":false},{"home":"JOR","away":"ALG","homeGoals":null,"awayGoals":null,"played":false},{"home":"ALG","away":"AUT","homeGoals":null,"awayGoals":null,"played":false},{"home":"JOR","away":"ARG","homeGoals":null,"awayGoals":null,"played":false}]},{"name":"Group K","teams":[{"code":"COD","name":"DR Congo","elo":1674},{"code":"COL","name":"Colombia","elo":1998},{"code":"POR","name":"Portugal","elo":1967},{"code":"UZB","name":"Uzbekistan","elo":1698}],"matches":[{"home":"POR","away":"COD","homeGoals":1,"awayGoals":1,"played":true},{"home":"UZB","away":"COL","homeGoals":1,"awayGoals":3,"played":true},{"home":"POR","away":"UZB","homeGoals":null,"awayGoals":null,"played":false},{"home":"COL","away":"COD","homeGoals":null,"awayGoals":null,"played":false},{"home":"COL","away":"POR","homeGoals":null,"awayGoals":null,"played":false},{"home":"COD","away":"UZB","homeGoals":null,"awayGoals":null,"played":false}]},{"name":"Group L","teams":[{"code":"CRO","name":"Croatia","elo":1881},{"code":"ENG","name":"England","elo":2055},{"code":"GHA","name":"Ghana","elo":1557},{"code":"PAN","name":"Panama","elo":1683}],"matches":[{"home":"ENG","away":"CRO","homeGoals":4,"awayGoals":2,"played":true},{"home":"GHA","away":"PAN","homeGoals":1,"awayGoals":0,"played":true},{"home":"ENG","away":"GHA","homeGoals":null,"awayGoals":null,"played":false},{"home":"PAN","away":"CRO","homeGoals":null,"awayGoals":null,"played":false},{"home":"PAN","away":"ENG","homeGoals":null,"awayGoals":null,"played":false},{"home":"CRO","away":"GHA","homeGoals":null,"awayGoals":null,"played":false}]}],
+  freshness: {"dataThrough":"Spain 4-0 Saudi Arabia","lastDate":"2026-06-21","playedCount":37,"totalCount":104,"builtAtISO":"2026-06-21T20:44:17.883Z"}
+};
+
+/* ============================================================================
+   DETERMINISTIC ENGINE + ALLOCATION + MONTE-CARLO MODEL
+   (engine.js, allocation.js, model.js inlined into one shared scope)
+   ========================================================================== */
+/* ===== engine.js ===== */
+
+// engine.js
+// Deterministic core engine for a 2026 FIFA World Cup bracket projector.
+//
+// Pure ES module, browser-safe (no Node-only APIs in exported logic).
+//
+// Public API:
+//   computeGroupStanding(group)            -> 4 teams ranked 1st..4th
+//   rankThirdPlaceTeams(groups)            -> all 12 third-place teams ranked, top 8 qualify
+//   scenarioGrid(group, upcomingMatchKeys, maxGoals=6)
+//                                          -> collapsed scenario summary per team + describe()
+//
+// Data shapes
+//   group   = { name, teams:[{code,name,fairPlay?}], matches:[match,...] }
+//   match   = { home, away, homeGoals, awayGoals, played:bool }
+//             home/away are team codes. A match "key" is `${home}-${away}`.
+//
+// Conventions
+//   - Only PLAYED matches contribute to a standing.
+//   - `fairPlay` is an optional per-team integer; LOWER is better; default 0.
+//   - Where a tie can only be resolved by "drawing of lots", we deterministically
+//     fall back to alphabetical-by-code ordering and flag the affected teams
+//     `tiedByLots:true` so a UI can surface the coin-flip.
+
+// ----------------------------------------------------------------------------
+// Low-level stat aggregation
+// ----------------------------------------------------------------------------
+
+/**
+ * Build a blank stat record for a team.
+ * @param {{code:string,name:string,fairPlay?:number}} team
+ */
+function blankStats(team) {
+  return {
+    code: team.code,
+    name: team.name,
+    fairPlay: Number.isFinite(team.fairPlay) ? team.fairPlay : 0,
+    played: 0,
+    won: 0,
+    drawn: 0,
+    lost: 0,
+    gf: 0,
+    ga: 0,
+    gd: 0,
+    points: 0,
+  };
+}
+
+/**
+ * Aggregate played matches into per-team stat records.
+ * Only matches whose `played` flag is truthy AND whose home & away codes are
+ * both in `teamCodes` count.
+ *
+ * @param {Array} teams   list of {code,name,fairPlay?}
+ * @param {Array} matches list of match objects
+ * @returns {Map<string,object>} code -> stats
+ */
+function aggregate(teams, matches) {
+  const byCode = new Map();
+  for (const t of teams) byCode.set(t.code, blankStats(t));
+
+  for (const m of matches) {
+    if (!m.played) continue;
+    const home = byCode.get(m.home);
+    const away = byCode.get(m.away);
+    if (!home || !away) continue; // match references a team not in this subset
+
+    const hg = m.homeGoals;
+    const ag = m.awayGoals;
+
+    home.played++; away.played++;
+    home.gf += hg; home.ga += ag;
+    away.gf += ag; away.ga += hg;
+
+    if (hg > ag) {
+      home.won++; away.lost++;
+      home.points += 3;
+    } else if (hg < ag) {
+      away.won++; home.lost++;
+      away.points += 3;
+    } else {
+      home.drawn++; away.drawn++;
+      home.points += 1; away.points += 1;
+    }
+  }
+
+  for (const s of byCode.values()) s.gd = s.gf - s.ga;
+  return byCode;
+}
+
+// ----------------------------------------------------------------------------
+// Tiebreaker comparators
+// ----------------------------------------------------------------------------
+
+/**
+ * Compare two stat records on the OVERALL group criteria (a,b,c):
+ *   points desc, goal-difference desc, goals-for desc.
+ * Returns negative if `x` ranks ahead of `y`, positive if behind, 0 if level.
+ */
+function cmpOverall(x, y) {
+  if (y.points !== x.points) return y.points - x.points;
+  if (y.gd !== x.gd) return y.gd - x.gd;
+  if (y.gf !== x.gf) return y.gf - x.gf;
+  return 0;
+}
+
+/**
+ * Compare two stat records on disciplinary (fair-play) points: LOWER is better.
+ * Returns negative if `x` ahead, positive if behind, 0 if level.
+ */
+function cmpFairPlay(x, y) {
+  return x.fairPlay - y.fairPlay;
+}
+
+/** Alphabetical-by-code comparator (the deterministic "drawing of lots"). */
+function cmpAlpha(x, y) {
+  return x.code < y.code ? -1 : x.code > y.code ? 1 : 0;
+}
+
+// ----------------------------------------------------------------------------
+// Head-to-head resolution
+// ----------------------------------------------------------------------------
+
+/**
+ * Given a set of tied teams (stat records) and the full match list, compute the
+ * head-to-head mini-table among ONLY those teams (matches where both sides are
+ * in the tied set), and split them by h2h criteria:
+ *   (d) h2h points, (e) h2h goal-difference, (f) h2h goals-for.
+ *
+ * Returns an array of "buckets": each bucket is an array of stat records that
+ * remain tied after applying h2h. Buckets are ordered best->worst. A bucket of
+ * length > 1 means h2h did not separate those teams and the caller must go on
+ * to fair-play / lots.
+ *
+ * @param {Array<object>} tied  stat records (>=2) currently tied on (a,b,c)
+ * @param {Array} allMatches    the group's full match list
+ */
+function headToHeadSplit(tied, allMatches) {
+  const codes = new Set(tied.map((t) => t.code));
+  const teamsSubset = tied.map((t) => ({ code: t.code, name: t.name, fairPlay: t.fairPlay }));
+  const subMatches = allMatches.filter(
+    (m) => m.played && codes.has(m.home) && codes.has(m.away)
+  );
+  const h2h = aggregate(teamsSubset, subMatches); // code -> h2h stats
+
+  // Sort the tied teams by their h2h overall criteria.
+  const ordered = [...tied].sort((a, b) => cmpOverall(h2h.get(a.code), h2h.get(b.code)));
+
+  // Group consecutive teams that are still level on h2h (a,b,c).
+  const buckets = [];
+  let cur = [ordered[0]];
+  for (let i = 1; i < ordered.length; i++) {
+    const prev = ordered[i - 1];
+    const team = ordered[i];
+    if (cmpOverall(h2h.get(prev.code), h2h.get(team.code)) === 0) {
+      cur.push(team);
+    } else {
+      buckets.push(cur);
+      cur = [team];
+    }
+  }
+  buckets.push(cur);
+  return buckets;
+}
+
+/**
+ * Fully resolve an ordering of a set of tied stat records, applying the FIFA
+ * sequence FROM the head-to-head step onward:
+ *   (d-f) head-to-head, (g) fair-play, (h) drawing of lots (alpha fallback).
+ *
+ * The h2h step is recursive in spirit: if h2h splits the set into smaller tied
+ * groups, each of those is re-resolved from h2h again on its own subset — but
+ * because a smaller tied subset's h2h is computed only among its members, a set
+ * that h2h could not split will not split on a re-run, so we proceed to
+ * fair-play then lots for any bucket length > 1.
+ *
+ * @returns {Array<object>} ordered stat records (best first); each record may
+ *          gain `tiedByLots:true`.
+ */
+function resolveTiedGroup(tied, allMatches) {
+  if (tied.length === 1) return [tied[0]];
+
+  // (d-f) head-to-head among exactly these tied teams.
+  const buckets = headToHeadSplit(tied, allMatches);
+
+  // If h2h fully kept them together (a single bucket of the same size), h2h has
+  // failed to separate -> go to fair-play / lots for the whole set.
+  if (buckets.length === 1 && buckets[0].length === tied.length) {
+    return resolveByFairPlayThenLots(tied);
+  }
+
+  // h2h produced >=2 buckets (a partial or full split). Resolve each bucket:
+  //  - length 1: settled
+  //  - length >1: these are tied on h2h too; recompute their OWN h2h subgroup
+  //               first (FIFA: re-apply criteria to the still-tied subset), and
+  //               if that still doesn't split, fair-play then lots.
+  const result = [];
+  for (const bucket of buckets) {
+    if (bucket.length === 1) {
+      result.push(bucket[0]);
+    } else {
+      result.push(...resolveStillTiedSubset(bucket, allMatches));
+    }
+  }
+  return result;
+}
+
+/**
+ * A subset that was tied within a larger h2h table. FIFA restarts the criteria
+ * for the reduced subgroup. We recompute h2h among ONLY this subset; if that
+ * splits them further we recurse, otherwise fair-play then lots.
+ */
+function resolveStillTiedSubset(subset, allMatches) {
+  const buckets = headToHeadSplit(subset, allMatches);
+  if (buckets.length === 1 && buckets[0].length === subset.length) {
+    return resolveByFairPlayThenLots(subset);
+  }
+  const result = [];
+  for (const bucket of buckets) {
+    if (bucket.length === 1) result.push(bucket[0]);
+    else result.push(...resolveStillTiedSubset(bucket, allMatches));
+  }
+  return result;
+}
+
+/**
+ * Resolve a still-tied set by (g) fair-play then (h) lots/alphabetical.
+ * Teams that remain level after fair-play (i.e. decided purely by lots) get
+ * `tiedByLots:true`.
+ */
+function resolveByFairPlayThenLots(tied) {
+  const ordered = [...tied].sort((a, b) => {
+    const fp = cmpFairPlay(a, b);
+    if (fp !== 0) return fp;
+    return cmpAlpha(a, b);
+  });
+  // Flag any teams that are level on fair-play with a neighbor (lots decided).
+  for (let i = 0; i < ordered.length; i++) {
+    const t = ordered[i];
+    const prevLevel = i > 0 && cmpFairPlay(ordered[i - 1], t) === 0;
+    const nextLevel = i < ordered.length - 1 && cmpFairPlay(t, ordered[i + 1]) === 0;
+    if (prevLevel || nextLevel) t.tiedByLots = true;
+  }
+  return ordered;
+}
+
+// ----------------------------------------------------------------------------
+// Group standing
+// ----------------------------------------------------------------------------
+
+/**
+ * Compute the full ranked standing of a group.
+ *
+ * @param {{name:string,teams:Array,matches:Array}} group
+ * @returns {Array<object>} 4 (or N) stat records ordered 1st..last, each with a
+ *          1-based `rank`, and possibly `tiedByLots:true`.
+ */
+function computeGroupStanding(group) {
+  const stats = aggregate(group.teams, group.matches);
+  const all = [...stats.values()];
+
+  // 1. Primary sort on overall criteria (a,b,c).
+  all.sort(cmpOverall);
+
+  // 2. Walk groups of teams that are level on (a,b,c) and resolve each with the
+  //    head-to-head -> fair-play -> lots cascade.
+  const ranked = [];
+  let i = 0;
+  while (i < all.length) {
+    let j = i + 1;
+    while (j < all.length && cmpOverall(all[i], all[j]) === 0) j++;
+    const tiedSlice = all.slice(i, j);
+    if (tiedSlice.length === 1) {
+      ranked.push(tiedSlice[0]);
+    } else {
+      ranked.push(...resolveTiedGroup(tiedSlice, group.matches));
+    }
+    i = j;
+  }
+
+  return ranked.map((s, idx) => ({
+    code: s.code,
+    name: s.name,
+    played: s.played,
+    won: s.won,
+    drawn: s.drawn,
+    lost: s.lost,
+    gf: s.gf,
+    ga: s.ga,
+    gd: s.gd,
+    points: s.points,
+    rank: idx + 1,
+    ...(s.tiedByLots ? { tiedByLots: true } : {}),
+  }));
+}
+
+// ----------------------------------------------------------------------------
+// Third-place ranking across groups
+// ----------------------------------------------------------------------------
+
+/**
+ * Rank the 3rd-place teams of all groups against each other.
+ * Criteria: points -> GD -> goals-for -> disciplinary -> lots(alpha).
+ *
+ * @param {Array} groups  array of group objects (any count; WC2026 has 12)
+ * @returns {Array<object>} all 3rd-place teams ranked best->worst, each with
+ *          `group` (group name), `rank` (1-based), `qualifies` (true for top 8),
+ *          and possibly `tiedByLots:true`.
+ */
+function rankThirdPlaceTeams(groups) {
+  const thirds = groups.map((g) => {
+    const standing = computeGroupStanding(g);
+    const third = standing.find((t) => t.rank === 3);
+    return { ...third, group: g.name };
+  });
+
+  // Sort with the full cascade. Note: there is no head-to-head among
+  // third-place teams (they're from different groups), so the sequence is
+  // overall -> fair-play -> lots.
+  thirds.sort((a, b) => {
+    const o = cmpOverall(a, b);
+    if (o !== 0) return o;
+    const fp = cmpFairPlay(a, b);
+    if (fp !== 0) return fp;
+    return cmpAlpha(a, b);
+  });
+
+  // Flag lots: teams level on overall AND fair-play with a neighbor.
+  const levelWith = (x, y) => cmpOverall(x, y) === 0 && cmpFairPlay(x, y) === 0;
+  for (let i = 0; i < thirds.length; i++) {
+    const prevLevel = i > 0 && levelWith(thirds[i - 1], thirds[i]);
+    const nextLevel = i < thirds.length - 1 && levelWith(thirds[i], thirds[i + 1]);
+    if (prevLevel || nextLevel) thirds[i].tiedByLots = true;
+  }
+
+  return thirds.map((t, idx) => ({
+    ...t,
+    rank: idx + 1,
+    qualifies: idx < 8,
+  }));
+}
+
+// ----------------------------------------------------------------------------
+// Scenario grid
+// ----------------------------------------------------------------------------
+
+const matchKey = (m) => `${m.home}-${m.away}`;
+
+/** All scorelines 0-0 .. maxGoals-maxGoals, inclusive. */
+function* scorelines(maxGoals) {
+  for (let h = 0; h <= maxGoals; h++) {
+    for (let a = 0; a <= maxGoals; a++) {
+      yield [h, a];
+    }
+  }
+}
+
+/**
+ * Classify a scoreline for the team identified by `code` in a given match.
+ * @returns {{result:'win'|'draw'|'loss', margin:number}} margin is the signed
+ *          goal margin from the team's perspective (positive = ahead).
+ */
+function outcomeFor(code, match, hg, ag) {
+  if (match.home === code) {
+    const margin = hg - ag;
+    return { result: margin > 0 ? 'win' : margin < 0 ? 'loss' : 'draw', margin };
+  }
+  // team is the away side
+  const margin = ag - hg;
+  return { result: margin > 0 ? 'win' : margin < 0 ? 'loss' : 'draw', margin };
+}
+
+/**
+ * scenarioGrid — enumerate every scoreline combination for the unplayed
+ * match(es) named by `upcomingMatchKeys`, holding played matches fixed, and
+ * collapse the resulting WITHIN-GROUP ranks into a per-team summary.
+ *
+ * IMPORTANT: This asserts ONLY within-group rank (1/2/3/4). It says nothing
+ * about 3rd-place qualification or knockout opponents (cross-group concerns).
+ *
+ * @param {object} group
+ * @param {string[]} upcomingMatchKeys  1 or 2 keys `${home}-${away}` of unplayed matches
+ * @param {number} [maxGoals=6]
+ * @returns {object} {
+ *   teams: { [code]: teamSummary },
+ *   matches: [matchKey,...],          // the enumerated matches, in order
+ *   describe(code): string,           // English digest for a team
+ * }
+ *
+ * teamSummary shape:
+ *   {
+ *     code, name,
+ *     ranks: number[],                // distinct ranks achievable (sorted)
+ *     // single-match case:
+ *     byOutcome: { win:{ranks,marginRules}, draw:{rank|ranks}, loss:{ranks,marginRules} }
+ *     // two-match case:
+ *     joint: [ { outcomes:[{key,result,margin?}...], rank } ... ]  // raw-ish, collapsed by rank
+ *     needs: { rankN: <condition tree> }   // "what they need" digest per achievable rank
+ *   }
+ */
+function scenarioGrid(group, upcomingMatchKeys, maxGoals = 6) {
+  if (!Array.isArray(upcomingMatchKeys) || upcomingMatchKeys.length < 1 || upcomingMatchKeys.length > 2) {
+    throw new Error('upcomingMatchKeys must contain 1 or 2 match keys');
+  }
+
+  // Resolve the upcoming match objects (must exist and be unplayed).
+  const upcoming = upcomingMatchKeys.map((key) => {
+    const m = group.matches.find((mm) => matchKey(mm) === key);
+    if (!m) throw new Error(`upcoming match not found: ${key}`);
+    return m;
+  });
+
+  const playedMatches = group.matches.filter((m) => m.played);
+  const teams = group.teams;
+
+  // Enumerate. For each combination we build a synthetic match list = played +
+  // the upcoming matches with assigned scores, compute the standing, and read
+  // off each team's rank.
+  //
+  // We record, per combination, the full scoreline tuple and the resulting rank
+  // for every team.
+  const combos = []; // { scores:[[hg,ag],...], rankByCode:{code:rank} }
+
+  const enumerate = (idx, acc) => {
+    if (idx === upcoming.length) {
+      const synthetic = playedMatches.concat(
+        upcoming.map((m, k) => ({
+          home: m.home,
+          away: m.away,
+          homeGoals: acc[k][0],
+          awayGoals: acc[k][1],
+          played: true,
+        }))
+      );
+      const standing = computeGroupStanding({ ...group, matches: synthetic });
+      const rankByCode = {};
+      for (const t of standing) rankByCode[t.code] = t.rank;
+      combos.push({ scores: acc.map((s) => s.slice()), rankByCode });
+      return;
+    }
+    for (const sl of scorelines(maxGoals)) {
+      acc.push(sl);
+      enumerate(idx + 1, acc);
+      acc.pop();
+    }
+  };
+  enumerate(0, []);
+
+  // Build per-team summaries.
+  const teamSummaries = {};
+  for (const team of teams) {
+    teamSummaries[team.code] =
+      upcoming.length === 1
+        ? summarizeSingle(team, upcoming[0], combos, maxGoals)
+        : summarizeDouble(team, upcoming, combos);
+  }
+
+  return {
+    matches: upcoming.map(matchKey),
+    teams: teamSummaries,
+    describe(code) {
+      const s = teamSummaries[code];
+      if (!s) throw new Error(`unknown team: ${code}`);
+      return s.description;
+    },
+  };
+}
+
+// --- single upcoming match -------------------------------------------------
+
+/**
+ * Collapse the grid for the SINGLE-match case for one team.
+ *
+ * For a team PLAYING in the match, outcome is win/draw/loss and within each
+ * outcome rank can vary only by margin -> we collapse to margin thresholds.
+ * For a team NOT playing, its rank can still vary with the scoreline (it affects
+ * GD/GF of the two participants), so we map the participants' margin -> rank.
+ */
+function summarizeSingle(team, match, combos, maxGoals) {
+  const code = team.code;
+  const isPlaying = match.home === code || match.away === code;
+
+  if (isPlaying) {
+    // Group combos by outcome, then within outcome by team-margin -> rank.
+    const buckets = { win: new Map(), draw: new Map(), loss: new Map() };
+    for (const c of combos) {
+      const [hg, ag] = c.scores[0];
+      const { result, margin } = outcomeFor(code, match, hg, ag);
+      const m = buckets[result];
+      const rank = c.rankByCode[code];
+      if (!m.has(margin)) m.set(margin, new Set());
+      m.get(margin).add(rank);
+    }
+
+    const byOutcome = {};
+    for (const result of ['win', 'draw', 'loss']) {
+      byOutcome[result] = collapseMarginMap(buckets[result], result);
+    }
+
+    const ranks = collectRanks(combos, code);
+    const description = describeSinglePlaying(byOutcome, maxGoals);
+    return { code, name: team.name, isPlaying: true, ranks, byOutcome, description };
+  }
+
+  // Non-playing team: rank depends on the participants' result/margin.
+  // Map (participantMargin from home perspective) -> set of ranks.
+  const map = new Map();
+  for (const c of combos) {
+    const [hg, ag] = c.scores[0];
+    const homeMargin = hg - ag; // signed, home perspective
+    const rank = c.rankByCode[code];
+    const keyM = homeMargin;
+    if (!map.has(keyM)) map.set(keyM, new Set());
+    map.get(keyM).add(rank);
+  }
+  const ranks = collectRanks(combos, code);
+  // Collapse contiguous home-margins sharing the same rank-set into bands.
+  const sortedM = [...map.entries()].sort((a, b) => a[0] - b[0]);
+  const sig = (set) => [...set].sort((a, b) => a - b).join(',');
+  const byMargin = [];
+  let bStart = sortedM[0][0];
+  let bSig = sig(sortedM[0][1]);
+  let bRanks = [...sortedM[0][1]].sort((a, b) => a - b);
+  let bPrev = sortedM[0][0];
+  const flushBand = (end) => byMargin.push({ homeMarginLo: bStart, homeMarginHi: end, ranks: bRanks });
+  for (let i = 1; i < sortedM.length; i++) {
+    const [m, set] = sortedM[i];
+    if (sig(set) === bSig && m === bPrev + 1) {
+      bPrev = m;
+    } else {
+      flushBand(bPrev);
+      bStart = m; bSig = sig(set); bRanks = [...set].sort((a, b) => a - b); bPrev = m;
+    }
+  }
+  flushBand(bPrev);
+  const description = describeNonPlaying(team, match, ranks, byMargin, maxGoals);
+  return { code, name: team.name, isPlaying: false, ranks, byMargin, description };
+}
+
+/**
+ * Given a Map<margin,Set<rank>> for a single outcome, collapse to clean rules.
+ * In the common deterministic case each margin yields exactly one rank, so we
+ * collapse contiguous margins that share a rank into threshold "runs".
+ *
+ * Margins are signed from the team's perspective: wins are positive (+1..+max),
+ * losses negative (-1..-max), a draw is exactly 0. Each rule records `marginLo`
+ * <= `marginHi` (the contiguous signed-margin span) and either a single `rank`
+ * (deterministic run) or a `ranks` array (margin alone didn't decide — rare,
+ * happens only when other-table lots intrude).
+ */
+function collapseMarginMap(marginMap, result) {
+  if (marginMap.size === 0) return { possible: false, rules: [], ranks: [] };
+
+  const entries = [...marginMap.entries()].sort((a, b) => a[0] - b[0]);
+  const allRanks = new Set();
+  for (const [, set] of entries) for (const r of set) allRanks.add(r);
+
+  // Merge contiguous margins that share the SAME rank-set (singleton or tied)
+  // into one threshold rule. A rule with one rank also exposes `.rank` for
+  // convenience; a tied rule exposes only `.ranks`.
+  const sig = (set) => [...set].sort((a, b) => a - b).join(',');
+  const rules = [];
+  let runStart = entries[0][0];
+  let runSig = sig(entries[0][1]);
+  let runRanks = [...entries[0][1]].sort((a, b) => a - b);
+  let prevMargin = entries[0][0];
+  const flush = (endMargin) => {
+    const rule = { marginLo: runStart, marginHi: endMargin, ranks: runRanks };
+    if (runRanks.length === 1) rule.rank = runRanks[0];
+    rules.push(rule);
+  };
+  for (let i = 1; i < entries.length; i++) {
+    const [m, set] = entries[i];
+    if (sig(set) === runSig && m === prevMargin + 1) {
+      prevMargin = m;
+    } else {
+      flush(prevMargin);
+      runStart = m;
+      runSig = sig(set);
+      runRanks = [...set].sort((a, b) => a - b);
+      prevMargin = m;
+    }
+  }
+  flush(prevMargin);
+
+  return {
+    possible: true,
+    ranks: [...allRanks].sort((a, b) => a - b),
+    rules,
+  };
+}
+
+function collectRanks(combos, code) {
+  const s = new Set();
+  for (const c of combos) s.add(c.rankByCode[code]);
+  return [...s].sort((a, b) => a - b);
+}
+
+const ordinal = (n) =>
+  n === 1 ? '1st' : n === 2 ? '2nd' : n === 3 ? '3rd' : `${n}th`;
+
+const rankWord = (rank) => ordinal(rank);
+
+/**
+ * English digest for a team playing in a single decisive match, e.g.
+ * "1st with any win; 2nd on a draw; 3rd if they lose by 1; 4th if they lose by 2+".
+ */
+function describeSinglePlaying(byOutcome, maxGoals) {
+  const parts = [];
+  if (byOutcome.win.possible) parts.push(...phrasesForOutcome(byOutcome.win, 'win', maxGoals));
+  if (byOutcome.draw.possible) parts.push(...phrasesForOutcome(byOutcome.draw, 'draw', maxGoals));
+  if (byOutcome.loss.possible) parts.push(...phrasesForOutcome(byOutcome.loss, 'loss', maxGoals));
+  return parts.join('; ');
+}
+
+/**
+ * Turn a collapsed outcome (win/draw/loss) into English phrases.
+ *  - draw: a single margin (0); usually one rank, multiple only under lots.
+ *  - win/loss: margin-threshold rules, ordered best-rank-first, with the rule
+ *    that reaches the enumeration edge (|margin| === maxGoals) rendered as "N+".
+ */
+function phrasesForOutcome(outcome, result, maxGoals) {
+  if (result === 'draw') {
+    const ranks = outcome.ranks;
+    if (ranks.length === 1) return [`${rankWord(ranks[0])} on a draw`];
+    return [`${ranks.map(rankWord).join(' or ')} on a draw (depends on the other result)`];
+  }
+
+  const rules = outcome.rules;
+
+  // Constant rank across the whole outcome -> "Nth with any win/loss".
+  const allDeterministic = rules.every((r) => r.rank != null);
+  const uniqueRanks = new Set(rules.flatMap((r) => (r.rank != null ? [r.rank] : r.ranks)));
+  if (allDeterministic && uniqueRanks.size === 1) {
+    const rank = [...uniqueRanks][0];
+    return [`${rankWord(rank)} with any ${result}`];
+  }
+
+  // Order rules by goal-margin magnitude ascending (smallest margin first); this
+  // reads naturally as the result gets more lopsided.
+  const ordered = [...rules].sort((a, b) => Math.abs(a.marginLo) - Math.abs(b.marginLo));
+  const verb = result === 'win' ? 'win' : 'lose';
+
+  return ordered.map((r) => {
+    const loMag = Math.abs(r.marginLo);
+    const hiMag = Math.abs(r.marginHi);
+    const lo = Math.min(loMag, hiMag);
+    const hi = Math.max(loMag, hiMag);
+    const reachesEdge = hi === maxGoals;
+    let cond;
+    if (lo === hi) cond = `if they ${verb} by ${lo}`;
+    else if (reachesEdge) cond = `if they ${verb} by ${lo}+`;
+    else cond = `if they ${verb} by ${lo}–${hi}`;
+    const label = r.rank != null ? rankWord(r.rank) : r.ranks.map(rankWord).join('/');
+    return `${label} ${cond}`;
+  });
+}
+
+function describeNonPlaying(team, match, ranks, byMargin, maxGoals) {
+  if (ranks.length === 1) {
+    return `${rankWord(ranks[0])} regardless of ${match.home} v ${match.away}`;
+  }
+  // Summarize by participant (home-perspective) margin bands.
+  const sideCond = (lo, hi) => {
+    // lo<=hi signed home margins within the band.
+    const band = (mLo, mHi, who, edge) => {
+      const a = Math.abs(mLo), b = Math.abs(mHi);
+      const x = Math.min(a, b), y = Math.max(a, b);
+      if (x === y) return `${who} win by ${x}`;
+      if (y === maxGoals && edge) return `${who} win by ${x}+`;
+      return `${who} win by ${x}–${y}`;
+    };
+    if (lo === 0 && hi === 0) return 'a draw';
+    if (lo > 0) return band(lo, hi, match.home, true);   // home wins
+    if (hi < 0) return band(lo, hi, match.away, true);   // away wins
+    // Band straddles 0: it covers a draw plus wins on one (or both) sides.
+    const segs = [];
+    if (lo < 0) segs.push(band(lo, -1, match.away, lo === -maxGoals)); // away-win part
+    if (lo <= 0 && hi >= 0) segs.push('a draw');
+    if (hi > 0) segs.push(band(1, hi, match.home, hi === maxGoals));   // home-win part
+    return segs.join(' or ');
+  };
+  const parts = byMargin.map((b) =>
+    `${b.ranks.map(rankWord).join('/')} on ${sideCond(b.homeMarginLo, b.homeMarginHi)}`
+  );
+  return parts.join('; ');
+}
+
+// --- two simultaneous upcoming matches -------------------------------------
+
+/**
+ * Collapse the grid for the TWO-match (final round) case for one team.
+ *
+ * We produce:
+ *   joint: array of { outcomes, rank } where outcomes describes each match by
+ *          result (and, where rank depends on it, margin) — collapsed so that
+ *          all scorelines yielding the same rank for this team share an entry.
+ *   needs: per achievable rank, a compact description of sufficient conditions.
+ *
+ * For readability we first reduce each match to (result, margin) from the
+ * perspective of its HOME team, then group combos by (resultA, resultB) and,
+ * within that, report the rank(s) and whether margin matters.
+ */
+function summarizeDouble(team, upcoming, combos) {
+  const code = team.code;
+  const [mA, mB] = upcoming;
+
+  // Group by (homeResultA, homeResultB) coarse outcome; collect rank sets and
+  // whether margins within that coarse cell affect the rank.
+  const cells = new Map(); // key "rA|rB" -> { rA,rB, rankSet:Set, marginVaries:bool, detail:Map }
+  for (const c of combos) {
+    const [aHg, aAg] = c.scores[0];
+    const [bHg, bAg] = c.scores[1];
+    const rA = aHg > aAg ? 'win' : aHg < aAg ? 'loss' : 'draw'; // home A perspective
+    const rB = bHg > bAg ? 'win' : bHg < bAg ? 'loss' : 'draw';
+    const key = `${rA}|${rB}`;
+    if (!cells.has(key)) cells.set(key, { rA, rB, rankSet: new Set(), detail: new Map() });
+    const cell = cells.get(key);
+    const rank = c.rankByCode[code];
+    cell.rankSet.add(rank);
+    // detail keyed by (marginA, marginB) for margin-sensitivity analysis
+    const dk = `${aHg - aAg},${bHg - bAg}`;
+    cell.detail.set(dk, rank);
+  }
+
+  const joint = [];
+  for (const cell of cells.values()) {
+    const ranks = [...cell.rankSet].sort((a, b) => a - b);
+    const marginVaries = ranks.length > 1;
+    joint.push({
+      outcomes: [
+        { key: matchKey(mA), home: mA.home, away: mA.away, result: cell.rA },
+        { key: matchKey(mB), home: mB.home, away: mB.away, result: cell.rB },
+      ],
+      ranks,
+      marginVaries,
+    });
+  }
+
+  // "What they need": for each achievable rank, list the coarse outcome cells
+  // where that rank is GUARANTEED (rank set === [rank]) vs merely possible.
+  const ranks = collectRanks(combos, code);
+  const needs = {};
+  for (const rank of ranks) {
+    const guaranteed = [];
+    const possible = [];
+    for (const j of joint) {
+      if (j.ranks.length === 1 && j.ranks[0] === rank) guaranteed.push(j.outcomes);
+      else if (j.ranks.includes(rank)) possible.push(j.outcomes);
+    }
+    needs[rank] = { guaranteed, possible };
+  }
+
+  const description = describeDouble(team, upcoming, ranks, joint);
+  return { code, name: team.name, ranks, joint, needs, description };
+}
+
+function describeDouble(team, upcoming, ranks, joint) {
+  const [mA, mB] = upcoming;
+  const resultPhrase = (o) => {
+    if (o.result === 'win') return `${o.home} beat ${o.away}`;
+    if (o.result === 'loss') return `${o.away} beat ${o.home}`;
+    return `${o.home}-${o.away} draw`;
+  };
+  // Build "rank: when ..." clauses, listing guaranteed coarse cells.
+  const clauses = [];
+  for (const rank of ranks) {
+    const guaranteedCells = joint.filter((j) => j.ranks.length === 1 && j.ranks[0] === rank);
+    if (guaranteedCells.length === 0) {
+      clauses.push(`${rankWord(rank)} possible (margin-dependent)`);
+      continue;
+    }
+    const cellPhrases = guaranteedCells.map((j) => j.outcomes.map(resultPhrase).join(' & '));
+    clauses.push(`${rankWord(rank)} if: ${cellPhrases.join('  OR  ')}`);
+  }
+  return clauses.join(' | ');
+}
+
+
+/* ===== allocation.js (filesystem read replaced by baked table) ===== */
+
+// allocation.js
+// FIFA 2026 World Cup "Annex C" third-place allocation: maps which eight
+// third-placed groups qualify to which round-of-32 third-place slot they fill.
+//
+// allocation.json is keyed by the canonical combination key: the 8 qualifying
+// group letters, sorted alphabetically and concatenated (e.g. "ABCDEFGH").
+// Each value maps a slot label ("1A","1B","1D","1E","1G","1I","1K","1L") to the
+// GROUP LETTER whose third-placed team fills that slot.
+//
+// ES module. No dependencies beyond node: builtins.
+
+
+let _allocation = null;
+function getAllocation() {
+  return __ALLOCATION__;
+}
+
+/**
+ * Normalize an array/Set/string of group letters to the canonical key:
+ * uppercased, de-duplicated implicitly by validation, sorted, concatenated.
+ * @param {Iterable<string>|string} groups
+ * @returns {string} canonical 8-letter key
+ */
+function canonicalKey(groups) {
+  let arr;
+  if (typeof groups === "string") {
+    arr = groups.split(/[^A-Za-z]+/).filter(Boolean);
+    if (arr.length <= 1) arr = groups.replace(/[^A-Za-z]/g, "").split(""); // "ABCDEFGH"
+  } else {
+    arr = [...groups];
+  }
+  const letters = arr.map((g) => String(g).trim().toUpperCase());
+  for (const l of letters) {
+    if (!/^[A-L]$/.test(l)) throw new Error(`invalid group letter: ${JSON.stringify(l)}`);
+  }
+  const uniq = [...new Set(letters)];
+  if (uniq.length !== 8) {
+    throw new Error(`expected 8 distinct group letters, got ${uniq.length}: ${uniq.join("")}`);
+  }
+  return uniq.sort().join("");
+}
+
+/**
+ * Look up the Annex C slot->group mapping for a given set of qualifying
+ * third-place groups.
+ * @param {Iterable<string>|string} qualifiedGroupLetters - the 8 group letters
+ *   whose third-placed teams qualified.
+ * @returns {Record<string,string>} mapping slot label -> group letter
+ */
+function lookupAllocation(qualifiedGroupLetters) {
+  const key = canonicalKey(qualifiedGroupLetters);
+  const table = getAllocation();
+  const entry = table[key];
+  if (!entry) {
+    throw new Error(`combination ${key} not found in Annex C allocation table`);
+  }
+  return { ...entry };
+}
+
+/**
+ * Combine the allocation with the bracket to resolve, for each R32 match that
+ * has a "third" slot, which group's third-placed team is assigned there.
+ *
+ * The bracket's R32 third slots are conventionally labelled by the group
+ * WINNER they oppose: a match whose other side is { type:"winner", group:X }
+ * has third slot label "1X". We use that to index the allocation.
+ *
+ * @param {Iterable<string>|string} qualifiedGroupLetters
+ * @param {object} bracket - parsed bracket.json
+ * @returns {Array<{match:number, slotLabel:string, group:string, candidates:string[]}>}
+ */
+function resolveThirdPlaceSlots(qualifiedGroupLetters, bracket) {
+  const alloc = lookupAllocation(qualifiedGroupLetters);
+  const out = [];
+  const r32 = (bracket && bracket.rounds && bracket.rounds.R32) || [];
+  for (const m of r32) {
+    let thirdSide = null;
+    let winnerSide = null;
+    for (const side of [m.home, m.away]) {
+      if (side && side.type === "third") thirdSide = side;
+      if (side && side.type === "winner") winnerSide = side;
+    }
+    if (!thirdSide) continue;
+    if (!winnerSide) {
+      throw new Error(`match ${m.match} has a third slot but no winner side to label it`);
+    }
+    const slotLabel = "1" + winnerSide.group;
+    const group = alloc[slotLabel];
+    if (!group) {
+      throw new Error(`no allocation for slot ${slotLabel} (match ${m.match})`);
+    }
+    // sanity: the assigned group must be one of FIFA's listed candidates
+    if (Array.isArray(thirdSide.from) && !thirdSide.from.includes(group)) {
+      throw new Error(
+        `match ${m.match} slot ${slotLabel}: allocated group ${group} not in candidate list ${thirdSide.from.join("/")}`
+      );
+    }
+    out.push({ match: m.match, slotLabel, group, candidates: thirdSide.from || null });
+  }
+  return out;
+}
+
+
+/* ===== model.js ===== */
+
+// model.js
+// Probabilistic projection engine for the 2026 World Cup bracket:
+//   - an Elo-driven Poisson scoreline model ("supremacy" model), and
+//   - a Monte Carlo tournament simulator built on top of engine.js + allocation.
+//
+// BROWSER-SAFE ES module. NO node: imports, no fs/process in exported logic.
+// It imports ONLY from engine.js (pure) and receives the Annex-C allocation
+// resolution as an injected dependency, so it never touches the filesystem.
+//
+// The caller (verify-model.mjs in Node, or the HTML build in the browser) is
+// responsible for loading bracket.json/allocation.json and passing in a
+// `resolveThirdPlaceSlots(groupLetters, bracket)` function via opts.
+//
+// All randomness flows through an injected rng function ()->[0,1). We NEVER
+// call Math.random internally, so a fixed seed reproduces a run exactly.
+
+// ----------------------------------------------------------------------------
+// Tunable constants (exported so they can be overridden / re-fit)
+// ----------------------------------------------------------------------------
+
+// Elo points -> goal-supremacy slope. 0.0036 goals per Elo point ≈ 1.44 goals
+// of expected-margin per 400 Elo (a 400-Elo gap is the classic "10x odds" gap).
+const ELO_SUPREMACY_COEF = 0.0036;
+
+// League-average total goals per match (both teams). World Cup group/KO games
+// historically average ~2.5–2.7; 2.6 is a reasonable central value.
+const BASE_TOTAL_GOALS = 2.6;
+
+// Floor on either side's Poisson mean so even a huge underdog can score.
+const MIN_LAMBDA = 0.15;
+
+// Default host-nation Elo bonus (points). Applied to USA/MEX/CAN in every match
+// via opts.hostCodes. Home-field in soccer is worth roughly +0.3–0.4 goals;
+// at the supremacy slope above, ~80 Elo ≈ +0.29 goals of supremacy. Kept modest
+// because co-hosting across 3 countries dilutes a true single-venue advantage.
+const DEFAULT_HOST_BONUS = 80;
+
+// Round index map for "furthest round reached".
+const ROUND_INDEX = Object.freeze({
+  R32: 0,
+  R16: 1,
+  QF: 2,
+  SF: 3,
+  Final: 4,
+  Champion: 5,
+});
+
+// ----------------------------------------------------------------------------
+// 1. Seedable PRNG — mulberry32
+// ----------------------------------------------------------------------------
+
+/**
+ * mulberry32 — a tiny, fast, decent-quality seedable PRNG.
+ * @param {number} seed  any 32-bit-ish integer
+ * @returns {() => number} function returning a float in [0, 1)
+ */
+function makeRng(seed) {
+  let a = seed >>> 0;
+  return function rng() {
+    a |= 0;
+    a = (a + 0x6d2b79f5) | 0;
+    let t = Math.imul(a ^ (a >>> 15), 1 | a);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
+// ----------------------------------------------------------------------------
+// 2. Poisson sampler — Knuth's algorithm
+// ----------------------------------------------------------------------------
+
+/**
+ * Sample a Poisson(lambda) integer using Knuth's multiplicative method.
+ * Fine for the small lambdas (~0.2–2.5) we draw here.
+ * @param {number} lambda  mean (>= 0)
+ * @param {() => number} rng
+ * @returns {number} non-negative integer goal count
+ */
+function samplePoisson(lambda, rng) {
+  if (lambda <= 0) return 0;
+  const L = Math.exp(-lambda);
+  let k = 0;
+  let p = 1;
+  do {
+    k++;
+    p *= rng();
+  } while (p > L);
+  return k - 1;
+}
+
+// ----------------------------------------------------------------------------
+// 3. Expected goals — the "supremacy" model
+// ----------------------------------------------------------------------------
+
+/**
+ * Map two Elo ratings (plus optional per-side host bonuses) to a pair of
+ * Poisson means.
+ * @param {number} eloA
+ * @param {number} eloB
+ * @param {object} [opts]
+ *   opts.hostBonusA, opts.hostBonusB  additive Elo bonuses (default 0)
+ *   opts.eloSupremacyCoef, opts.baseTotalGoals, opts.minLambda  overrides
+ * @returns {{lambdaA:number, lambdaB:number}}
+ */
+function expectedGoals(eloA, eloB, opts = {}) {
+  const coef = opts.eloSupremacyCoef ?? ELO_SUPREMACY_COEF;
+  const total = opts.baseTotalGoals ?? BASE_TOTAL_GOALS;
+  const minL = opts.minLambda ?? MIN_LAMBDA;
+
+  const effA = eloA + (opts.hostBonusA ?? 0);
+  const effB = eloB + (opts.hostBonusB ?? 0);
+
+  const supremacy = coef * (effA - effB);
+  const lambdaA = Math.max(minL, (total + supremacy) / 2);
+  const lambdaB = Math.max(minL, (total - supremacy) / 2);
+  return { lambdaA, lambdaB };
+}
+
+// ----------------------------------------------------------------------------
+// 4 & 5. Scoreline samplers
+// ----------------------------------------------------------------------------
+
+/**
+ * Sample a group-stage scoreline (independent Poisson draws).
+ * @returns {{ga:number, gb:number}}
+ */
+function sampleMatch(eloA, eloB, rng, opts = {}) {
+  const { lambdaA, lambdaB } = expectedGoals(eloA, eloB, opts);
+  return { ga: samplePoisson(lambdaA, rng), gb: samplePoisson(lambdaB, rng) };
+}
+
+/**
+ * Sample a knockout scoreline; if drawn, resolve by an Elo-weighted shootout.
+ * The drawn scoreline is preserved in {ga,gb}; only `winner` reflects the
+ * shootout. Penalties use effective Elo (host bonus included).
+ * @returns {{ga:number, gb:number, winner:'A'|'B'}}
+ */
+function sampleKnockout(eloA, eloB, rng, opts = {}) {
+  const { ga, gb } = sampleMatch(eloA, eloB, rng, opts);
+  if (ga > gb) return { ga, gb, winner: 'A' };
+  if (gb > ga) return { ga, gb, winner: 'B' };
+  // Tied -> shootout modeled as an Elo-weighted coin.
+  const effA = eloA + (opts.hostBonusA ?? 0);
+  const effB = eloB + (opts.hostBonusB ?? 0);
+  const pA = 1 / (1 + Math.pow(10, -(effA - effB) / 400));
+  return { ga, gb, winner: rng() < pA ? 'A' : 'B' };
+}
+
+// ----------------------------------------------------------------------------
+// Internal helpers
+// ----------------------------------------------------------------------------
+
+/** Host bonus for a given team code under opts.hostCodes (a Set). */
+function hostBonusFor(code, opts) {
+  if (opts.hostCodes && opts.hostCodes.has && opts.hostCodes.has(code)) {
+    return opts.hostBonus ?? DEFAULT_HOST_BONUS;
+  }
+  return 0;
+}
+
+/** Group letter ("A".."L") from a group object whose name is "Group X". */
+function groupLetter(group) {
+  const m = /Group\s+([A-L])/i.exec(group.name);
+  return m ? m[1].toUpperCase() : group.name.trim().slice(-1).toUpperCase();
+}
+
+/**
+ * Deep-ish copy of the groups array sufficient for a single sim: teams are kept
+ * by reference (read-only: code/name/elo), matches are cloned (we mutate goals
+ * + played). Avoids cloning the immutable team records every sim.
+ */
+function cloneGroupsForSim(groups) {
+  return groups.map((g) => ({
+    name: g.name,
+    teams: g.teams,
+    matches: g.matches.map((m) => ({
+      home: m.home,
+      away: m.away,
+      homeGoals: m.homeGoals,
+      awayGoals: m.awayGoals,
+      played: m.played,
+    })),
+  }));
+}
+
+// ----------------------------------------------------------------------------
+// 6. One full tournament simulation
+// ----------------------------------------------------------------------------
+
+/**
+ * Simulate ONE complete tournament from the current state.
+ *
+ * @param {Array} groups   engine-schema group objects (teams carry `elo`)
+ * @param {object} bracket parsed bracket.json
+ * @param {() => number} rng
+ * @param {object} opts
+ *   opts.hostCodes   Set<code> of host countries (always get host bonus)
+ *   opts.hostBonus   Elo bonus magnitude (default DEFAULT_HOST_BONUS)
+ *   opts.resolveThirdPlaceSlots(groupLetters, bracket) -> [{match,group,...}]
+ *       (injected so this module stays browser/fs-free)
+ *   plus any expectedGoals overrides.
+ * @returns {{
+ *   groupRank: Record<string,number>,
+ *   qualifiedAs: Record<string,'winner'|'runnerup'|'third'|null>,
+ *   r32: Array<{match:number, home:string, away:string}>,
+ *   reached: Record<string,number>,
+ *   champion: string
+ * }}
+ */
+function simulateTournament(groups, bracket, rng, opts = {}) {
+  const resolveThirds = opts.resolveThirdPlaceSlots;
+  if (typeof resolveThirds !== 'function') {
+    throw new Error('opts.resolveThirdPlaceSlots(groupLetters, bracket) is required');
+  }
+
+  const eloByCode = new Map();
+  for (const g of groups) for (const t of g.teams) eloByCode.set(t.code, t.elo);
+  const eloOf = (code) => eloByCode.get(code);
+
+  // --- group stage: sample every unplayed match -----------------------------
+  const sim = cloneGroupsForSim(groups);
+  for (const g of sim) {
+    for (const m of g.matches) {
+      if (m.played) continue;
+      const hb = hostBonusFor(m.home, opts);
+      const ab = hostBonusFor(m.away, opts);
+      const { ga, gb } = sampleMatch(eloOf(m.home), eloOf(m.away), rng, {
+        ...opts,
+        hostBonusA: hb,
+        hostBonusB: ab,
+      });
+      m.homeGoals = ga;
+      m.awayGoals = gb;
+      m.played = true;
+    }
+  }
+
+  // --- standings -------------------------------------------------------------
+  const winnerOfGroup = {};   // letter -> code
+  const runnerUpOfGroup = {}; // letter -> code
+  const groupRank = {};       // code -> 1..4
+  const qualifiedAs = {};     // code -> role | null
+  const standings = {};       // letter -> ranked array
+
+  for (const g of sim) {
+    const letter = groupLetter(g);
+    const standing = computeGroupStanding(g);
+    standings[letter] = standing;
+    for (const s of standing) {
+      groupRank[s.code] = s.rank;
+      qualifiedAs[s.code] = null;
+      if (s.rank === 1) winnerOfGroup[letter] = s.code;
+      else if (s.rank === 2) runnerUpOfGroup[letter] = s.code;
+    }
+    qualifiedAs[winnerOfGroup[letter]] = 'winner';
+    qualifiedAs[runnerUpOfGroup[letter]] = 'runnerup';
+  }
+
+  // --- best 8 third-place teams ---------------------------------------------
+  const thirds = rankThirdPlaceTeams(sim); // each has .group (= "Group X"), .qualifies
+  const qualifiedThirds = thirds.filter((t) => t.qualifies);
+  // map group LETTER -> qualifying third-place team code
+  const thirdCodeByLetter = {};
+  const qualifiedLetters = [];
+  for (const t of qualifiedThirds) {
+    const letter = /Group\s+([A-L])/i.exec(t.group)?.[1]?.toUpperCase()
+      ?? String(t.group).trim().slice(-1).toUpperCase();
+    thirdCodeByLetter[letter] = t.code;
+    qualifiedLetters.push(letter);
+    qualifiedAs[t.code] = 'third';
+  }
+
+  // --- Annex C: which group's third fills each R32 third slot ---------------
+  const thirdSlots = resolveThirds(qualifiedLetters, bracket); // [{match, group}]
+  const thirdCodeForMatch = {};
+  for (const s of thirdSlots) thirdCodeForMatch[s.match] = thirdCodeByLetter[s.group];
+
+  // --- build the 16 R32 fixtures --------------------------------------------
+  const slotCode = (side, matchNo) => {
+    if (side.type === 'winner') return winnerOfGroup[side.group];
+    if (side.type === 'runnerup') return runnerUpOfGroup[side.group];
+    if (side.type === 'third') return thirdCodeForMatch[matchNo];
+    throw new Error(`unexpected R32 slot type: ${side.type}`);
+  };
+
+  const r32 = bracket.rounds.R32.map((m) => ({
+    match: m.match,
+    home: slotCode(m.home, m.match),
+    away: slotCode(m.away, m.match),
+  }));
+
+  // --- knockout bracket ------------------------------------------------------
+  // winnerByMatch / loserByMatch: match number -> team code.
+  const winnerByMatch = {};
+  const loserByMatch = {};
+  const reached = {};
+
+  // Seed "reached" for everyone who made the R32.
+  for (const fx of r32) {
+    reached[fx.home] = ROUND_INDEX.R32;
+    reached[fx.away] = ROUND_INDEX.R32;
+  }
+
+  const bump = (code, roundIdx) => {
+    if (reached[code] === undefined || roundIdx > reached[code]) reached[code] = roundIdx;
+  };
+
+  // Resolve a winnerOf/loserOf side to a concrete team code (R16+ rounds).
+  const sideCode = (side) => {
+    if (side.type === 'winnerOf') return winnerByMatch[side.match];
+    if (side.type === 'loserOf') return loserByMatch[side.match];
+    throw new Error(`unexpected knockout side type: ${side.type}`);
+  };
+
+  // R32: play each fixture.
+  const playKnockout = (homeCode, awayCode) => {
+    const hb = hostBonusFor(homeCode, opts);
+    const ab = hostBonusFor(awayCode, opts);
+    const res = sampleKnockout(eloOf(homeCode), eloOf(awayCode), rng, {
+      ...opts,
+      hostBonusA: hb,
+      hostBonusB: ab,
+    });
+    const winner = res.winner === 'A' ? homeCode : awayCode;
+    const loser = res.winner === 'A' ? awayCode : homeCode;
+    return { winner, loser };
+  };
+
+  for (const fx of r32) {
+    const { winner, loser } = playKnockout(fx.home, fx.away);
+    winnerByMatch[fx.match] = winner;
+    loserByMatch[fx.match] = loser;
+    bump(winner, ROUND_INDEX.R16); // winning R32 => reached R16
+  }
+
+  // Helper to run a round whose sides are winnerOf references.
+  const runRound = (roundMatches, advanceRoundIdx) => {
+    for (const m of roundMatches) {
+      const homeCode = sideCode(m.home);
+      const awayCode = sideCode(m.away);
+      const { winner, loser } = playKnockout(homeCode, awayCode);
+      winnerByMatch[m.match] = winner;
+      loserByMatch[m.match] = loser;
+      bump(winner, advanceRoundIdx);
+    }
+  };
+
+  runRound(bracket.rounds.R16, ROUND_INDEX.QF);   // win R16 => reached QF
+  runRound(bracket.rounds.QF, ROUND_INDEX.SF);    // win QF  => reached SF
+  runRound(bracket.rounds.SF, ROUND_INDEX.Final); // win SF  => reached Final
+
+  // Final.
+  const finalM = bracket.rounds.Final[0];
+  const fHome = winnerByMatch[finalM.home.match];
+  const fAway = winnerByMatch[finalM.away.match];
+  const { winner: champion } = playKnockout(fHome, fAway);
+  winnerByMatch[finalM.match] = champion;
+  bump(champion, ROUND_INDEX.Champion);
+
+  // Third-place playoff is simulated for completeness (does not affect `reached`
+  // beyond the SF appearance the two losers already have).
+  const tpM = bracket.rounds.ThirdPlace?.[0];
+  if (tpM) {
+    const a = loserByMatch[tpM.home.match];
+    const b = loserByMatch[tpM.away.match];
+    if (a && b) {
+      const { winner } = playKnockout(a, b);
+      winnerByMatch[tpM.match] = winner;
+    }
+  }
+
+  return { groupRank, qualifiedAs, r32, reached, champion };
+}
+
+// ----------------------------------------------------------------------------
+// 7. Monte Carlo aggregation
+// ----------------------------------------------------------------------------
+
+/**
+ * Run n simulations and aggregate per-team and per-R32-slot statistics.
+ *
+ * @param {Array} groups
+ * @param {object} bracket
+ * @param {object} opts  { n=10000, seed=1, hostCodes, hostBonus,
+ *                          resolveThirdPlaceSlots, ...expectedGoals overrides }
+ * @returns {{
+ *   n:number,
+ *   perTeam: Array<object>,             // sorted by pWinCup desc
+ *   perR32Slot: Array<{match,home:[{code,p}],away:[{code,p}]}>,
+ *   modalBracket: Array<{match, home:{code,p}, away:{code,p}}>
+ * }}
+ */
+function monteCarlo(groups, bracket, opts = {}) {
+  const n = opts.n ?? 10000;
+  const seed = opts.seed ?? 1;
+  const rng = makeRng(seed);
+
+  // team metadata
+  const nameByCode = new Map();
+  for (const g of groups) for (const t of g.teams) nameByCode.set(t.code, t.name);
+
+  // per-team counters
+  const C = {}; // code -> counter object
+  const ensure = (code) => {
+    if (!C[code]) {
+      C[code] = {
+        code,
+        name: nameByCode.get(code),
+        winGroup: 0, runnerUp: 0, thirdQualify: 0,
+        reachR32: 0, reachR16: 0, reachQF: 0, reachSF: 0, reachFinal: 0, winCup: 0,
+      };
+    }
+    return C[code];
+  };
+  for (const code of nameByCode.keys()) ensure(code);
+
+  // per-R32-slot tallies: 16 matches x {home: Map<code,count>, away: Map<code,count>}
+  const r32Matches = bracket.rounds.R32.map((m) => m.match);
+  const slotTally = {};
+  for (const mNo of r32Matches) slotTally[mNo] = { home: new Map(), away: new Map() };
+  const inc = (map, code) => map.set(code, (map.get(code) || 0) + 1);
+
+  const simOpts = { ...opts };
+
+  for (let i = 0; i < n; i++) {
+    const r = simulateTournament(groups, bracket, rng, simOpts);
+
+    // group roles
+    for (const [code, role] of Object.entries(r.qualifiedAs)) {
+      if (role === 'winner') C[code].winGroup++;
+      else if (role === 'runnerup') C[code].runnerUp++;
+      else if (role === 'third') C[code].thirdQualify++;
+    }
+
+    // furthest round reached (cumulative: reaching SF implies reached R16, etc.)
+    for (const [code, idx] of Object.entries(r.reached)) {
+      const c = C[code];
+      if (idx >= ROUND_INDEX.R32) c.reachR32++;
+      if (idx >= ROUND_INDEX.R16) c.reachR16++;
+      if (idx >= ROUND_INDEX.QF) c.reachQF++;
+      if (idx >= ROUND_INDEX.SF) c.reachSF++;
+      if (idx >= ROUND_INDEX.Final) c.reachFinal++;
+    }
+    C[r.champion].winCup++;
+
+    // R32 slot occupancy
+    for (const fx of r.r32) {
+      inc(slotTally[fx.match].home, fx.home);
+      inc(slotTally[fx.match].away, fx.away);
+    }
+  }
+
+  const perTeam = Object.values(C)
+    .map((c) => ({
+      code: c.code,
+      name: c.name,
+      pWinGroup: c.winGroup / n,
+      pRunnerUp: c.runnerUp / n,
+      pThirdQualify: c.thirdQualify / n,
+      pReachR32: c.reachR32 / n,
+      pReachR16: c.reachR16 / n,
+      pReachQF: c.reachQF / n,
+      pReachSF: c.reachSF / n,
+      pReachFinal: c.reachFinal / n,
+      pWinCup: c.winCup / n,
+    }))
+    .sort((a, b) => b.pWinCup - a.pWinCup);
+
+  // per-R32-slot distributions (top candidates) + modal bracket
+  const TOP = opts.topCandidates ?? 4;
+  const topOf = (map) =>
+    [...map.entries()]
+      .map(([code, count]) => ({ code, p: count / n }))
+      .sort((a, b) => b.p - a.p);
+
+  const perR32Slot = r32Matches.map((mNo) => {
+    const home = topOf(slotTally[mNo].home);
+    const away = topOf(slotTally[mNo].away);
+    return { match: mNo, home: home.slice(0, TOP), away: away.slice(0, TOP) };
+  });
+
+  const modalBracket = r32Matches.map((mNo) => {
+    const home = topOf(slotTally[mNo].home);
+    const away = topOf(slotTally[mNo].away);
+    return {
+      match: mNo,
+      home: home[0] ?? { code: null, p: 0 },
+      away: away[0] ?? { code: null, p: 0 },
+    };
+  });
+
+  return { n, perTeam, perR32Slot, modalBracket };
+}
+
+
+/* ============================================================================
+   WORKER SOURCE (built from a Blob) — runs monteCarlo off the main thread.
+   We stringify the same logic bundle + a tiny message handler.
+   ========================================================================== */
+var __WORKER_SRC__ = `
+/* ===== engine.js ===== */
+
+// engine.js
+// Deterministic core engine for a 2026 FIFA World Cup bracket projector.
+//
+// Pure ES module, browser-safe (no Node-only APIs in exported logic).
+//
+// Public API:
+//   computeGroupStanding(group)            -> 4 teams ranked 1st..4th
+//   rankThirdPlaceTeams(groups)            -> all 12 third-place teams ranked, top 8 qualify
+//   scenarioGrid(group, upcomingMatchKeys, maxGoals=6)
+//                                          -> collapsed scenario summary per team + describe()
+//
+// Data shapes
+//   group   = { name, teams:[{code,name,fairPlay?}], matches:[match,...] }
+//   match   = { home, away, homeGoals, awayGoals, played:bool }
+//             home/away are team codes. A match "key" is \`\${home}-\${away}\`.
+//
+// Conventions
+//   - Only PLAYED matches contribute to a standing.
+//   - \`fairPlay\` is an optional per-team integer; LOWER is better; default 0.
+//   - Where a tie can only be resolved by "drawing of lots", we deterministically
+//     fall back to alphabetical-by-code ordering and flag the affected teams
+//     \`tiedByLots:true\` so a UI can surface the coin-flip.
+
+// ----------------------------------------------------------------------------
+// Low-level stat aggregation
+// ----------------------------------------------------------------------------
+
+/**
+ * Build a blank stat record for a team.
+ * @param {{code:string,name:string,fairPlay?:number}} team
+ */
+function blankStats(team) {
+  return {
+    code: team.code,
+    name: team.name,
+    fairPlay: Number.isFinite(team.fairPlay) ? team.fairPlay : 0,
+    played: 0,
+    won: 0,
+    drawn: 0,
+    lost: 0,
+    gf: 0,
+    ga: 0,
+    gd: 0,
+    points: 0,
+  };
+}
+
+/**
+ * Aggregate played matches into per-team stat records.
+ * Only matches whose \`played\` flag is truthy AND whose home & away codes are
+ * both in \`teamCodes\` count.
+ *
+ * @param {Array} teams   list of {code,name,fairPlay?}
+ * @param {Array} matches list of match objects
+ * @returns {Map<string,object>} code -> stats
+ */
+function aggregate(teams, matches) {
+  const byCode = new Map();
+  for (const t of teams) byCode.set(t.code, blankStats(t));
+
+  for (const m of matches) {
+    if (!m.played) continue;
+    const home = byCode.get(m.home);
+    const away = byCode.get(m.away);
+    if (!home || !away) continue; // match references a team not in this subset
+
+    const hg = m.homeGoals;
+    const ag = m.awayGoals;
+
+    home.played++; away.played++;
+    home.gf += hg; home.ga += ag;
+    away.gf += ag; away.ga += hg;
+
+    if (hg > ag) {
+      home.won++; away.lost++;
+      home.points += 3;
+    } else if (hg < ag) {
+      away.won++; home.lost++;
+      away.points += 3;
+    } else {
+      home.drawn++; away.drawn++;
+      home.points += 1; away.points += 1;
+    }
+  }
+
+  for (const s of byCode.values()) s.gd = s.gf - s.ga;
+  return byCode;
+}
+
+// ----------------------------------------------------------------------------
+// Tiebreaker comparators
+// ----------------------------------------------------------------------------
+
+/**
+ * Compare two stat records on the OVERALL group criteria (a,b,c):
+ *   points desc, goal-difference desc, goals-for desc.
+ * Returns negative if \`x\` ranks ahead of \`y\`, positive if behind, 0 if level.
+ */
+function cmpOverall(x, y) {
+  if (y.points !== x.points) return y.points - x.points;
+  if (y.gd !== x.gd) return y.gd - x.gd;
+  if (y.gf !== x.gf) return y.gf - x.gf;
+  return 0;
+}
+
+/**
+ * Compare two stat records on disciplinary (fair-play) points: LOWER is better.
+ * Returns negative if \`x\` ahead, positive if behind, 0 if level.
+ */
+function cmpFairPlay(x, y) {
+  return x.fairPlay - y.fairPlay;
+}
+
+/** Alphabetical-by-code comparator (the deterministic "drawing of lots"). */
+function cmpAlpha(x, y) {
+  return x.code < y.code ? -1 : x.code > y.code ? 1 : 0;
+}
+
+// ----------------------------------------------------------------------------
+// Head-to-head resolution
+// ----------------------------------------------------------------------------
+
+/**
+ * Given a set of tied teams (stat records) and the full match list, compute the
+ * head-to-head mini-table among ONLY those teams (matches where both sides are
+ * in the tied set), and split them by h2h criteria:
+ *   (d) h2h points, (e) h2h goal-difference, (f) h2h goals-for.
+ *
+ * Returns an array of "buckets": each bucket is an array of stat records that
+ * remain tied after applying h2h. Buckets are ordered best->worst. A bucket of
+ * length > 1 means h2h did not separate those teams and the caller must go on
+ * to fair-play / lots.
+ *
+ * @param {Array<object>} tied  stat records (>=2) currently tied on (a,b,c)
+ * @param {Array} allMatches    the group's full match list
+ */
+function headToHeadSplit(tied, allMatches) {
+  const codes = new Set(tied.map((t) => t.code));
+  const teamsSubset = tied.map((t) => ({ code: t.code, name: t.name, fairPlay: t.fairPlay }));
+  const subMatches = allMatches.filter(
+    (m) => m.played && codes.has(m.home) && codes.has(m.away)
+  );
+  const h2h = aggregate(teamsSubset, subMatches); // code -> h2h stats
+
+  // Sort the tied teams by their h2h overall criteria.
+  const ordered = [...tied].sort((a, b) => cmpOverall(h2h.get(a.code), h2h.get(b.code)));
+
+  // Group consecutive teams that are still level on h2h (a,b,c).
+  const buckets = [];
+  let cur = [ordered[0]];
+  for (let i = 1; i < ordered.length; i++) {
+    const prev = ordered[i - 1];
+    const team = ordered[i];
+    if (cmpOverall(h2h.get(prev.code), h2h.get(team.code)) === 0) {
+      cur.push(team);
+    } else {
+      buckets.push(cur);
+      cur = [team];
+    }
+  }
+  buckets.push(cur);
+  return buckets;
+}
+
+/**
+ * Fully resolve an ordering of a set of tied stat records, applying the FIFA
+ * sequence FROM the head-to-head step onward:
+ *   (d-f) head-to-head, (g) fair-play, (h) drawing of lots (alpha fallback).
+ *
+ * The h2h step is recursive in spirit: if h2h splits the set into smaller tied
+ * groups, each of those is re-resolved from h2h again on its own subset — but
+ * because a smaller tied subset's h2h is computed only among its members, a set
+ * that h2h could not split will not split on a re-run, so we proceed to
+ * fair-play then lots for any bucket length > 1.
+ *
+ * @returns {Array<object>} ordered stat records (best first); each record may
+ *          gain \`tiedByLots:true\`.
+ */
+function resolveTiedGroup(tied, allMatches) {
+  if (tied.length === 1) return [tied[0]];
+
+  // (d-f) head-to-head among exactly these tied teams.
+  const buckets = headToHeadSplit(tied, allMatches);
+
+  // If h2h fully kept them together (a single bucket of the same size), h2h has
+  // failed to separate -> go to fair-play / lots for the whole set.
+  if (buckets.length === 1 && buckets[0].length === tied.length) {
+    return resolveByFairPlayThenLots(tied);
+  }
+
+  // h2h produced >=2 buckets (a partial or full split). Resolve each bucket:
+  //  - length 1: settled
+  //  - length >1: these are tied on h2h too; recompute their OWN h2h subgroup
+  //               first (FIFA: re-apply criteria to the still-tied subset), and
+  //               if that still doesn't split, fair-play then lots.
+  const result = [];
+  for (const bucket of buckets) {
+    if (bucket.length === 1) {
+      result.push(bucket[0]);
+    } else {
+      result.push(...resolveStillTiedSubset(bucket, allMatches));
+    }
+  }
+  return result;
+}
+
+/**
+ * A subset that was tied within a larger h2h table. FIFA restarts the criteria
+ * for the reduced subgroup. We recompute h2h among ONLY this subset; if that
+ * splits them further we recurse, otherwise fair-play then lots.
+ */
+function resolveStillTiedSubset(subset, allMatches) {
+  const buckets = headToHeadSplit(subset, allMatches);
+  if (buckets.length === 1 && buckets[0].length === subset.length) {
+    return resolveByFairPlayThenLots(subset);
+  }
+  const result = [];
+  for (const bucket of buckets) {
+    if (bucket.length === 1) result.push(bucket[0]);
+    else result.push(...resolveStillTiedSubset(bucket, allMatches));
+  }
+  return result;
+}
+
+/**
+ * Resolve a still-tied set by (g) fair-play then (h) lots/alphabetical.
+ * Teams that remain level after fair-play (i.e. decided purely by lots) get
+ * \`tiedByLots:true\`.
+ */
+function resolveByFairPlayThenLots(tied) {
+  const ordered = [...tied].sort((a, b) => {
+    const fp = cmpFairPlay(a, b);
+    if (fp !== 0) return fp;
+    return cmpAlpha(a, b);
+  });
+  // Flag any teams that are level on fair-play with a neighbor (lots decided).
+  for (let i = 0; i < ordered.length; i++) {
+    const t = ordered[i];
+    const prevLevel = i > 0 && cmpFairPlay(ordered[i - 1], t) === 0;
+    const nextLevel = i < ordered.length - 1 && cmpFairPlay(t, ordered[i + 1]) === 0;
+    if (prevLevel || nextLevel) t.tiedByLots = true;
+  }
+  return ordered;
+}
+
+// ----------------------------------------------------------------------------
+// Group standing
+// ----------------------------------------------------------------------------
+
+/**
+ * Compute the full ranked standing of a group.
+ *
+ * @param {{name:string,teams:Array,matches:Array}} group
+ * @returns {Array<object>} 4 (or N) stat records ordered 1st..last, each with a
+ *          1-based \`rank\`, and possibly \`tiedByLots:true\`.
+ */
+function computeGroupStanding(group) {
+  const stats = aggregate(group.teams, group.matches);
+  const all = [...stats.values()];
+
+  // 1. Primary sort on overall criteria (a,b,c).
+  all.sort(cmpOverall);
+
+  // 2. Walk groups of teams that are level on (a,b,c) and resolve each with the
+  //    head-to-head -> fair-play -> lots cascade.
+  const ranked = [];
+  let i = 0;
+  while (i < all.length) {
+    let j = i + 1;
+    while (j < all.length && cmpOverall(all[i], all[j]) === 0) j++;
+    const tiedSlice = all.slice(i, j);
+    if (tiedSlice.length === 1) {
+      ranked.push(tiedSlice[0]);
+    } else {
+      ranked.push(...resolveTiedGroup(tiedSlice, group.matches));
+    }
+    i = j;
+  }
+
+  return ranked.map((s, idx) => ({
+    code: s.code,
+    name: s.name,
+    played: s.played,
+    won: s.won,
+    drawn: s.drawn,
+    lost: s.lost,
+    gf: s.gf,
+    ga: s.ga,
+    gd: s.gd,
+    points: s.points,
+    rank: idx + 1,
+    ...(s.tiedByLots ? { tiedByLots: true } : {}),
+  }));
+}
+
+// ----------------------------------------------------------------------------
+// Third-place ranking across groups
+// ----------------------------------------------------------------------------
+
+/**
+ * Rank the 3rd-place teams of all groups against each other.
+ * Criteria: points -> GD -> goals-for -> disciplinary -> lots(alpha).
+ *
+ * @param {Array} groups  array of group objects (any count; WC2026 has 12)
+ * @returns {Array<object>} all 3rd-place teams ranked best->worst, each with
+ *          \`group\` (group name), \`rank\` (1-based), \`qualifies\` (true for top 8),
+ *          and possibly \`tiedByLots:true\`.
+ */
+function rankThirdPlaceTeams(groups) {
+  const thirds = groups.map((g) => {
+    const standing = computeGroupStanding(g);
+    const third = standing.find((t) => t.rank === 3);
+    return { ...third, group: g.name };
+  });
+
+  // Sort with the full cascade. Note: there is no head-to-head among
+  // third-place teams (they're from different groups), so the sequence is
+  // overall -> fair-play -> lots.
+  thirds.sort((a, b) => {
+    const o = cmpOverall(a, b);
+    if (o !== 0) return o;
+    const fp = cmpFairPlay(a, b);
+    if (fp !== 0) return fp;
+    return cmpAlpha(a, b);
+  });
+
+  // Flag lots: teams level on overall AND fair-play with a neighbor.
+  const levelWith = (x, y) => cmpOverall(x, y) === 0 && cmpFairPlay(x, y) === 0;
+  for (let i = 0; i < thirds.length; i++) {
+    const prevLevel = i > 0 && levelWith(thirds[i - 1], thirds[i]);
+    const nextLevel = i < thirds.length - 1 && levelWith(thirds[i], thirds[i + 1]);
+    if (prevLevel || nextLevel) thirds[i].tiedByLots = true;
+  }
+
+  return thirds.map((t, idx) => ({
+    ...t,
+    rank: idx + 1,
+    qualifies: idx < 8,
+  }));
+}
+
+// ----------------------------------------------------------------------------
+// Scenario grid
+// ----------------------------------------------------------------------------
+
+const matchKey = (m) => \`\${m.home}-\${m.away}\`;
+
+/** All scorelines 0-0 .. maxGoals-maxGoals, inclusive. */
+function* scorelines(maxGoals) {
+  for (let h = 0; h <= maxGoals; h++) {
+    for (let a = 0; a <= maxGoals; a++) {
+      yield [h, a];
+    }
+  }
+}
+
+/**
+ * Classify a scoreline for the team identified by \`code\` in a given match.
+ * @returns {{result:'win'|'draw'|'loss', margin:number}} margin is the signed
+ *          goal margin from the team's perspective (positive = ahead).
+ */
+function outcomeFor(code, match, hg, ag) {
+  if (match.home === code) {
+    const margin = hg - ag;
+    return { result: margin > 0 ? 'win' : margin < 0 ? 'loss' : 'draw', margin };
+  }
+  // team is the away side
+  const margin = ag - hg;
+  return { result: margin > 0 ? 'win' : margin < 0 ? 'loss' : 'draw', margin };
+}
+
+/**
+ * scenarioGrid — enumerate every scoreline combination for the unplayed
+ * match(es) named by \`upcomingMatchKeys\`, holding played matches fixed, and
+ * collapse the resulting WITHIN-GROUP ranks into a per-team summary.
+ *
+ * IMPORTANT: This asserts ONLY within-group rank (1/2/3/4). It says nothing
+ * about 3rd-place qualification or knockout opponents (cross-group concerns).
+ *
+ * @param {object} group
+ * @param {string[]} upcomingMatchKeys  1 or 2 keys \`\${home}-\${away}\` of unplayed matches
+ * @param {number} [maxGoals=6]
+ * @returns {object} {
+ *   teams: { [code]: teamSummary },
+ *   matches: [matchKey,...],          // the enumerated matches, in order
+ *   describe(code): string,           // English digest for a team
+ * }
+ *
+ * teamSummary shape:
+ *   {
+ *     code, name,
+ *     ranks: number[],                // distinct ranks achievable (sorted)
+ *     // single-match case:
+ *     byOutcome: { win:{ranks,marginRules}, draw:{rank|ranks}, loss:{ranks,marginRules} }
+ *     // two-match case:
+ *     joint: [ { outcomes:[{key,result,margin?}...], rank } ... ]  // raw-ish, collapsed by rank
+ *     needs: { rankN: <condition tree> }   // "what they need" digest per achievable rank
+ *   }
+ */
+function scenarioGrid(group, upcomingMatchKeys, maxGoals = 6) {
+  if (!Array.isArray(upcomingMatchKeys) || upcomingMatchKeys.length < 1 || upcomingMatchKeys.length > 2) {
+    throw new Error('upcomingMatchKeys must contain 1 or 2 match keys');
+  }
+
+  // Resolve the upcoming match objects (must exist and be unplayed).
+  const upcoming = upcomingMatchKeys.map((key) => {
+    const m = group.matches.find((mm) => matchKey(mm) === key);
+    if (!m) throw new Error(\`upcoming match not found: \${key}\`);
+    return m;
+  });
+
+  const playedMatches = group.matches.filter((m) => m.played);
+  const teams = group.teams;
+
+  // Enumerate. For each combination we build a synthetic match list = played +
+  // the upcoming matches with assigned scores, compute the standing, and read
+  // off each team's rank.
+  //
+  // We record, per combination, the full scoreline tuple and the resulting rank
+  // for every team.
+  const combos = []; // { scores:[[hg,ag],...], rankByCode:{code:rank} }
+
+  const enumerate = (idx, acc) => {
+    if (idx === upcoming.length) {
+      const synthetic = playedMatches.concat(
+        upcoming.map((m, k) => ({
+          home: m.home,
+          away: m.away,
+          homeGoals: acc[k][0],
+          awayGoals: acc[k][1],
+          played: true,
+        }))
+      );
+      const standing = computeGroupStanding({ ...group, matches: synthetic });
+      const rankByCode = {};
+      for (const t of standing) rankByCode[t.code] = t.rank;
+      combos.push({ scores: acc.map((s) => s.slice()), rankByCode });
+      return;
+    }
+    for (const sl of scorelines(maxGoals)) {
+      acc.push(sl);
+      enumerate(idx + 1, acc);
+      acc.pop();
+    }
+  };
+  enumerate(0, []);
+
+  // Build per-team summaries.
+  const teamSummaries = {};
+  for (const team of teams) {
+    teamSummaries[team.code] =
+      upcoming.length === 1
+        ? summarizeSingle(team, upcoming[0], combos, maxGoals)
+        : summarizeDouble(team, upcoming, combos);
+  }
+
+  return {
+    matches: upcoming.map(matchKey),
+    teams: teamSummaries,
+    describe(code) {
+      const s = teamSummaries[code];
+      if (!s) throw new Error(\`unknown team: \${code}\`);
+      return s.description;
+    },
+  };
+}
+
+// --- single upcoming match -------------------------------------------------
+
+/**
+ * Collapse the grid for the SINGLE-match case for one team.
+ *
+ * For a team PLAYING in the match, outcome is win/draw/loss and within each
+ * outcome rank can vary only by margin -> we collapse to margin thresholds.
+ * For a team NOT playing, its rank can still vary with the scoreline (it affects
+ * GD/GF of the two participants), so we map the participants' margin -> rank.
+ */
+function summarizeSingle(team, match, combos, maxGoals) {
+  const code = team.code;
+  const isPlaying = match.home === code || match.away === code;
+
+  if (isPlaying) {
+    // Group combos by outcome, then within outcome by team-margin -> rank.
+    const buckets = { win: new Map(), draw: new Map(), loss: new Map() };
+    for (const c of combos) {
+      const [hg, ag] = c.scores[0];
+      const { result, margin } = outcomeFor(code, match, hg, ag);
+      const m = buckets[result];
+      const rank = c.rankByCode[code];
+      if (!m.has(margin)) m.set(margin, new Set());
+      m.get(margin).add(rank);
+    }
+
+    const byOutcome = {};
+    for (const result of ['win', 'draw', 'loss']) {
+      byOutcome[result] = collapseMarginMap(buckets[result], result);
+    }
+
+    const ranks = collectRanks(combos, code);
+    const description = describeSinglePlaying(byOutcome, maxGoals);
+    return { code, name: team.name, isPlaying: true, ranks, byOutcome, description };
+  }
+
+  // Non-playing team: rank depends on the participants' result/margin.
+  // Map (participantMargin from home perspective) -> set of ranks.
+  const map = new Map();
+  for (const c of combos) {
+    const [hg, ag] = c.scores[0];
+    const homeMargin = hg - ag; // signed, home perspective
+    const rank = c.rankByCode[code];
+    const keyM = homeMargin;
+    if (!map.has(keyM)) map.set(keyM, new Set());
+    map.get(keyM).add(rank);
+  }
+  const ranks = collectRanks(combos, code);
+  // Collapse contiguous home-margins sharing the same rank-set into bands.
+  const sortedM = [...map.entries()].sort((a, b) => a[0] - b[0]);
+  const sig = (set) => [...set].sort((a, b) => a - b).join(',');
+  const byMargin = [];
+  let bStart = sortedM[0][0];
+  let bSig = sig(sortedM[0][1]);
+  let bRanks = [...sortedM[0][1]].sort((a, b) => a - b);
+  let bPrev = sortedM[0][0];
+  const flushBand = (end) => byMargin.push({ homeMarginLo: bStart, homeMarginHi: end, ranks: bRanks });
+  for (let i = 1; i < sortedM.length; i++) {
+    const [m, set] = sortedM[i];
+    if (sig(set) === bSig && m === bPrev + 1) {
+      bPrev = m;
+    } else {
+      flushBand(bPrev);
+      bStart = m; bSig = sig(set); bRanks = [...set].sort((a, b) => a - b); bPrev = m;
+    }
+  }
+  flushBand(bPrev);
+  const description = describeNonPlaying(team, match, ranks, byMargin, maxGoals);
+  return { code, name: team.name, isPlaying: false, ranks, byMargin, description };
+}
+
+/**
+ * Given a Map<margin,Set<rank>> for a single outcome, collapse to clean rules.
+ * In the common deterministic case each margin yields exactly one rank, so we
+ * collapse contiguous margins that share a rank into threshold "runs".
+ *
+ * Margins are signed from the team's perspective: wins are positive (+1..+max),
+ * losses negative (-1..-max), a draw is exactly 0. Each rule records \`marginLo\`
+ * <= \`marginHi\` (the contiguous signed-margin span) and either a single \`rank\`
+ * (deterministic run) or a \`ranks\` array (margin alone didn't decide — rare,
+ * happens only when other-table lots intrude).
+ */
+function collapseMarginMap(marginMap, result) {
+  if (marginMap.size === 0) return { possible: false, rules: [], ranks: [] };
+
+  const entries = [...marginMap.entries()].sort((a, b) => a[0] - b[0]);
+  const allRanks = new Set();
+  for (const [, set] of entries) for (const r of set) allRanks.add(r);
+
+  // Merge contiguous margins that share the SAME rank-set (singleton or tied)
+  // into one threshold rule. A rule with one rank also exposes \`.rank\` for
+  // convenience; a tied rule exposes only \`.ranks\`.
+  const sig = (set) => [...set].sort((a, b) => a - b).join(',');
+  const rules = [];
+  let runStart = entries[0][0];
+  let runSig = sig(entries[0][1]);
+  let runRanks = [...entries[0][1]].sort((a, b) => a - b);
+  let prevMargin = entries[0][0];
+  const flush = (endMargin) => {
+    const rule = { marginLo: runStart, marginHi: endMargin, ranks: runRanks };
+    if (runRanks.length === 1) rule.rank = runRanks[0];
+    rules.push(rule);
+  };
+  for (let i = 1; i < entries.length; i++) {
+    const [m, set] = entries[i];
+    if (sig(set) === runSig && m === prevMargin + 1) {
+      prevMargin = m;
+    } else {
+      flush(prevMargin);
+      runStart = m;
+      runSig = sig(set);
+      runRanks = [...set].sort((a, b) => a - b);
+      prevMargin = m;
+    }
+  }
+  flush(prevMargin);
+
+  return {
+    possible: true,
+    ranks: [...allRanks].sort((a, b) => a - b),
+    rules,
+  };
+}
+
+function collectRanks(combos, code) {
+  const s = new Set();
+  for (const c of combos) s.add(c.rankByCode[code]);
+  return [...s].sort((a, b) => a - b);
+}
+
+const ordinal = (n) =>
+  n === 1 ? '1st' : n === 2 ? '2nd' : n === 3 ? '3rd' : \`\${n}th\`;
+
+const rankWord = (rank) => ordinal(rank);
+
+/**
+ * English digest for a team playing in a single decisive match, e.g.
+ * "1st with any win; 2nd on a draw; 3rd if they lose by 1; 4th if they lose by 2+".
+ */
+function describeSinglePlaying(byOutcome, maxGoals) {
+  const parts = [];
+  if (byOutcome.win.possible) parts.push(...phrasesForOutcome(byOutcome.win, 'win', maxGoals));
+  if (byOutcome.draw.possible) parts.push(...phrasesForOutcome(byOutcome.draw, 'draw', maxGoals));
+  if (byOutcome.loss.possible) parts.push(...phrasesForOutcome(byOutcome.loss, 'loss', maxGoals));
+  return parts.join('; ');
+}
+
+/**
+ * Turn a collapsed outcome (win/draw/loss) into English phrases.
+ *  - draw: a single margin (0); usually one rank, multiple only under lots.
+ *  - win/loss: margin-threshold rules, ordered best-rank-first, with the rule
+ *    that reaches the enumeration edge (|margin| === maxGoals) rendered as "N+".
+ */
+function phrasesForOutcome(outcome, result, maxGoals) {
+  if (result === 'draw') {
+    const ranks = outcome.ranks;
+    if (ranks.length === 1) return [\`\${rankWord(ranks[0])} on a draw\`];
+    return [\`\${ranks.map(rankWord).join(' or ')} on a draw (depends on the other result)\`];
+  }
+
+  const rules = outcome.rules;
+
+  // Constant rank across the whole outcome -> "Nth with any win/loss".
+  const allDeterministic = rules.every((r) => r.rank != null);
+  const uniqueRanks = new Set(rules.flatMap((r) => (r.rank != null ? [r.rank] : r.ranks)));
+  if (allDeterministic && uniqueRanks.size === 1) {
+    const rank = [...uniqueRanks][0];
+    return [\`\${rankWord(rank)} with any \${result}\`];
+  }
+
+  // Order rules by goal-margin magnitude ascending (smallest margin first); this
+  // reads naturally as the result gets more lopsided.
+  const ordered = [...rules].sort((a, b) => Math.abs(a.marginLo) - Math.abs(b.marginLo));
+  const verb = result === 'win' ? 'win' : 'lose';
+
+  return ordered.map((r) => {
+    const loMag = Math.abs(r.marginLo);
+    const hiMag = Math.abs(r.marginHi);
+    const lo = Math.min(loMag, hiMag);
+    const hi = Math.max(loMag, hiMag);
+    const reachesEdge = hi === maxGoals;
+    let cond;
+    if (lo === hi) cond = \`if they \${verb} by \${lo}\`;
+    else if (reachesEdge) cond = \`if they \${verb} by \${lo}+\`;
+    else cond = \`if they \${verb} by \${lo}–\${hi}\`;
+    const label = r.rank != null ? rankWord(r.rank) : r.ranks.map(rankWord).join('/');
+    return \`\${label} \${cond}\`;
+  });
+}
+
+function describeNonPlaying(team, match, ranks, byMargin, maxGoals) {
+  if (ranks.length === 1) {
+    return \`\${rankWord(ranks[0])} regardless of \${match.home} v \${match.away}\`;
+  }
+  // Summarize by participant (home-perspective) margin bands.
+  const sideCond = (lo, hi) => {
+    // lo<=hi signed home margins within the band.
+    const band = (mLo, mHi, who, edge) => {
+      const a = Math.abs(mLo), b = Math.abs(mHi);
+      const x = Math.min(a, b), y = Math.max(a, b);
+      if (x === y) return \`\${who} win by \${x}\`;
+      if (y === maxGoals && edge) return \`\${who} win by \${x}+\`;
+      return \`\${who} win by \${x}–\${y}\`;
+    };
+    if (lo === 0 && hi === 0) return 'a draw';
+    if (lo > 0) return band(lo, hi, match.home, true);   // home wins
+    if (hi < 0) return band(lo, hi, match.away, true);   // away wins
+    // Band straddles 0: it covers a draw plus wins on one (or both) sides.
+    const segs = [];
+    if (lo < 0) segs.push(band(lo, -1, match.away, lo === -maxGoals)); // away-win part
+    if (lo <= 0 && hi >= 0) segs.push('a draw');
+    if (hi > 0) segs.push(band(1, hi, match.home, hi === maxGoals));   // home-win part
+    return segs.join(' or ');
+  };
+  const parts = byMargin.map((b) =>
+    \`\${b.ranks.map(rankWord).join('/')} on \${sideCond(b.homeMarginLo, b.homeMarginHi)}\`
+  );
+  return parts.join('; ');
+}
+
+// --- two simultaneous upcoming matches -------------------------------------
+
+/**
+ * Collapse the grid for the TWO-match (final round) case for one team.
+ *
+ * We produce:
+ *   joint: array of { outcomes, rank } where outcomes describes each match by
+ *          result (and, where rank depends on it, margin) — collapsed so that
+ *          all scorelines yielding the same rank for this team share an entry.
+ *   needs: per achievable rank, a compact description of sufficient conditions.
+ *
+ * For readability we first reduce each match to (result, margin) from the
+ * perspective of its HOME team, then group combos by (resultA, resultB) and,
+ * within that, report the rank(s) and whether margin matters.
+ */
+function summarizeDouble(team, upcoming, combos) {
+  const code = team.code;
+  const [mA, mB] = upcoming;
+
+  // Group by (homeResultA, homeResultB) coarse outcome; collect rank sets and
+  // whether margins within that coarse cell affect the rank.
+  const cells = new Map(); // key "rA|rB" -> { rA,rB, rankSet:Set, marginVaries:bool, detail:Map }
+  for (const c of combos) {
+    const [aHg, aAg] = c.scores[0];
+    const [bHg, bAg] = c.scores[1];
+    const rA = aHg > aAg ? 'win' : aHg < aAg ? 'loss' : 'draw'; // home A perspective
+    const rB = bHg > bAg ? 'win' : bHg < bAg ? 'loss' : 'draw';
+    const key = \`\${rA}|\${rB}\`;
+    if (!cells.has(key)) cells.set(key, { rA, rB, rankSet: new Set(), detail: new Map() });
+    const cell = cells.get(key);
+    const rank = c.rankByCode[code];
+    cell.rankSet.add(rank);
+    // detail keyed by (marginA, marginB) for margin-sensitivity analysis
+    const dk = \`\${aHg - aAg},\${bHg - bAg}\`;
+    cell.detail.set(dk, rank);
+  }
+
+  const joint = [];
+  for (const cell of cells.values()) {
+    const ranks = [...cell.rankSet].sort((a, b) => a - b);
+    const marginVaries = ranks.length > 1;
+    joint.push({
+      outcomes: [
+        { key: matchKey(mA), home: mA.home, away: mA.away, result: cell.rA },
+        { key: matchKey(mB), home: mB.home, away: mB.away, result: cell.rB },
+      ],
+      ranks,
+      marginVaries,
+    });
+  }
+
+  // "What they need": for each achievable rank, list the coarse outcome cells
+  // where that rank is GUARANTEED (rank set === [rank]) vs merely possible.
+  const ranks = collectRanks(combos, code);
+  const needs = {};
+  for (const rank of ranks) {
+    const guaranteed = [];
+    const possible = [];
+    for (const j of joint) {
+      if (j.ranks.length === 1 && j.ranks[0] === rank) guaranteed.push(j.outcomes);
+      else if (j.ranks.includes(rank)) possible.push(j.outcomes);
+    }
+    needs[rank] = { guaranteed, possible };
+  }
+
+  const description = describeDouble(team, upcoming, ranks, joint);
+  return { code, name: team.name, ranks, joint, needs, description };
+}
+
+function describeDouble(team, upcoming, ranks, joint) {
+  const [mA, mB] = upcoming;
+  const resultPhrase = (o) => {
+    if (o.result === 'win') return \`\${o.home} beat \${o.away}\`;
+    if (o.result === 'loss') return \`\${o.away} beat \${o.home}\`;
+    return \`\${o.home}-\${o.away} draw\`;
+  };
+  // Build "rank: when ..." clauses, listing guaranteed coarse cells.
+  const clauses = [];
+  for (const rank of ranks) {
+    const guaranteedCells = joint.filter((j) => j.ranks.length === 1 && j.ranks[0] === rank);
+    if (guaranteedCells.length === 0) {
+      clauses.push(\`\${rankWord(rank)} possible (margin-dependent)\`);
+      continue;
+    }
+    const cellPhrases = guaranteedCells.map((j) => j.outcomes.map(resultPhrase).join(' & '));
+    clauses.push(\`\${rankWord(rank)} if: \${cellPhrases.join('  OR  ')}\`);
+  }
+  return clauses.join(' | ');
+}
+
+
+/* ===== allocation.js (filesystem read replaced by baked table) ===== */
+
+// allocation.js
+// FIFA 2026 World Cup "Annex C" third-place allocation: maps which eight
+// third-placed groups qualify to which round-of-32 third-place slot they fill.
+//
+// allocation.json is keyed by the canonical combination key: the 8 qualifying
+// group letters, sorted alphabetically and concatenated (e.g. "ABCDEFGH").
+// Each value maps a slot label ("1A","1B","1D","1E","1G","1I","1K","1L") to the
+// GROUP LETTER whose third-placed team fills that slot.
+//
+// ES module. No dependencies beyond node: builtins.
+
+
+let _allocation = null;
+function getAllocation() {
+  return __ALLOCATION__;
+}
+
+/**
+ * Normalize an array/Set/string of group letters to the canonical key:
+ * uppercased, de-duplicated implicitly by validation, sorted, concatenated.
+ * @param {Iterable<string>|string} groups
+ * @returns {string} canonical 8-letter key
+ */
+function canonicalKey(groups) {
+  let arr;
+  if (typeof groups === "string") {
+    arr = groups.split(/[^A-Za-z]+/).filter(Boolean);
+    if (arr.length <= 1) arr = groups.replace(/[^A-Za-z]/g, "").split(""); // "ABCDEFGH"
+  } else {
+    arr = [...groups];
+  }
+  const letters = arr.map((g) => String(g).trim().toUpperCase());
+  for (const l of letters) {
+    if (!/^[A-L]$/.test(l)) throw new Error(\`invalid group letter: \${JSON.stringify(l)}\`);
+  }
+  const uniq = [...new Set(letters)];
+  if (uniq.length !== 8) {
+    throw new Error(\`expected 8 distinct group letters, got \${uniq.length}: \${uniq.join("")}\`);
+  }
+  return uniq.sort().join("");
+}
+
+/**
+ * Look up the Annex C slot->group mapping for a given set of qualifying
+ * third-place groups.
+ * @param {Iterable<string>|string} qualifiedGroupLetters - the 8 group letters
+ *   whose third-placed teams qualified.
+ * @returns {Record<string,string>} mapping slot label -> group letter
+ */
+function lookupAllocation(qualifiedGroupLetters) {
+  const key = canonicalKey(qualifiedGroupLetters);
+  const table = getAllocation();
+  const entry = table[key];
+  if (!entry) {
+    throw new Error(\`combination \${key} not found in Annex C allocation table\`);
+  }
+  return { ...entry };
+}
+
+/**
+ * Combine the allocation with the bracket to resolve, for each R32 match that
+ * has a "third" slot, which group's third-placed team is assigned there.
+ *
+ * The bracket's R32 third slots are conventionally labelled by the group
+ * WINNER they oppose: a match whose other side is { type:"winner", group:X }
+ * has third slot label "1X". We use that to index the allocation.
+ *
+ * @param {Iterable<string>|string} qualifiedGroupLetters
+ * @param {object} bracket - parsed bracket.json
+ * @returns {Array<{match:number, slotLabel:string, group:string, candidates:string[]}>}
+ */
+function resolveThirdPlaceSlots(qualifiedGroupLetters, bracket) {
+  const alloc = lookupAllocation(qualifiedGroupLetters);
+  const out = [];
+  const r32 = (bracket && bracket.rounds && bracket.rounds.R32) || [];
+  for (const m of r32) {
+    let thirdSide = null;
+    let winnerSide = null;
+    for (const side of [m.home, m.away]) {
+      if (side && side.type === "third") thirdSide = side;
+      if (side && side.type === "winner") winnerSide = side;
+    }
+    if (!thirdSide) continue;
+    if (!winnerSide) {
+      throw new Error(\`match \${m.match} has a third slot but no winner side to label it\`);
+    }
+    const slotLabel = "1" + winnerSide.group;
+    const group = alloc[slotLabel];
+    if (!group) {
+      throw new Error(\`no allocation for slot \${slotLabel} (match \${m.match})\`);
+    }
+    // sanity: the assigned group must be one of FIFA's listed candidates
+    if (Array.isArray(thirdSide.from) && !thirdSide.from.includes(group)) {
+      throw new Error(
+        \`match \${m.match} slot \${slotLabel}: allocated group \${group} not in candidate list \${thirdSide.from.join("/")}\`
+      );
+    }
+    out.push({ match: m.match, slotLabel, group, candidates: thirdSide.from || null });
+  }
+  return out;
+}
+
+
+/* ===== model.js ===== */
+
+// model.js
+// Probabilistic projection engine for the 2026 World Cup bracket:
+//   - an Elo-driven Poisson scoreline model ("supremacy" model), and
+//   - a Monte Carlo tournament simulator built on top of engine.js + allocation.
+//
+// BROWSER-SAFE ES module. NO node: imports, no fs/process in exported logic.
+// It imports ONLY from engine.js (pure) and receives the Annex-C allocation
+// resolution as an injected dependency, so it never touches the filesystem.
+//
+// The caller (verify-model.mjs in Node, or the HTML build in the browser) is
+// responsible for loading bracket.json/allocation.json and passing in a
+// \`resolveThirdPlaceSlots(groupLetters, bracket)\` function via opts.
+//
+// All randomness flows through an injected rng function ()->[0,1). We NEVER
+// call Math.random internally, so a fixed seed reproduces a run exactly.
+
+// ----------------------------------------------------------------------------
+// Tunable constants (exported so they can be overridden / re-fit)
+// ----------------------------------------------------------------------------
+
+// Elo points -> goal-supremacy slope. 0.0036 goals per Elo point ≈ 1.44 goals
+// of expected-margin per 400 Elo (a 400-Elo gap is the classic "10x odds" gap).
+const ELO_SUPREMACY_COEF = 0.0036;
+
+// League-average total goals per match (both teams). World Cup group/KO games
+// historically average ~2.5–2.7; 2.6 is a reasonable central value.
+const BASE_TOTAL_GOALS = 2.6;
+
+// Floor on either side's Poisson mean so even a huge underdog can score.
+const MIN_LAMBDA = 0.15;
+
+// Default host-nation Elo bonus (points). Applied to USA/MEX/CAN in every match
+// via opts.hostCodes. Home-field in soccer is worth roughly +0.3–0.4 goals;
+// at the supremacy slope above, ~80 Elo ≈ +0.29 goals of supremacy. Kept modest
+// because co-hosting across 3 countries dilutes a true single-venue advantage.
+const DEFAULT_HOST_BONUS = 80;
+
+// Round index map for "furthest round reached".
+const ROUND_INDEX = Object.freeze({
+  R32: 0,
+  R16: 1,
+  QF: 2,
+  SF: 3,
+  Final: 4,
+  Champion: 5,
+});
+
+// ----------------------------------------------------------------------------
+// 1. Seedable PRNG — mulberry32
+// ----------------------------------------------------------------------------
+
+/**
+ * mulberry32 — a tiny, fast, decent-quality seedable PRNG.
+ * @param {number} seed  any 32-bit-ish integer
+ * @returns {() => number} function returning a float in [0, 1)
+ */
+function makeRng(seed) {
+  let a = seed >>> 0;
+  return function rng() {
+    a |= 0;
+    a = (a + 0x6d2b79f5) | 0;
+    let t = Math.imul(a ^ (a >>> 15), 1 | a);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
+// ----------------------------------------------------------------------------
+// 2. Poisson sampler — Knuth's algorithm
+// ----------------------------------------------------------------------------
+
+/**
+ * Sample a Poisson(lambda) integer using Knuth's multiplicative method.
+ * Fine for the small lambdas (~0.2–2.5) we draw here.
+ * @param {number} lambda  mean (>= 0)
+ * @param {() => number} rng
+ * @returns {number} non-negative integer goal count
+ */
+function samplePoisson(lambda, rng) {
+  if (lambda <= 0) return 0;
+  const L = Math.exp(-lambda);
+  let k = 0;
+  let p = 1;
+  do {
+    k++;
+    p *= rng();
+  } while (p > L);
+  return k - 1;
+}
+
+// ----------------------------------------------------------------------------
+// 3. Expected goals — the "supremacy" model
+// ----------------------------------------------------------------------------
+
+/**
+ * Map two Elo ratings (plus optional per-side host bonuses) to a pair of
+ * Poisson means.
+ * @param {number} eloA
+ * @param {number} eloB
+ * @param {object} [opts]
+ *   opts.hostBonusA, opts.hostBonusB  additive Elo bonuses (default 0)
+ *   opts.eloSupremacyCoef, opts.baseTotalGoals, opts.minLambda  overrides
+ * @returns {{lambdaA:number, lambdaB:number}}
+ */
+function expectedGoals(eloA, eloB, opts = {}) {
+  const coef = opts.eloSupremacyCoef ?? ELO_SUPREMACY_COEF;
+  const total = opts.baseTotalGoals ?? BASE_TOTAL_GOALS;
+  const minL = opts.minLambda ?? MIN_LAMBDA;
+
+  const effA = eloA + (opts.hostBonusA ?? 0);
+  const effB = eloB + (opts.hostBonusB ?? 0);
+
+  const supremacy = coef * (effA - effB);
+  const lambdaA = Math.max(minL, (total + supremacy) / 2);
+  const lambdaB = Math.max(minL, (total - supremacy) / 2);
+  return { lambdaA, lambdaB };
+}
+
+// ----------------------------------------------------------------------------
+// 4 & 5. Scoreline samplers
+// ----------------------------------------------------------------------------
+
+/**
+ * Sample a group-stage scoreline (independent Poisson draws).
+ * @returns {{ga:number, gb:number}}
+ */
+function sampleMatch(eloA, eloB, rng, opts = {}) {
+  const { lambdaA, lambdaB } = expectedGoals(eloA, eloB, opts);
+  return { ga: samplePoisson(lambdaA, rng), gb: samplePoisson(lambdaB, rng) };
+}
+
+/**
+ * Sample a knockout scoreline; if drawn, resolve by an Elo-weighted shootout.
+ * The drawn scoreline is preserved in {ga,gb}; only \`winner\` reflects the
+ * shootout. Penalties use effective Elo (host bonus included).
+ * @returns {{ga:number, gb:number, winner:'A'|'B'}}
+ */
+function sampleKnockout(eloA, eloB, rng, opts = {}) {
+  const { ga, gb } = sampleMatch(eloA, eloB, rng, opts);
+  if (ga > gb) return { ga, gb, winner: 'A' };
+  if (gb > ga) return { ga, gb, winner: 'B' };
+  // Tied -> shootout modeled as an Elo-weighted coin.
+  const effA = eloA + (opts.hostBonusA ?? 0);
+  const effB = eloB + (opts.hostBonusB ?? 0);
+  const pA = 1 / (1 + Math.pow(10, -(effA - effB) / 400));
+  return { ga, gb, winner: rng() < pA ? 'A' : 'B' };
+}
+
+// ----------------------------------------------------------------------------
+// Internal helpers
+// ----------------------------------------------------------------------------
+
+/** Host bonus for a given team code under opts.hostCodes (a Set). */
+function hostBonusFor(code, opts) {
+  if (opts.hostCodes && opts.hostCodes.has && opts.hostCodes.has(code)) {
+    return opts.hostBonus ?? DEFAULT_HOST_BONUS;
+  }
+  return 0;
+}
+
+/** Group letter ("A".."L") from a group object whose name is "Group X". */
+function groupLetter(group) {
+  const m = /Group\\s+([A-L])/i.exec(group.name);
+  return m ? m[1].toUpperCase() : group.name.trim().slice(-1).toUpperCase();
+}
+
+/**
+ * Deep-ish copy of the groups array sufficient for a single sim: teams are kept
+ * by reference (read-only: code/name/elo), matches are cloned (we mutate goals
+ * + played). Avoids cloning the immutable team records every sim.
+ */
+function cloneGroupsForSim(groups) {
+  return groups.map((g) => ({
+    name: g.name,
+    teams: g.teams,
+    matches: g.matches.map((m) => ({
+      home: m.home,
+      away: m.away,
+      homeGoals: m.homeGoals,
+      awayGoals: m.awayGoals,
+      played: m.played,
+    })),
+  }));
+}
+
+// ----------------------------------------------------------------------------
+// 6. One full tournament simulation
+// ----------------------------------------------------------------------------
+
+/**
+ * Simulate ONE complete tournament from the current state.
+ *
+ * @param {Array} groups   engine-schema group objects (teams carry \`elo\`)
+ * @param {object} bracket parsed bracket.json
+ * @param {() => number} rng
+ * @param {object} opts
+ *   opts.hostCodes   Set<code> of host countries (always get host bonus)
+ *   opts.hostBonus   Elo bonus magnitude (default DEFAULT_HOST_BONUS)
+ *   opts.resolveThirdPlaceSlots(groupLetters, bracket) -> [{match,group,...}]
+ *       (injected so this module stays browser/fs-free)
+ *   plus any expectedGoals overrides.
+ * @returns {{
+ *   groupRank: Record<string,number>,
+ *   qualifiedAs: Record<string,'winner'|'runnerup'|'third'|null>,
+ *   r32: Array<{match:number, home:string, away:string}>,
+ *   reached: Record<string,number>,
+ *   champion: string
+ * }}
+ */
+function simulateTournament(groups, bracket, rng, opts = {}) {
+  const resolveThirds = opts.resolveThirdPlaceSlots;
+  if (typeof resolveThirds !== 'function') {
+    throw new Error('opts.resolveThirdPlaceSlots(groupLetters, bracket) is required');
+  }
+
+  const eloByCode = new Map();
+  for (const g of groups) for (const t of g.teams) eloByCode.set(t.code, t.elo);
+  const eloOf = (code) => eloByCode.get(code);
+
+  // --- group stage: sample every unplayed match -----------------------------
+  const sim = cloneGroupsForSim(groups);
+  for (const g of sim) {
+    for (const m of g.matches) {
+      if (m.played) continue;
+      const hb = hostBonusFor(m.home, opts);
+      const ab = hostBonusFor(m.away, opts);
+      const { ga, gb } = sampleMatch(eloOf(m.home), eloOf(m.away), rng, {
+        ...opts,
+        hostBonusA: hb,
+        hostBonusB: ab,
+      });
+      m.homeGoals = ga;
+      m.awayGoals = gb;
+      m.played = true;
+    }
+  }
+
+  // --- standings -------------------------------------------------------------
+  const winnerOfGroup = {};   // letter -> code
+  const runnerUpOfGroup = {}; // letter -> code
+  const groupRank = {};       // code -> 1..4
+  const qualifiedAs = {};     // code -> role | null
+  const standings = {};       // letter -> ranked array
+
+  for (const g of sim) {
+    const letter = groupLetter(g);
+    const standing = computeGroupStanding(g);
+    standings[letter] = standing;
+    for (const s of standing) {
+      groupRank[s.code] = s.rank;
+      qualifiedAs[s.code] = null;
+      if (s.rank === 1) winnerOfGroup[letter] = s.code;
+      else if (s.rank === 2) runnerUpOfGroup[letter] = s.code;
+    }
+    qualifiedAs[winnerOfGroup[letter]] = 'winner';
+    qualifiedAs[runnerUpOfGroup[letter]] = 'runnerup';
+  }
+
+  // --- best 8 third-place teams ---------------------------------------------
+  const thirds = rankThirdPlaceTeams(sim); // each has .group (= "Group X"), .qualifies
+  const qualifiedThirds = thirds.filter((t) => t.qualifies);
+  // map group LETTER -> qualifying third-place team code
+  const thirdCodeByLetter = {};
+  const qualifiedLetters = [];
+  for (const t of qualifiedThirds) {
+    const letter = /Group\\s+([A-L])/i.exec(t.group)?.[1]?.toUpperCase()
+      ?? String(t.group).trim().slice(-1).toUpperCase();
+    thirdCodeByLetter[letter] = t.code;
+    qualifiedLetters.push(letter);
+    qualifiedAs[t.code] = 'third';
+  }
+
+  // --- Annex C: which group's third fills each R32 third slot ---------------
+  const thirdSlots = resolveThirds(qualifiedLetters, bracket); // [{match, group}]
+  const thirdCodeForMatch = {};
+  for (const s of thirdSlots) thirdCodeForMatch[s.match] = thirdCodeByLetter[s.group];
+
+  // --- build the 16 R32 fixtures --------------------------------------------
+  const slotCode = (side, matchNo) => {
+    if (side.type === 'winner') return winnerOfGroup[side.group];
+    if (side.type === 'runnerup') return runnerUpOfGroup[side.group];
+    if (side.type === 'third') return thirdCodeForMatch[matchNo];
+    throw new Error(\`unexpected R32 slot type: \${side.type}\`);
+  };
+
+  const r32 = bracket.rounds.R32.map((m) => ({
+    match: m.match,
+    home: slotCode(m.home, m.match),
+    away: slotCode(m.away, m.match),
+  }));
+
+  // --- knockout bracket ------------------------------------------------------
+  // winnerByMatch / loserByMatch: match number -> team code.
+  const winnerByMatch = {};
+  const loserByMatch = {};
+  const reached = {};
+
+  // Seed "reached" for everyone who made the R32.
+  for (const fx of r32) {
+    reached[fx.home] = ROUND_INDEX.R32;
+    reached[fx.away] = ROUND_INDEX.R32;
+  }
+
+  const bump = (code, roundIdx) => {
+    if (reached[code] === undefined || roundIdx > reached[code]) reached[code] = roundIdx;
+  };
+
+  // Resolve a winnerOf/loserOf side to a concrete team code (R16+ rounds).
+  const sideCode = (side) => {
+    if (side.type === 'winnerOf') return winnerByMatch[side.match];
+    if (side.type === 'loserOf') return loserByMatch[side.match];
+    throw new Error(\`unexpected knockout side type: \${side.type}\`);
+  };
+
+  // R32: play each fixture.
+  const playKnockout = (homeCode, awayCode) => {
+    const hb = hostBonusFor(homeCode, opts);
+    const ab = hostBonusFor(awayCode, opts);
+    const res = sampleKnockout(eloOf(homeCode), eloOf(awayCode), rng, {
+      ...opts,
+      hostBonusA: hb,
+      hostBonusB: ab,
+    });
+    const winner = res.winner === 'A' ? homeCode : awayCode;
+    const loser = res.winner === 'A' ? awayCode : homeCode;
+    return { winner, loser };
+  };
+
+  for (const fx of r32) {
+    const { winner, loser } = playKnockout(fx.home, fx.away);
+    winnerByMatch[fx.match] = winner;
+    loserByMatch[fx.match] = loser;
+    bump(winner, ROUND_INDEX.R16); // winning R32 => reached R16
+  }
+
+  // Helper to run a round whose sides are winnerOf references.
+  const runRound = (roundMatches, advanceRoundIdx) => {
+    for (const m of roundMatches) {
+      const homeCode = sideCode(m.home);
+      const awayCode = sideCode(m.away);
+      const { winner, loser } = playKnockout(homeCode, awayCode);
+      winnerByMatch[m.match] = winner;
+      loserByMatch[m.match] = loser;
+      bump(winner, advanceRoundIdx);
+    }
+  };
+
+  runRound(bracket.rounds.R16, ROUND_INDEX.QF);   // win R16 => reached QF
+  runRound(bracket.rounds.QF, ROUND_INDEX.SF);    // win QF  => reached SF
+  runRound(bracket.rounds.SF, ROUND_INDEX.Final); // win SF  => reached Final
+
+  // Final.
+  const finalM = bracket.rounds.Final[0];
+  const fHome = winnerByMatch[finalM.home.match];
+  const fAway = winnerByMatch[finalM.away.match];
+  const { winner: champion } = playKnockout(fHome, fAway);
+  winnerByMatch[finalM.match] = champion;
+  bump(champion, ROUND_INDEX.Champion);
+
+  // Third-place playoff is simulated for completeness (does not affect \`reached\`
+  // beyond the SF appearance the two losers already have).
+  const tpM = bracket.rounds.ThirdPlace?.[0];
+  if (tpM) {
+    const a = loserByMatch[tpM.home.match];
+    const b = loserByMatch[tpM.away.match];
+    if (a && b) {
+      const { winner } = playKnockout(a, b);
+      winnerByMatch[tpM.match] = winner;
+    }
+  }
+
+  return { groupRank, qualifiedAs, r32, reached, champion };
+}
+
+// ----------------------------------------------------------------------------
+// 7. Monte Carlo aggregation
+// ----------------------------------------------------------------------------
+
+/**
+ * Run n simulations and aggregate per-team and per-R32-slot statistics.
+ *
+ * @param {Array} groups
+ * @param {object} bracket
+ * @param {object} opts  { n=10000, seed=1, hostCodes, hostBonus,
+ *                          resolveThirdPlaceSlots, ...expectedGoals overrides }
+ * @returns {{
+ *   n:number,
+ *   perTeam: Array<object>,             // sorted by pWinCup desc
+ *   perR32Slot: Array<{match,home:[{code,p}],away:[{code,p}]}>,
+ *   modalBracket: Array<{match, home:{code,p}, away:{code,p}}>
+ * }}
+ */
+function monteCarlo(groups, bracket, opts = {}) {
+  const n = opts.n ?? 10000;
+  const seed = opts.seed ?? 1;
+  const rng = makeRng(seed);
+
+  // team metadata
+  const nameByCode = new Map();
+  for (const g of groups) for (const t of g.teams) nameByCode.set(t.code, t.name);
+
+  // per-team counters
+  const C = {}; // code -> counter object
+  const ensure = (code) => {
+    if (!C[code]) {
+      C[code] = {
+        code,
+        name: nameByCode.get(code),
+        winGroup: 0, runnerUp: 0, thirdQualify: 0,
+        reachR32: 0, reachR16: 0, reachQF: 0, reachSF: 0, reachFinal: 0, winCup: 0,
+      };
+    }
+    return C[code];
+  };
+  for (const code of nameByCode.keys()) ensure(code);
+
+  // per-R32-slot tallies: 16 matches x {home: Map<code,count>, away: Map<code,count>}
+  const r32Matches = bracket.rounds.R32.map((m) => m.match);
+  const slotTally = {};
+  for (const mNo of r32Matches) slotTally[mNo] = { home: new Map(), away: new Map() };
+  const inc = (map, code) => map.set(code, (map.get(code) || 0) + 1);
+
+  const simOpts = { ...opts };
+
+  for (let i = 0; i < n; i++) {
+    const r = simulateTournament(groups, bracket, rng, simOpts);
+
+    // group roles
+    for (const [code, role] of Object.entries(r.qualifiedAs)) {
+      if (role === 'winner') C[code].winGroup++;
+      else if (role === 'runnerup') C[code].runnerUp++;
+      else if (role === 'third') C[code].thirdQualify++;
+    }
+
+    // furthest round reached (cumulative: reaching SF implies reached R16, etc.)
+    for (const [code, idx] of Object.entries(r.reached)) {
+      const c = C[code];
+      if (idx >= ROUND_INDEX.R32) c.reachR32++;
+      if (idx >= ROUND_INDEX.R16) c.reachR16++;
+      if (idx >= ROUND_INDEX.QF) c.reachQF++;
+      if (idx >= ROUND_INDEX.SF) c.reachSF++;
+      if (idx >= ROUND_INDEX.Final) c.reachFinal++;
+    }
+    C[r.champion].winCup++;
+
+    // R32 slot occupancy
+    for (const fx of r.r32) {
+      inc(slotTally[fx.match].home, fx.home);
+      inc(slotTally[fx.match].away, fx.away);
+    }
+  }
+
+  const perTeam = Object.values(C)
+    .map((c) => ({
+      code: c.code,
+      name: c.name,
+      pWinGroup: c.winGroup / n,
+      pRunnerUp: c.runnerUp / n,
+      pThirdQualify: c.thirdQualify / n,
+      pReachR32: c.reachR32 / n,
+      pReachR16: c.reachR16 / n,
+      pReachQF: c.reachQF / n,
+      pReachSF: c.reachSF / n,
+      pReachFinal: c.reachFinal / n,
+      pWinCup: c.winCup / n,
+    }))
+    .sort((a, b) => b.pWinCup - a.pWinCup);
+
+  // per-R32-slot distributions (top candidates) + modal bracket
+  const TOP = opts.topCandidates ?? 4;
+  const topOf = (map) =>
+    [...map.entries()]
+      .map(([code, count]) => ({ code, p: count / n }))
+      .sort((a, b) => b.p - a.p);
+
+  const perR32Slot = r32Matches.map((mNo) => {
+    const home = topOf(slotTally[mNo].home);
+    const away = topOf(slotTally[mNo].away);
+    return { match: mNo, home: home.slice(0, TOP), away: away.slice(0, TOP) };
+  });
+
+  const modalBracket = r32Matches.map((mNo) => {
+    const home = topOf(slotTally[mNo].home);
+    const away = topOf(slotTally[mNo].away);
+    return {
+      match: mNo,
+      home: home[0] ?? { code: null, p: 0 },
+      away: away[0] ?? { code: null, p: 0 },
+    };
+  });
+
+  return { n, perTeam, perR32Slot, modalBracket };
+}
+
+
+self.onmessage = function (e) {
+  var d = e.data;
+  var groups = d.groups;
+  // rebuild hostCodes Set (Sets don't survive structured clone of our payload shape)
+  var hostCodes = new Set(d.hostCodes || []);
+  var opts = {
+    n: d.n, seed: d.seed,
+    hostCodes: hostCodes,
+    topCandidates: d.topCandidates || 6,
+    resolveThirdPlaceSlots: function (letters, bracket) {
+      return resolveThirdPlaceSlots(letters, bracket);
+    }
+  };
+  try {
+    var mc = monteCarlo(groups, d.bracket, opts);
+    self.postMessage({ ok: true, mc: mc });
+  } catch (err) {
+    self.postMessage({ ok: false, error: String(err && err.stack || err) });
+  }
+};
+`;
+
+/* ============================================================================
+   APP UI
+   ========================================================================== */
+
+(function(){
+  var DATA = __APP_DATA__;
+  var TEAMS = DATA.teams;
+  var BRACKET = DATA.bracket;
+  var FRESH = DATA.freshness;
+  var HOSTS = ['USA','MEX','CAN'];
+  var SIM_N = 10000;
+  var SIM_SEED = 12345;
+
+  // team lookups
+  var nameByCode = {}, eloByCode = {};
+  TEAMS.forEach(function(t){ nameByCode[t.code]=t.name; eloByCode[t.code]=t.elo; });
+
+  // deterministic-ish color accent per team code (subtle, no flags)
+  function accentFor(code){
+    if(!code) return '#6b7280';
+    var h=0; for(var i=0;i<code.length;i++) h=(h*31+code.charCodeAt(i))>>>0;
+    var hue=h%360; return 'hsl('+hue+',45%,52%)';
+  }
+
+  // ---- working state ----
+  // groups: deep clone we may mutate in My Picks mode (manual scores).
+  function cloneGroups(gs){
+    return gs.map(function(g){
+      return { name:g.name, teams:g.teams.map(function(t){return {code:t.code,name:t.name,elo:t.elo};}),
+        matches:g.matches.map(function(m){return {home:m.home,away:m.away,homeGoals:m.homeGoals,awayGoals:m.awayGoals,played:m.played, manual:m.manual||false};}) };
+    });
+  }
+  var baseGroups = DATA.groups;            // pristine (feed)
+  var workGroups = cloneGroups(baseGroups);// editable in My Picks
+
+  var state = {
+    mode:'projected',          // 'projected' | 'picks'
+    tab:'bracket',             // bracket | groups | scenario
+    mc:null,                   // last monteCarlo result (projected)
+    simming:false,
+    picks:{}                   // matchNo -> winning code (knockout picks)
+  };
+
+  // ---------- formatting ----------
+  function pct(p){ if(p>=0.995) return '99%'; if(p<=0.005&&p>0) return '<1%'; var v=p*100; return (v>=10? Math.round(v): (Math.round(v*10)/10))+'%'; }
+  function pct1(p){ return (Math.round(p*1000)/10).toFixed(1)+'%'; }
+  function esc(s){ return String(s).replace(/[&<>]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;'}[c];}); }
+  function localBuilt(iso){ try{ var d=new Date(iso); return d.toLocaleString(undefined,{month:'short',day:'numeric',hour:'numeric',minute:'2-digit'}); }catch(e){ return iso; } }
+
+  // ---------- group helpers ----------
+  function letterOf(g){ var m=/Group\s+([A-L])/i.exec(g.name); return m?m[1].toUpperCase():g.name.slice(-1); }
+  function groupsForCompute(){ return state.mode==='picks'? workGroups : baseGroups; }
+
+  // ====================================================================
+  // MONTE CARLO (Projected mode) — Web Worker w/ synchronous fallback
+  // ====================================================================
+  var worker=null, workerBroken=false;
+  function buildWorker(){
+    if(worker||workerBroken) return worker;
+    try{
+      var blob=new Blob([__WORKER_SRC__],{type:'text/javascript'});
+      worker=new Worker(URL.createObjectURL(blob));
+    }catch(e){ workerBroken=true; worker=null; }
+    return worker;
+  }
+
+  function runProjection(){
+    state.simming=true; render();
+    var groups=groupsForCompute();
+    var payload={ groups:groups, bracket:BRACKET, n:SIM_N, seed:SIM_SEED,
+      hostCodes:HOSTS, topCandidates:6 };
+    var w=buildWorker();
+    if(w){
+      w.onmessage=function(ev){
+        if(ev.data&&ev.data.ok){ state.mc=ev.data.mc; }
+        else { /* worker failed -> fall back */ workerBroken=true; try{w.terminate();}catch(_){} worker=null; state.mc=syncMonte(groups); }
+        state.simming=false; render();
+      };
+      w.onerror=function(){ workerBroken=true; try{w.terminate();}catch(_){} worker=null;
+        state.mc=syncMonte(groups); state.simming=false; render(); };
+      w.postMessage(payload);
+    } else {
+      // synchronous fallback (briefly blocks UI)
+      setTimeout(function(){ state.mc=syncMonte(groups); state.simming=false; render(); }, 20);
+    }
+  }
+  function syncMonte(groups){
+    return monteCarlo(groups, BRACKET, { n:SIM_N, seed:SIM_SEED,
+      hostCodes:new Set(HOSTS), topCandidates:6, resolveThirdPlaceSlots:resolveThirdPlaceSlots });
+  }
+
+  // ====================================================================
+  // MY PICKS — deterministic resolution of the bracket given current
+  // standings + user-forced knockout winners; unknown remainder via the
+  // modal team from a quick sim (so empty slots still show a likely team).
+  // ====================================================================
+  function deterministicBracket(){
+    // 1. standings from current (possibly edited) groups
+    var groups=groupsForCompute();
+    var winners={}, runners={};
+    groups.forEach(function(g){
+      var L=letterOf(g); var st=computeGroupStanding(g);
+      st.forEach(function(s){ if(s.rank===1) winners[L]=s.code; else if(s.rank===2) runners[L]=s.code; });
+    });
+    // 2. third-place qualification + Annex C (only if all 12 groups complete enough
+    //    to rank thirds; engine handles partials but allocation needs 8 letters)
+    var thirdByLetter={}, thirdSlots=null, allocOK=false;
+    try{
+      var thirds=rankThirdPlaceTeams(groups);
+      var qualLetters=[];
+      thirds.filter(function(t){return t.qualifies;}).forEach(function(t){
+        var L=/Group\s+([A-L])/i.exec(t.group)[1].toUpperCase();
+        thirdByLetter[L]=t.code; qualLetters.push(L);
+      });
+      if(qualLetters.length===8){
+        thirdSlots=resolveThirdPlaceSlots(qualLetters, BRACKET); allocOK=true;
+      }
+    }catch(e){ allocOK=false; }
+    var thirdForMatch={};
+    if(allocOK&&thirdSlots){ thirdSlots.forEach(function(s){ thirdForMatch[s.match]=thirdByLetter[s.group]; }); }
+
+    // group-stage completeness: every group match played?
+    var allGroupDone = groups.every(function(g){ return g.matches.every(function(m){return m.played;}); });
+
+    function slotCode(side, matchNo){
+      if(side.type==='winner') return winners[side.group]||null;
+      if(side.type==='runnerup') return runners[side.group]||null;
+      if(side.type==='third') return thirdForMatch[matchNo]||null;
+      return null;
+    }
+
+    // R32 fixtures (known where group complete)
+    var slotByMatch={}; // matchNo -> {home,away}
+    BRACKET.rounds.R32.forEach(function(m){
+      slotByMatch[m.match]={ home:slotCode(m.home,m.match), away:slotCode(m.away,m.match) };
+    });
+
+    // winner of each match: user pick overrides; else null (unknown)
+    var winnerOf={};
+    function resolveWinner(matchNo){
+      if(state.picks[matchNo]) return state.picks[matchNo];
+      return null;
+    }
+    // propagate through rounds
+    var order=['R32','R16','QF','SF','Final'];
+    order.forEach(function(rd){
+      (BRACKET.rounds[rd]||[]).forEach(function(m){
+        if(rd!=='R32'){
+          var h=m.home.type==='winnerOf'? winnerOf[m.home.match] : null;
+          var a=m.away.type==='winnerOf'? winnerOf[m.away.match] : null;
+          slotByMatch[m.match]={ home:h, away:a };
+        }
+        winnerOf[m.match]=resolveWinner(m.match);
+      });
+    });
+
+    return { slotByMatch:slotByMatch, winnerOf:winnerOf, allGroupDone:allGroupDone, allocOK:allocOK };
+  }
+
+  // ====================================================================
+  // RENDER
+  // ====================================================================
+  var root=document.getElementById('app');
+
+  function render(){
+    root.innerHTML='';
+    root.appendChild(header());
+    root.appendChild(controls());
+    var s;
+    if(state.tab==='bracket') s=renderBracket();
+    else if(state.tab==='groups') s=renderGroups();
+    else s=renderScenario();
+    root.appendChild(s);
+    root.appendChild(about());
+
+    // kick a projection if needed
+    if(state.mode==='projected' && state.tab!=='scenario' && !state.mc && !state.simming){
+      runProjection();
+    }
+  }
+
+  function header(){
+    var d=document.createElement('div');
+    var note = 'Very-recently-finished or in-progress games may not yet be in the feed — switch to My Picks to enter a just-final result by hand.';
+    d.innerHTML =
+      '<h1>2026 World Cup &mdash; Bracket Projector</h1>'+
+      '<div class="muted tiny">Elo&ndash;Poisson supremacy model &middot; '+SIM_N.toLocaleString()+' Monte-Carlo sims &middot; data via openfootball</div>'+
+      '<div class="fresh"><div><b>Data through:</b> '+esc(FRESH.dataThrough)+
+        ' &middot; '+FRESH.playedCount+'/'+FRESH.totalCount+' matches played &middot; built '+esc(localBuilt(FRESH.builtAtISO))+'</div>'+
+        '<div class="note">'+note+'</div></div>';
+    return d;
+  }
+
+  function controls(){
+    var wrap=document.createElement('div');
+    // mode toggle
+    var seg=document.createElement('div'); seg.className='row';
+    seg.innerHTML='<span class="seg">'+
+      '<button data-m="projected" class="'+(state.mode==='projected'?'on':'')+'">Projected</button>'+
+      '<button data-m="picks" class="'+(state.mode==='picks'?'on':'')+'">My Picks</button></span>'+
+      '<span class="spacer"></span>';
+    if(state.mode==='picks'){
+      var rb=document.createElement('button'); rb.className='btn warn'; rb.textContent='Reset picks';
+      rb.onclick=function(){ state.picks={}; workGroups=cloneGroups(baseGroups); state.mc=null; render(); };
+      seg.appendChild(rb);
+    }
+    Array.prototype.forEach.call(seg.querySelectorAll('button[data-m]'),function(b){
+      b.onclick=function(){ state.mode=b.getAttribute('data-m'); if(state.mode==='projected'){ state.mc=null; } render(); };
+    });
+    wrap.appendChild(seg);
+
+    // tabs
+    var tabs=document.createElement('div'); tabs.className='tabbar';
+    [['bracket','Knockout bracket'],['groups','Group stage'],['scenario','Scenario calculator']].forEach(function(t){
+      var b=document.createElement('button'); b.className='tab'+(state.tab===t[0]?' active':'');
+      b.textContent=t[1]; b.onclick=function(){ state.tab=t[0]; render(); };
+      tabs.appendChild(b);
+    });
+    wrap.appendChild(tabs);
+    return wrap;
+  }
+
+  // ---------------- BRACKET ----------------
+  function renderBracket(){
+    var sec=document.createElement('div'); sec.className='section active';
+    if(state.mode==='projected'){
+      var bar=document.createElement('div'); bar.className='row tiny muted';
+      if(state.simming){ bar.innerHTML='<span class="simstate"><span class="spinner"></span> simulating '+SIM_N.toLocaleString()+' tournaments&hellip;</span>'; }
+      else { bar.innerHTML='<span>Each slot shows the most-likely team and the share of sims it appears there. Tap a slot for the top candidates.</span>'; }
+      sec.appendChild(bar);
+      if(!state.mc){ if(!state.simming){ var p=document.createElement('div'); p.className='muted'; p.textContent='Preparing simulation…'; sec.appendChild(p);} sec.appendChild(bracketShell(null)); return sec; }
+      sec.appendChild(bracketShell(state.mc));
+    } else {
+      var info=document.createElement('div'); info.className='callout';
+      info.innerHTML='<b>My Picks.</b> Group results below feed the R32; tap any knockout slot to choose who advances. Edit group scores in the Group stage tab. Empty slots stay blank until the groups (or your picks) decide them.';
+      sec.appendChild(info);
+      sec.appendChild(bracketShell(null));
+    }
+    return sec;
+  }
+
+  function bracketShell(mc){
+    // build per-match modal occupant maps from mc (projected) or deterministic (picks)
+    var det = state.mode==='picks'? deterministicBracket() : null;
+    var slotMap={};   // R32 matchNo -> {home:[cands], away:[cands]}
+    _winPoolCache={};
+    if(mc){
+      mc.perR32Slot.forEach(function(s){ slotMap[s.match]={ home:s.home, away:s.away }; });
+    }
+
+    var wrap=document.createElement('div'); wrap.className='bracket-wrap';
+    var br=document.createElement('div'); br.className='bracket';
+
+    var rounds=[['R32','Round of 32'],['R16','Round of 16'],['QF','Quarter-finals'],['SF','Semi-finals'],['Final','Final']];
+    rounds.forEach(function(rd){
+      var col=document.createElement('div'); col.className='col'+(rd[0]==='Final'?' final-col':'');
+      var h=document.createElement('h3'); h.textContent=rd[1]; col.appendChild(h);
+      (BRACKET.rounds[rd[0]]||[]).forEach(function(m){
+        col.appendChild(matchCard(rd[0], m, mc, slotMap, det));
+      });
+      br.appendChild(col);
+    });
+    wrap.appendChild(br);
+    return wrap;
+  }
+
+  function matchCard(round, m, mc, slotMap, det){
+    var card=document.createElement('div'); card.className='match';
+    var hdr=document.createElement('div'); hdr.className='mhdr'; hdr.textContent='M'+m.match;
+    card.appendChild(hdr);
+
+    // determine the two slots
+    var homeInfo, awayInfo;
+    if(state.mode==='projected' && mc){
+      if(round==='R32'){
+        var sm=slotMap[m.match];
+        homeInfo=projSlot(sm?sm.home:null);
+        awayInfo=projSlot(sm?sm.away:null);
+      } else {
+        // R16+ : aggregate the candidate pool feeding each side, normalized.
+        homeInfo=projWinnerOf(m.home, slotMap);
+        awayInfo=projWinnerOf(m.away, slotMap);
+      }
+    } else if(state.mode==='picks'){
+      var d=det.slotByMatch[m.match]||{};
+      homeInfo=pickSlot(d.home, m.match, round, 'home', m);
+      awayInfo=pickSlot(d.away, m.match, round, 'away', m);
+    } else {
+      homeInfo={code:null,p:0}; awayInfo={code:null,p:0};
+    }
+
+    card.appendChild(slotEl(homeInfo, round, m, 'home'));
+    card.appendChild(slotEl(awayInfo, round, m, 'away'));
+    return card;
+  }
+
+  // cache: aggregated candidate pool for the WINNER of a given match number.
+  var _winPoolCache={};
+  function projSlot(info){
+    if(!info||!info.length) return {code:null,p:0,cands:[]};
+    var top=info[0]||{};
+    return {code:top.code||null, p:top.p||0, cands:info};
+  }
+
+  // R16+ projected: the winner of a feeding match comes from the union of the
+  // R32 occupants beneath it. We aggregate each candidate's R32-appearance
+  // probability, then RENORMALIZE within the pool to express "given this slot is
+  // reached, which team is most likely here." This is a glanceable approximation
+  // (it ignores match-by-match win probability), surfaced honestly in About.
+  function projWinnerOf(side, slotMap){
+    var pool=winnerPool(side, slotMap);
+    if(!pool.length) return {code:null,p:0,cands:[]};
+    var tot=0; pool.forEach(function(c){tot+=c.p;});
+    var norm=pool.map(function(c){return {code:c.code,p:tot>0?c.p/tot:0};})
+      .sort(function(a,b){return b.p-a.p;});
+    return {code:norm[0].code,p:norm[0].p,cands:norm.slice(0,6)};
+  }
+  function winnerPool(side, slotMap){
+    if(side.type!=='winnerOf') return [];
+    if(_winPoolCache[side.match]) return _winPoolCache[side.match];
+    var fm=findMatch(side.match);
+    var pool;
+    if(isR32(side.match)){
+      // leaf: combine this match's two R32 candidate slots
+      var sm=slotMap[side.match]||{home:[],away:[]};
+      pool=mergeCands((sm.home||[]),(sm.away||[]));
+    } else {
+      pool=mergeCands(winnerPool(fm.home, slotMap), winnerPool(fm.away, slotMap));
+    }
+    _winPoolCache[side.match]=pool;
+    return pool;
+  }
+  function mergeCands(a,b){
+    var m={}; [a,b].forEach(function(arr){ (arr||[]).forEach(function(c){ if(c&&c.code) m[c.code]=(m[c.code]||0)+(c.p||0); }); });
+    return Object.keys(m).map(function(k){return {code:k,p:m[k]};});
+  }
+  function isR32(no){ return BRACKET.rounds.R32.some(function(x){return x.match===no;}); }
+  function findMatch(no){
+    var all=[].concat(BRACKET.rounds.R32,BRACKET.rounds.R16,BRACKET.rounds.QF,BRACKET.rounds.SF,BRACKET.rounds.Final);
+    return all.filter(function(x){return x.match===no;})[0];
+  }
+
+  function pickSlot(code, matchNo, round, side, m){
+    return {code:code||null, p:0, known:!!code};
+  }
+
+  function slotEl(info, round, m, side){
+    var el=document.createElement('div'); el.className='slot'+(info.code?'':' empty');
+    if(state.mode==='picks' && state.picks[m.match] && state.picks[m.match]===info.code){ el.className+=' winner-row'; }
+    var code=info.code;
+    var acc=document.createElement('div'); acc.className='accent'; acc.style.background=accentFor(code);
+    el.appendChild(acc);
+    var c=document.createElement('div'); c.className='code'; c.textContent=code||'—'; el.appendChild(c);
+    var nm=document.createElement('div'); nm.className='nm'; nm.textContent=code?(nameByCode[code]||''):'TBD'; el.appendChild(nm);
+    var pe=document.createElement('div'); pe.className='p';
+    if(state.mode==='projected' && code){ pe.textContent=pct(info.p); }
+    el.appendChild(pe);
+
+    if(state.mode==='projected'){
+      el.onclick=function(ev){ if(info.cands&&info.cands.length) showCandidates(ev, info.cands, m.match, side); };
+    } else {
+      // My Picks: clicking a slot picks that team to advance from this match
+      el.onclick=function(){ if(code){ state.picks[m.match]=code; render(); } };
+      if(code){ el.title='Click to advance '+(nameByCode[code]||code); }
+    }
+    return el;
+  }
+
+  function showCandidates(ev, cands, matchNo, side){
+    closePop();
+    var pop=document.createElement('div'); pop.className='pop';
+    pop.innerHTML='<span class="x">&times;</span><h4>M'+matchNo+' &middot; '+side+' slot &mdash; top candidates</h4>';
+    cands.slice(0,5).forEach(function(c){
+      if(!c||!c.code) return;
+      var row=document.createElement('div'); row.className='cand';
+      row.innerHTML='<span class="code" style="color:'+accentFor(c.code)+'">'+c.code+'</span>'+
+        '<span class="nm">'+esc(nameByCode[c.code]||'')+'</span>'+
+        '<span class="p">'+pct1(c.p)+'</span>';
+      pop.appendChild(row);
+    });
+    pop.querySelector('.x').onclick=closePop;
+    document.body.appendChild(pop);
+    var x=Math.min(ev.clientX, window.innerWidth-pop.offsetWidth-10);
+    var y=Math.min(ev.clientY+8, window.innerHeight-pop.offsetHeight-10);
+    pop.style.left=Math.max(8,x)+'px'; pop.style.top=Math.max(8,y)+'px';
+    setTimeout(function(){ document.addEventListener('click', outsidePop, {once:true}); },0);
+  }
+  function outsidePop(e){ var p=document.querySelector('.pop'); if(p&&!p.contains(e.target)) closePop(); }
+  function closePop(){ var p=document.querySelector('.pop'); if(p) p.remove(); }
+
+  // ---------------- GROUP STAGE ----------------
+  function renderGroups(){
+    var sec=document.createElement('div'); sec.className='section active';
+    if(state.mode==='picks'){
+      var note=document.createElement('div'); note.className='callout';
+      note.innerHTML='Edit any <b>unplayed</b> match score below (steppers) to recompute standings, the 3rd-place table, the Annex&nbsp;C allocation, and the bracket live. You can also <b>add a not-yet-in-feed result</b> by hand at the bottom of a group.';
+      sec.appendChild(note);
+    }
+    var grid=document.createElement('div'); grid.className='groups-grid';
+    var gs=groupsForCompute();
+    gs.forEach(function(g){ grid.appendChild(groupCard(g)); });
+    sec.appendChild(grid);
+    sec.appendChild(thirdsPanel(gs));
+    return sec;
+  }
+
+  function groupCard(g){
+    var card=document.createElement('div'); card.className='gcard';
+    var st=computeGroupStanding(g);
+    var h=document.createElement('h3'); h.textContent=g.name; card.appendChild(h);
+    var t=document.createElement('table');
+    t.innerHTML='<thead><tr><th>#</th><th>Team</th><th>P</th><th>W</th><th>D</th><th>L</th><th>GF</th><th>GA</th><th>GD</th><th>Pts</th></tr></thead>';
+    var tb=document.createElement('tbody');
+    st.forEach(function(s){
+      var tr=document.createElement('tr'); if(s.rank<=2) tr.className='q'+s.rank;
+      var lots=s.tiedByLots?' <span class="lots" title="Level on all criteria incl. fair-play — separated only by drawing of lots (a real coin-flip)">⚖</span>':'';
+      tr.innerHTML='<td>'+s.rank+'</td>'+
+        '<td><span style="color:'+accentFor(s.code)+';font-weight:700">'+s.code+'</span> <span class="muted tiny">'+esc(s.name)+'</span>'+lots+'</td>'+
+        '<td>'+s.played+'</td><td>'+s.won+'</td><td>'+s.drawn+'</td><td>'+s.lost+'</td>'+
+        '<td>'+s.gf+'</td><td>'+s.ga+'</td><td>'+(s.gd>0?'+':'')+s.gd+'</td><td><b>'+s.points+'</b></td>';
+      tb.appendChild(tr);
+    });
+    t.appendChild(tb); card.appendChild(t);
+
+    if(state.mode==='picks'){
+      // editors for each match
+      g.matches.forEach(function(m){ card.appendChild(matchEditor(g,m)); });
+      card.appendChild(manualAdd(g));
+    }
+    return card;
+  }
+
+  function matchEditor(g,m){
+    var row=document.createElement('div'); row.className='editor'+(m.played?' played':'');
+    var hg=(m.homeGoals==null?0:m.homeGoals), ag=(m.awayGoals==null?0:m.awayGoals);
+    function stepper(val, onCh){
+      var s=document.createElement('span'); s.className='stepper';
+      var dec=document.createElement('button'); dec.textContent='−';
+      var inp=document.createElement('input'); inp.type='number'; inp.min='0'; inp.value=val;
+      var inc=document.createElement('button'); inc.textContent='+';
+      dec.onclick=function(){ var v=Math.max(0,(+inp.value||0)-1); inp.value=v; onCh(v); };
+      inc.onclick=function(){ var v=Math.max(0,(+inp.value||0)+1); inp.value=v; onCh(v); };
+      inp.onchange=function(){ var v=Math.max(0,Math.floor(+inp.value||0)); inp.value=v; onCh(v); };
+      s.appendChild(dec); s.appendChild(inp); s.appendChild(inc); return s;
+    }
+    var lblH=document.createElement('span'); lblH.className='lbl'; lblH.style.color=accentFor(m.home); lblH.textContent=m.home;
+    var lblA=document.createElement('span'); lblA.className='lbl'; lblA.style.color=accentFor(m.away); lblA.textContent=m.away;
+    var newH=hg, newA=ag;
+    function commit(){ m.homeGoals=newH; m.awayGoals=newA; m.played=true; state.mc=null; render(); }
+    row.appendChild(lblH);
+    row.appendChild(stepper(hg,function(v){newH=v;commit();}));
+    var vs=document.createElement('span'); vs.className='vs'; vs.textContent=':'; row.appendChild(vs);
+    row.appendChild(stepper(ag,function(v){newA=v;commit();}));
+    row.appendChild(lblA);
+    var tag=document.createElement('span'); tag.className='tag';
+    tag.textContent = m.played? (m.manual?'manual':'played') : 'projected→edit';
+    row.appendChild(tag);
+    if(m.played){
+      var clr=document.createElement('button'); clr.className='btn tiny'; clr.style.padding='2px 6px'; clr.textContent='clear';
+      clr.onclick=function(){ m.played=false; m.homeGoals=null; m.awayGoals=null; m.manual=false; state.mc=null; render(); };
+      row.appendChild(clr);
+    }
+    return row;
+  }
+
+  function manualAdd(g){
+    // Allow entering a just-finished real result that isn't in the feed yet,
+    // for any pairing in the group that doesn't already have a match row.
+    var wrap=document.createElement('div'); wrap.className='manual-add tiny muted';
+    wrap.textContent='All '+g.teams.length+' teams’ fixtures are listed above. Use a row’s steppers to enter a final score the feed hasn’t picked up yet (it will be tagged “manual”).';
+    return wrap;
+  }
+
+  function thirdsPanel(gs){
+    var panel=document.createElement('div'); panel.className='thirds';
+    var h=document.createElement('h3'); h.style.margin='2px 0 6px'; h.style.fontSize='14px';
+    h.textContent='Third-place ranking (top 8 advance)'; panel.appendChild(h);
+    var ranked;
+    try{ ranked=rankThirdPlaceTeams(gs); }
+    catch(e){ var er=document.createElement('div'); er.className='muted tiny'; er.textContent='Third-place ranking unavailable: '+e.message; panel.appendChild(er); return panel; }
+    ranked.forEach(function(t,i){
+      if(i===8){ var cut=document.createElement('div'); cut.className='cut'; cut.innerHTML='<span>cut line</span>'; panel.appendChild(cut); }
+      var row=document.createElement('div'); row.className='trow'+(t.qualifies?' qual':'');
+      var lots=t.tiedByLots?' ⚖':'';
+      row.innerHTML='<span class="g">'+esc(t.group)+'</span>'+
+        '<span class="cd" style="color:'+accentFor(t.code)+'">'+t.code+lots+'</span>'+
+        '<span class="st">'+t.points+' pts &middot; GD '+(t.gd>0?'+':'')+t.gd+' &middot; GF '+t.gf+'</span>';
+      panel.appendChild(row);
+    });
+    return panel;
+  }
+
+  // ---------------- SCENARIO CALCULATOR ----------------
+  function renderScenario(){
+    var sec=document.createElement('div'); sec.className='section active';
+    var gs=baseGroups; // scenarios always against the real feed
+    var callout=document.createElement('div'); callout.className='callout';
+    callout.innerHTML='These are <b>within-group positions</b> (1st/2nd/3rd/4th) and are <b>deterministic</b>. They do <b>not</b> assert 3rd-place qualification or knockout opponents — those are cross-group and shown probabilistically in the bracket.';
+    sec.appendChild(callout);
+
+    // controls: group select + match select
+    var ctrls=document.createElement('div'); ctrls.className='scn-controls';
+    var gsel=document.createElement('select');
+    gs.forEach(function(g){ var o=document.createElement('option'); o.value=letterOf(g); o.textContent=g.name; gsel.appendChild(o); });
+    if(!state.scnGroup) state.scnGroup=letterOf(gs[0]);
+    gsel.value=state.scnGroup;
+    var msel=document.createElement('select');
+    ctrls.appendChild(document.createTextNode('Group: ')); ctrls.appendChild(gsel);
+    ctrls.appendChild(document.createTextNode(' Match: ')); ctrls.appendChild(msel);
+    sec.appendChild(ctrls);
+
+    var out=document.createElement('div'); sec.appendChild(out);
+
+    function curGroup(){ return gs.filter(function(g){return letterOf(g)===state.scnGroup;})[0]; }
+    function key(m){ return m.home+'-'+m.away; }
+
+    function refillMatches(){
+      msel.innerHTML='';
+      var g=curGroup();
+      var unplayed=g.matches.filter(function(m){return !m.played;});
+      if(!unplayed.length){ var o=document.createElement('option'); o.textContent='(all matches played)'; o.value=''; msel.appendChild(o); return; }
+      // detect simultaneous final pair (same date+time) -> not available in feed times here,
+      // so we approximate: if exactly 2 unplayed remain in the group, offer joint mode.
+      unplayed.forEach(function(m){ var o=document.createElement('option'); o.value=key(m); o.textContent=m.home+' v '+m.away; msel.appendChild(o); });
+      if(unplayed.length===2){ var oj=document.createElement('option'); oj.value='JOINT'; oj.textContent='Final round — BOTH games (joint)'; msel.appendChild(oj); msel.value='JOINT'; }
+    }
+
+    function compute(){
+      out.innerHTML='';
+      var g=curGroup();
+      var unplayed=g.matches.filter(function(m){return !m.played;});
+      if(!unplayed.length){ out.innerHTML='<div class="scn-card muted">All matches in '+esc(g.name)+' are played — the group is decided.</div>'; return; }
+      var keys;
+      if(msel.value==='JOINT'){ keys=unplayed.slice(0,2).map(key); }
+      else if(msel.value){ keys=[msel.value]; }
+      else { keys=[key(unplayed[0])]; }
+      var grid;
+      try{ grid=scenarioGrid(g, keys, 6); }
+      catch(e){ out.innerHTML='<div class="scn-card muted">Scenario unavailable: '+esc(e.message)+'</div>'; return; }
+      var card=document.createElement('div'); card.className='scn-card';
+      var head=document.createElement('div'); head.className='scn-note';
+      head.innerHTML=(keys.length===2?'Joint final-round scenario for both remaining matches: '
+        :'Scenario for the next match: ')+'<b>'+esc(grid.matches.join('  +  '))+'</b>';
+      card.appendChild(head);
+      g.teams.forEach(function(team){
+        var s=grid.teams[team.code]; if(!s) return;
+        var row=document.createElement('div'); row.className='scn-team';
+        row.innerHTML='<div class="h"><span class="cd" style="color:'+accentFor(team.code)+'">'+team.code+'</span> <span class="nm">'+esc(team.name)+'</span></div>'+
+          '<div class="desc">'+esc(grid.describe(team.code))+'</div>';
+        card.appendChild(row);
+      });
+      out.appendChild(card);
+    }
+
+    gsel.onchange=function(){ state.scnGroup=gsel.value; refillMatches(); compute(); };
+    msel.onchange=compute;
+    refillMatches(); compute();
+    return sec;
+  }
+
+  // ---------------- ABOUT ----------------
+  function about(){
+    var d=document.createElement('details'); d.className='about';
+    d.innerHTML='<summary>About this model &amp; method</summary>'+
+      '<p><b>Strength signal:</b> soccer Elo ratings (eloratings.net-style). A rating gap maps to expected goal <i>supremacy</i> ('+
+        '~0.0036 goals per Elo point), split into a Poisson mean for each side around a '+
+        'base of 2.6 total goals. Co-host bonus (+80 Elo) for USA/Mexico/Canada.</p>'+
+      '<p><b>Projection:</b> '+SIM_N.toLocaleString()+' Monte-Carlo tournaments. Each unplayed group game is a Poisson scoreline draw; '+
+        'standings use the full FIFA tiebreaker cascade (points → GD → GF → head-to-head → fair-play → drawing of lots). '+
+        'The best 8 third-place teams are mapped into the Round of 32 by FIFA’s Annex C table. '+
+        'Knockout ties go to an Elo-weighted shootout coin.</p>'+
+      '<p><b>Coin-flips are real:</b> a ⚖ marks teams a standing could separate only by drawing of lots — a genuine random draw, '+
+        'which we render deterministically (alphabetical) but flag honestly.</p>'+
+      '<p><b>Data:</b> openfootball/worldcup.json (public domain). '+FRESH.playedCount+' of 104 matches in the build. '+
+        'Re-run the build as games finish to refresh. In-progress or very-recently-final games may lag the feed — use My Picks to enter them by hand.</p>'+
+      '<p class="muted tiny">Within-group positions in the Scenario tab are exact; everything probabilistic (qualification odds, opponents, title odds) is a model estimate, not a guarantee.</p>';
+    return d;
+  }
+
+  // first paint
+  render();
+})();
+
+</script>
+</body>
+</html>
