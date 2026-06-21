@@ -1,5 +1,5 @@
 {
-  "source": "Wikipedia: 2026 FIFA World Cup knockout stage (raw wikitext, action=raw), cross-checked against the embedded {{16TeamBracket}} template. Match numbers and matchups per FIFA WC2026 Regulations Annex (round of 32 schedule).",
+  "source": "R32 + Annex C: Wikipedia raw wikitext, INDEPENDENTLY CONFIRMED against FIFA official regulations PDF + openfootball + ESPN/CBS/Fox (R32 byte-identical; allocation 495/495 exact). R16 matches 91-94 CORRECTED 2026-06-21: Wikipedia had them transposed (M91/M93 and M92/M94 swapped), which misrouted R16 winners into the wrong SF half; fixed to openfootball/ESPN/CBS/Fox venue-anchored order (M91=W76/W78, M92=W79/W80, M93=W83/W84, M94=W81/W82).",
   "thirdPlaceSlotLabels": ["1A", "1B", "1D", "1E", "1G", "1I", "1K", "1L"],
   "rounds": {
     "R32": [
@@ -23,10 +23,10 @@
     "R16": [
       { "match": 89, "home": { "type": "winnerOf", "match": 74 }, "away": { "type": "winnerOf", "match": 77 } },
       { "match": 90, "home": { "type": "winnerOf", "match": 73 }, "away": { "type": "winnerOf", "match": 75 } },
-      { "match": 91, "home": { "type": "winnerOf", "match": 83 }, "away": { "type": "winnerOf", "match": 84 } },
-      { "match": 92, "home": { "type": "winnerOf", "match": 81 }, "away": { "type": "winnerOf", "match": 82 } },
-      { "match": 93, "home": { "type": "winnerOf", "match": 76 }, "away": { "type": "winnerOf", "match": 78 } },
-      { "match": 94, "home": { "type": "winnerOf", "match": 79 }, "away": { "type": "winnerOf", "match": 80 } },
+      { "match": 91, "home": { "type": "winnerOf", "match": 76 }, "away": { "type": "winnerOf", "match": 78 } },
+      { "match": 92, "home": { "type": "winnerOf", "match": 79 }, "away": { "type": "winnerOf", "match": 80 } },
+      { "match": 93, "home": { "type": "winnerOf", "match": 83 }, "away": { "type": "winnerOf", "match": 84 } },
+      { "match": 94, "home": { "type": "winnerOf", "match": 81 }, "away": { "type": "winnerOf", "match": 82 } },
       { "match": 95, "home": { "type": "winnerOf", "match": 86 }, "away": { "type": "winnerOf", "match": 88 } },
       { "match": 96, "home": { "type": "winnerOf", "match": 85 }, "away": { "type": "winnerOf", "match": 87 } }
     ],
