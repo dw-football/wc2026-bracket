@@ -43,13 +43,14 @@ HTML Artifact.
      Never blur the two.
 3. **Python data-refresh step.**
 
-## R32 structure (from FIFA, confirmed)
+## R32 structure
 Group winners A,B,D,E,G,I,K,L draw a best-third-place team. C,F,H,J winners draw
 a runner-up. A 3rd-place team never faces its own group winner.
-- M74 = Winner D (Germany) vs Best-3rd of A/B/C/D/F
-- M79 = Winner E (Mexico)  vs Best-3rd of C/E/F/H/I
-- M81 = Winner I (USA)     vs Best-3rd of B/E/F/I/J
-(USA/Mexico/Germany already group winners → their slots are trivial.)
+⚠️ The exact winner-group→match-number mapping is being parsed programmatically
+from Wikipedia (the web-search summary was self-contradictory — do NOT trust any
+hand-noted M74/M79/M81 mapping). Authoritative version → bracket.json.
+Which group each of USA/Mexico/Germany actually won comes from the openfootball
+data + standings, NOT from memory.
 
 ## FIFA tiebreakers (group stage), in order
 points → goal difference → goals scored → head-to-head (pts, GD, GF among tied)

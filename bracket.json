@@ -1,0 +1,50 @@
+{
+  "source": "Wikipedia: 2026 FIFA World Cup knockout stage (raw wikitext, action=raw), cross-checked against the embedded {{16TeamBracket}} template. Match numbers and matchups per FIFA WC2026 Regulations Annex (round of 32 schedule).",
+  "thirdPlaceSlotLabels": ["1A", "1B", "1D", "1E", "1G", "1I", "1K", "1L"],
+  "rounds": {
+    "R32": [
+      { "match": 73, "home": { "type": "runnerup", "group": "A" }, "away": { "type": "runnerup", "group": "B" } },
+      { "match": 74, "home": { "type": "winner", "group": "E" }, "away": { "type": "third", "from": ["A", "B", "C", "D", "F"] } },
+      { "match": 75, "home": { "type": "winner", "group": "F" }, "away": { "type": "runnerup", "group": "C" } },
+      { "match": 76, "home": { "type": "winner", "group": "C" }, "away": { "type": "runnerup", "group": "F" } },
+      { "match": 77, "home": { "type": "winner", "group": "I" }, "away": { "type": "third", "from": ["C", "D", "F", "G", "H"] } },
+      { "match": 78, "home": { "type": "runnerup", "group": "E" }, "away": { "type": "runnerup", "group": "I" } },
+      { "match": 79, "home": { "type": "winner", "group": "A" }, "away": { "type": "third", "from": ["C", "E", "F", "H", "I"] } },
+      { "match": 80, "home": { "type": "winner", "group": "L" }, "away": { "type": "third", "from": ["E", "H", "I", "J", "K"] } },
+      { "match": 81, "home": { "type": "winner", "group": "D" }, "away": { "type": "third", "from": ["B", "E", "F", "I", "J"] } },
+      { "match": 82, "home": { "type": "winner", "group": "G" }, "away": { "type": "third", "from": ["A", "E", "H", "I", "J"] } },
+      { "match": 83, "home": { "type": "runnerup", "group": "K" }, "away": { "type": "runnerup", "group": "L" } },
+      { "match": 84, "home": { "type": "winner", "group": "H" }, "away": { "type": "runnerup", "group": "J" } },
+      { "match": 85, "home": { "type": "winner", "group": "B" }, "away": { "type": "third", "from": ["E", "F", "G", "I", "J"] } },
+      { "match": 86, "home": { "type": "winner", "group": "J" }, "away": { "type": "runnerup", "group": "H" } },
+      { "match": 87, "home": { "type": "winner", "group": "K" }, "away": { "type": "third", "from": ["D", "E", "I", "J", "L"] } },
+      { "match": 88, "home": { "type": "runnerup", "group": "D" }, "away": { "type": "runnerup", "group": "G" } }
+    ],
+    "R16": [
+      { "match": 89, "home": { "type": "winnerOf", "match": 74 }, "away": { "type": "winnerOf", "match": 77 } },
+      { "match": 90, "home": { "type": "winnerOf", "match": 73 }, "away": { "type": "winnerOf", "match": 75 } },
+      { "match": 91, "home": { "type": "winnerOf", "match": 83 }, "away": { "type": "winnerOf", "match": 84 } },
+      { "match": 92, "home": { "type": "winnerOf", "match": 81 }, "away": { "type": "winnerOf", "match": 82 } },
+      { "match": 93, "home": { "type": "winnerOf", "match": 76 }, "away": { "type": "winnerOf", "match": 78 } },
+      { "match": 94, "home": { "type": "winnerOf", "match": 79 }, "away": { "type": "winnerOf", "match": 80 } },
+      { "match": 95, "home": { "type": "winnerOf", "match": 86 }, "away": { "type": "winnerOf", "match": 88 } },
+      { "match": 96, "home": { "type": "winnerOf", "match": 85 }, "away": { "type": "winnerOf", "match": 87 } }
+    ],
+    "QF": [
+      { "match": 97, "home": { "type": "winnerOf", "match": 89 }, "away": { "type": "winnerOf", "match": 90 } },
+      { "match": 98, "home": { "type": "winnerOf", "match": 93 }, "away": { "type": "winnerOf", "match": 94 } },
+      { "match": 99, "home": { "type": "winnerOf", "match": 91 }, "away": { "type": "winnerOf", "match": 92 } },
+      { "match": 100, "home": { "type": "winnerOf", "match": 95 }, "away": { "type": "winnerOf", "match": 96 } }
+    ],
+    "SF": [
+      { "match": 101, "home": { "type": "winnerOf", "match": 97 }, "away": { "type": "winnerOf", "match": 98 } },
+      { "match": 102, "home": { "type": "winnerOf", "match": 99 }, "away": { "type": "winnerOf", "match": 100 } }
+    ],
+    "ThirdPlace": [
+      { "match": 103, "home": { "type": "loserOf", "match": 101 }, "away": { "type": "loserOf", "match": 102 } }
+    ],
+    "Final": [
+      { "match": 104, "home": { "type": "winnerOf", "match": 101 }, "away": { "type": "winnerOf", "match": 102 } }
+    ]
+  }
+}
