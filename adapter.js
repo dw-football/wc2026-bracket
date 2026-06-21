@@ -139,6 +139,8 @@ export function toGroups(raw, teamsTable) {
       homeGoals: played ? m.score.ft[0] : null,
       awayGoals: played ? m.score.ft[1] : null,
       played,
+      date: m.date ?? null,
+      time: m.time ?? null,
     });
   }
 

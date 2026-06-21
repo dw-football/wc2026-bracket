@@ -672,7 +672,9 @@ const APP_JS = String.raw`
   // Picks: deterministic occupant (p=0, no candidates), user override aware.
   function buildSlotInfo(mc, det){
     var info={}; // matchNo -> {home:{code,p,cands,known,picked}, away:{...}}
-    var rounds=['R32','R16','QF','SF','Final'];
+    // include ThirdPlace (M103) so the 3rd-place playoff box resolves too;
+    // model.perSlot carries it in projected mode, picks mode leaves it TBD.
+    var rounds=['R32','R16','QF','SF','ThirdPlace','Final'];
     if(state.mode==='projected' && mc){
       var byMatch={}; mc.perSlot.forEach(function(s){ byMatch[s.match]=s; });
       rounds.forEach(function(rd){
@@ -732,14 +734,64 @@ const APP_JS = String.raw`
     t.textContent=str==null?'':String(str); return t;
   }
 
-  // Compute the vertical center of each match. R32 are evenly stacked; each later
-  // round's match centers on the midpoint of its two feeder matches.
+  // Compute the vertical center of each match.
+  //
+  // The bracket must read as a proper single-elimination TREE, traceable
+  // left->right. FIFA match NUMBERS do not run down the tree, so we cannot stack
+  // R32 in 73..88 order — that misaligns every later column with the matches
+  // that feed it. Instead we derive the leaf order from the tree itself:
+  //
+  //   - Build a match lookup across all rounds.
+  //   - From the Final (the root) walk down each winnerOf reference, taking the
+  //     HOME subtree before the AWAY subtree (in-order DFS). The R32 matches are
+  //     the leaves; the order they're visited IS their top->bottom order.
+  //   - Stack the 16 R32 leaves evenly in that order; every internal match then
+  //     centers on the midpoint of its two children (recursively).
+  //
+  // This is fully data-driven: if bracket.json changes, the layout follows.
+  function buildMatchIndex(){
+    var idx={};
+    Object.keys(BRACKET.rounds).forEach(function(rd){
+      (BRACKET.rounds[rd]||[]).forEach(function(m){ idx[m.match]=m; });
+    });
+    return idx;
+  }
+
+  // In-order DFS from a root match, home subtree before away, collecting the
+  // R32 leaf match numbers in top->bottom order.
+  function r32LeafOrder(idx, rootMatch){
+    var r32set={};
+    BRACKET.rounds.R32.forEach(function(m){ r32set[m.match]=true; });
+    var order=[];
+    function walk(matchNo){
+      if(r32set[matchNo]){ order.push(matchNo); return; }
+      var m=idx[matchNo]; if(!m) return;
+      [m.home, m.away].forEach(function(side){
+        if(side && side.type==='winnerOf') walk(side.match);
+      });
+    }
+    walk(rootMatch);
+    return order;
+  }
+
   function computeLayout(){
     var cy={}; // matchNo -> center y (within drawing area, before TITLE offset)
     var unit=MATCH_H+MATCH_GAP;
+    var idx=buildMatchIndex();
     var r32=BRACKET.rounds.R32;
-    r32.forEach(function(m,i){ cy[m.match]=PAD_Y + i*unit + MATCH_H/2; });
-    function feeders(side){ return side.type==='winnerOf'? side.match : null; }
+
+    // Tree-position order of the R32 leaves (root = the Final).
+    var rootMatch=(BRACKET.rounds.Final[0]||{}).match;
+    var leafOrder=r32LeafOrder(idx, rootMatch);
+    // Fallback: if traversal didn't cover all leaves (malformed data), append the
+    // rest in array order so nothing vanishes.
+    if(leafOrder.length<r32.length){
+      var seen={}; leafOrder.forEach(function(n){ seen[n]=true; });
+      r32.forEach(function(m){ if(!seen[m.match]) leafOrder.push(m.match); });
+    }
+    leafOrder.forEach(function(matchNo,i){ cy[matchNo]=PAD_Y + i*unit + MATCH_H/2; });
+
+    function feeders(side){ return side&&side.type==='winnerOf'? side.match : null; }
     ['R16','QF','SF','Final'].forEach(function(rd){
       (BRACKET.rounds[rd]||[]).forEach(function(m){
         var a=feeders(m.home), b=feeders(m.away);
@@ -749,7 +801,7 @@ const APP_JS = String.raw`
       });
     });
     var totalH=PAD_Y + r32.length*unit - MATCH_GAP + PAD_Y;
-    return { cy:cy, totalH:totalH };
+    return { cy:cy, totalH:totalH, leafOrder:leafOrder };
   }
 
   function colX(ci){ return PAD_X + ci*(COL_W+COL_GAP); }
@@ -806,6 +858,18 @@ const APP_JS = String.raw`
       });
     });
 
+    // 3rd-place playoff (M103 = losers of the two semis): drawn small and
+    // unobtrusively below the Final column so it never distorts the main tree.
+    var tp=(BRACKET.rounds.ThirdPlace||[])[0];
+    if(tp){
+      var finalCi=ROUNDS.length-1;
+      var tx=colX(finalCi);
+      var ty=TITLE_H + lay.totalH - PAD_Y - MATCH_H; // just above the bottom pad
+      svg.appendChild(svgText(tx+Math.round(4*_PS), ty-Math.round(15*_PS), '3rd place',
+        { fill:'#9aa3b2','font-size':String(FS(10)),'font-weight':'700' }));
+      svg.appendChild(thirdPlaceGroup(tp, tx, ty, slotInfo[tp.match]||{}));
+    }
+
     return svg;
   }
 
@@ -821,6 +885,20 @@ const APP_JS = String.raw`
       stroke:'#2a2f3a','stroke-width':'1' }));
     g.appendChild(slotGroup(round, m, 'home', info.home||{code:null,p:0}, x, top));
     g.appendChild(slotGroup(round, m, 'away', info.away||{code:null,p:0}, x, top+SLOT_H));
+    return g;
+  }
+
+  // 3rd-place playoff box — same structure as a regular match box but visually
+  // muted (dashed border) so it reads as an aside, not part of the main tree.
+  function thirdPlaceGroup(m, x, top, info){
+    var g=svgEl('g',{});
+    g.appendChild(svgText(x+Math.round(4*_PS), top-Math.round(3*_PS), 'M'+m.match, { fill:'#6b7280','font-size':String(FS(9)) }));
+    g.appendChild(svgEl('rect',{ x:x, y:top, width:COL_W, height:MATCH_H, rx:Math.round(6*_PS),
+      fill:'#15181f', stroke:'#2a2f3a','stroke-width':String(_PS),'stroke-dasharray':Math.round(4*_PS)+' '+Math.round(3*_PS) }));
+    g.appendChild(svgEl('line',{ x1:x, y1:top+SLOT_H, x2:x+COL_W, y2:top+SLOT_H,
+      stroke:'#2a2f3a','stroke-width':'1' }));
+    g.appendChild(slotGroup('ThirdPlace', m, 'home', info.home||{code:null,p:0}, x, top));
+    g.appendChild(slotGroup('ThirdPlace', m, 'away', info.away||{code:null,p:0}, x, top+SLOT_H));
     return g;
   }
 
