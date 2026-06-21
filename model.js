@@ -420,6 +420,7 @@ export function monteCarlo(groups, bracket, opts = {}) {
         code,
         name: nameByCode.get(code),
         winGroup: 0, runnerUp: 0, thirdQualify: 0,
+        g1: 0, g2: 0, g3: 0, g4: 0, // full final group-position distribution
         reachR32: 0, reachR16: 0, reachQF: 0, reachSF: 0, reachFinal: 0, winCup: 0,
       };
     }
@@ -457,6 +458,15 @@ export function monteCarlo(groups, bracket, opts = {}) {
       else if (role === 'third') C[code].thirdQualify++;
     }
 
+    // full final group-position distribution (1..4), independent of qualification
+    for (const [code, rk] of Object.entries(r.groupRank)) {
+      const c = C[code];
+      if (rk === 1) c.g1++;
+      else if (rk === 2) c.g2++;
+      else if (rk === 3) c.g3++;
+      else c.g4++;
+    }
+
     // furthest round reached (cumulative: reaching SF implies reached R16, etc.)
     for (const [code, idx] of Object.entries(r.reached)) {
       const c = C[code];
@@ -490,6 +500,10 @@ export function monteCarlo(groups, bracket, opts = {}) {
       pWinGroup: c.winGroup / n,
       pRunnerUp: c.runnerUp / n,
       pThirdQualify: c.thirdQualify / n,
+      pGroup1: c.g1 / n, // full final group-position distribution (Elo model)
+      pGroup2: c.g2 / n,
+      pGroup3: c.g3 / n,
+      pGroup4: c.g4 / n,
       pReachR32: c.reachR32 / n,
       pReachR16: c.reachR16 / n,
       pReachQF: c.reachQF / n,
