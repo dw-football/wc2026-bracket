@@ -1,5 +1,13 @@
 # WC2026 Bracket Projector
 
+## WORKFLOW RULE — localhost first, push only on command
+**NEW FEATURES / code changes: build to `dist/` and let David verify on localhost
+FIRST. Do NOT commit or push to GitHub until David explicitly says to.** Deploying =
+pushing to GitHub Pages, which is live to friends — that's David's call, per change.
+The ONE exception is the **"GO" score-update flow** below, where "GO" itself IS the
+authorization to build + push (score refreshes are pre-approved). Everything else
+(new UI, logic, layout, copy) stops at localhost until David approves the push.
+
 ## RESUME
 Next action: **UPDATE THE TEST SUITE** — `scenario-summary.test.js` and
 `group-situation.test.js` are STALE/FAILING after this session's big scenario-text

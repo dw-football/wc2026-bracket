@@ -190,10 +190,11 @@ async function main() {
     readText('group-situation.js'),
   ]);
 
-  const [teams, bracket, allocation] = await Promise.all([
+  const [teams, bracket, allocation, koSchedule] = await Promise.all([
     loadJSON('teams.json'),
     loadJSON('bracket.json'),
     loadJSON('allocation.json'),
+    loadJSON('knockout-schedule.json'),
   ]);
 
   const raw = await fetchRaw({ refresh });
@@ -248,7 +249,7 @@ async function main() {
   const mcMs = Date.now() - mcT0;
   console.log(`Bake done in ${(mcMs / 1000).toFixed(1)}s  (${(mcMs / BAKE_N * 1000).toFixed(1)} µs/sim)`);
 
-  const data = { teams, bracket, allocation, groups, freshness, bakedMc };
+  const data = { teams, bracket, allocation, groups, freshness, bakedMc, koSchedule };
 
   const html = renderHTML(logicBundle, data);
 
@@ -306,7 +307,8 @@ var __APP_DATA__ = {
   bracket: ${embed(data.bracket)},
   groups: ${embed(data.groups)},
   freshness: ${embed(data.freshness)},
-  bakedMc: ${embed(data.bakedMc)}
+  bakedMc: ${embed(data.bakedMc)},
+  koSchedule: ${embed(data.koSchedule)}
 };
 
 /* ============================================================================
@@ -554,6 +556,7 @@ const APP_JS = String.raw`
   var DATA = __APP_DATA__;
   var TEAMS = DATA.teams;
   var BRACKET = DATA.bracket;
+  var KOSCHED = DATA.koSchedule || {};   // matchNo -> { venue, ground, dateLabel, timeEDT }
   var FRESH = DATA.freshness;
   var BAKED_MC = DATA.bakedMc || null;   // high-n Monte Carlo baked at build time
   var HOSTS = ['USA','MEX','CAN'];
@@ -1014,7 +1017,7 @@ const APP_JS = String.raw`
     var t1=svgText(PAD_X, Math.round(22*_PS), '2026 World Cup — '+(state.mode==='picks'?'My-Picks bracket':'projected bracket'),
       { fill:'#e7eaf0','font-size':String(FS(17)),'font-weight':'700' });
     svg.appendChild(t1);
-    var stamp='data through '+FRESH.dataThrough+' · '+FRESH.playedCount+'/'+FRESH.totalCount+' played · built '+localBuilt(FRESH.builtAtISO);
+    var stamp='data through '+FRESH.dataThrough+' · '+FRESH.playedCount+'/'+FRESH.totalCount+' played · built '+localBuilt(FRESH.builtAtISO)+' · knockout times EDT';
     svg.appendChild(svgText(PAD_X, Math.round(39*_PS), stamp, { fill:'#9aa3b2','font-size':String(FS(11)) }));
 
     // round headers
@@ -1064,10 +1067,23 @@ const APP_JS = String.raw`
     return svg;
   }
 
+  // " venue · date · time" for a knockout match (no EDT suffix — the stamp line
+  // carries a single "all times EDT" note). Empty string if no schedule entry.
+  function koLabel(matchNo){
+    var k=KOSCHED[matchNo]||KOSCHED[String(matchNo)]; if(!k) return '';
+    return [k.venue, k.dateLabel, k.timeEDT].filter(Boolean).join(' · ');
+  }
+  // Append the schedule line to the right of the "M##" header.
+  function matchHeader(g, matchNo, x, top){
+    g.appendChild(svgText(x+Math.round(4*_PS), top-Math.round(3*_PS), 'M'+matchNo, { fill:'#6b7280','font-size':String(FS(9)) }));
+    var lbl=koLabel(matchNo);
+    if(lbl) g.appendChild(svgText(x+Math.round(28*_PS), top-Math.round(3*_PS), lbl, { fill:'#828b9a','font-size':String(FS(8.5)) }));
+  }
+
   function matchGroup(round, m, x, top, info){
     var g=svgEl('g',{});
-    // header (match number) above the box
-    g.appendChild(svgText(x+Math.round(4*_PS), top-Math.round(3*_PS), 'M'+m.match, { fill:'#6b7280','font-size':String(FS(9)) }));
+    // header (match number + venue/date/time) above the box
+    matchHeader(g, m.match, x, top);
     // outer box
     g.appendChild(svgEl('rect',{ x:x, y:top, width:COL_W, height:MATCH_H, rx:Math.round(6*_PS),
       fill:'#1d212b', stroke:'#2a2f3a','stroke-width':String(_PS) }));
@@ -1083,7 +1099,7 @@ const APP_JS = String.raw`
   // muted (dashed border) so it reads as an aside, not part of the main tree.
   function thirdPlaceGroup(m, x, top, info){
     var g=svgEl('g',{});
-    g.appendChild(svgText(x+Math.round(4*_PS), top-Math.round(3*_PS), 'M'+m.match, { fill:'#6b7280','font-size':String(FS(9)) }));
+    matchHeader(g, m.match, x, top);
     g.appendChild(svgEl('rect',{ x:x, y:top, width:COL_W, height:MATCH_H, rx:Math.round(6*_PS),
       fill:'#15181f', stroke:'#2a2f3a','stroke-width':String(_PS),'stroke-dasharray':Math.round(4*_PS)+' '+Math.round(3*_PS) }));
     g.appendChild(svgEl('line',{ x1:x, y1:top+SLOT_H, x2:x+COL_W, y2:top+SLOT_H,
