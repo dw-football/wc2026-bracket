@@ -92,9 +92,14 @@ test('Group L (real data) — verbatim output + invariants', async () => {
     assert.doesNotMatch(s, /clinch top spot/);
   }
 
-  // Elimination triggers must be phrased as a loss for the eliminated side.
+  // "Elimination" triggers describe loss of TOP-2 viability, not tournament
+  // elimination (a best-third berth may still be live — never asserted here).
   const croTrigger = sit.nextRound.triggers.find((s) => s.startsWith('Croatia'));
-  assert.ok(croTrigger && /be eliminated with a loss/.test(croTrigger));
+  assert.ok(croTrigger && /drop out of the top-two race with a loss/.test(croTrigger));
+  // Guard: this module must never assert bare tournament "elimination"/"out".
+  for (const s of sit.nextRound.triggers) {
+    assert.doesNotMatch(s, /be eliminated/);
+  }
 });
 
 // ----------------------------------------------------------------------------
@@ -217,9 +222,11 @@ test('(a) synthetic: team mathematically ELIMINATED with 2 games left', () => {
   const D = sit.teams.find((t) => t.code === 'D');
   const C = sit.teams.find((t) => t.code === 'C');
   assert.equal(D.remaining, 2, 'D has 2 games left');
-  assert.equal(D.status, 'eliminated', 'D is eliminated');
-  assert.equal(C.status, 'eliminated', 'C is eliminated');
-  assert.equal(D.statusLine, 'Eliminated');
+  assert.equal(D.status, 'eliminated', 'D cannot finish top 2 (internal status key)');
+  assert.equal(C.status, 'eliminated', 'C cannot finish top 2 (internal status key)');
+  // Honest wording: "Out of the top two", NOT a bare "Eliminated" (best-third
+  // qualification is cross-group and never asserted by this module).
+  assert.equal(D.statusLine, 'Out of the top two');
   assert.equal(D.magicNumber, null);
 
   // A and B: with both fixed on 7 and the other two maxing at 6, A & B have
@@ -339,6 +346,50 @@ test('(c) synthetic: contention team with hand-computed magic number', () => {
 // ----------------------------------------------------------------------------
 // needLine language lock: no "from its last", floors phrased as results/totals
 // ----------------------------------------------------------------------------
+
+// ----------------------------------------------------------------------------
+// (d) Non-monotone magic number + honest "out of the top two" wording.
+//     Real Group G shape: BEL 0-0 IRN, BEL 1-1 EGY, IRN 2-2 NZL.
+//     Standings: IRN 2, BEL 2, NZL 1, EGY 1. Remaining: BEL-NZL, EGY-IRN, EGY-NZL.
+// ----------------------------------------------------------------------------
+
+test('(d) magic number respects non-monotone safety; never asserts bare elimination', () => {
+  const teams = [team('BEL'), team('IRN'), team('EGY'), team('NZL')];
+  const matches = [
+    mk('BEL', 'IRN', 0, 0, '2026-06-15', '12:00 UTC+0'),
+    mk('BEL', 'EGY', 1, 1, '2026-06-16', '12:00 UTC+0'),
+    mk('IRN', 'NZL', 2, 2, '2026-06-17', '12:00 UTC+0'),
+    mk('BEL', 'NZL', null, null, '2026-06-21', '12:00 UTC+0'),
+    mk('EGY', 'IRN', null, null, '2026-06-21', '15:00 UTC+0'),
+    mk('EGY', 'NZL', null, null, '2026-06-26', '12:00 UTC+0'),
+  ];
+  const sit = groupSituation({ name: 'Group G-like', teams, matches });
+  const EGY = sit.teams.find((t) => t.code === 'EGY');
+
+  // Egypt on 1 pt with 2 to play. Points-safety is NON-MONOTONE: two draws (3 pts)
+  // is tie-safe, but win+loss (4 pts) can finish 3rd behind IRN(5) and BEL(5).
+  // So the guarantee is NOT "two draws" — the magic number is 5 (a win and a draw).
+  assert.equal(EGY.magicNumber, 5, 'Egypt magic number is 5, not 3 (4 pts is unsafe)');
+  assert.match(EGY.needLine, /win and a draw/);
+  // The old false claim must be gone.
+  assert.doesNotMatch(EGY.needLine, /[Tt]wo draws \(or better\) guarantees/);
+
+  // IRN/BEL on 2 with 1 to play: a loss costs them TOP 2 — but they could still
+  // finish 3rd and qualify cross-group, so the wording must be "out of the top
+  // two", never a bare "out"/"eliminated".
+  for (const code of ['IRN', 'BEL']) {
+    const t = sit.teams.find((x) => x.code === code);
+    assert.match(t.needLine, /out of the top two with a loss/, `${code} honest wording`);
+    assert.doesNotMatch(t.needLine, /\beliminated\b/, `${code} never says eliminated`);
+  }
+
+  // Sweep: no needLine in this group may assert a top-2 guarantee that a higher
+  // reachable points total would violate (the bug class), and none may use bare
+  // tournament-elimination language.
+  for (const t of sit.teams) {
+    assert.doesNotMatch(t.needLine, /\beliminated\b/);
+  }
+});
 
 test('needLine never says "from its last" (the confusing-accumulation phrasing)', async () => {
   const teams = JSON.parse(await readFile(new URL('./teams.json', import.meta.url), 'utf8'));

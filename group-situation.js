@@ -247,19 +247,34 @@ function magicAndThreshold(basePts, unplayed, code) {
   const totals = [...byTotal.keys()].sort((a, b) => a - b);
   const maxFinal = totals[totals.length - 1];
 
-  // magicNumber: smallest total whose aggregate is guaranteed-safe (no 'out'
-  // across other combos). If that guarantee includes a tie at the cut, flag it.
+  // magicNumber: the smallest finishing total P such that finishing on >= P
+  // GUARANTEES top 2 — i.e. P AND EVERY reachable total above it are safe (no
+  // losing branch).
+  //
+  // ⚠️ Points-total safety is NOT monotone, so we cannot take the first safe
+  // total bottom-up. A team's remaining games are AGAINST its rivals, so the
+  // PATH to a total matters, not just the total: a draw denies a rival 2 points
+  // while a loss hands them 3. A lower total reached by drawing rivals can be
+  // safe while a HIGHER total reached by beating a minnow but losing to a rival
+  // is not. (Real case: Egypt on 1 pt — two draws → 3 pts is tie-safe, but a
+  // win + a loss → 4 pts can leave them 3rd behind two rivals on 5.) So we
+  // require the WHOLE upper tail to be safe before declaring a guarantee.
   let magicNumber = null;
   let tieAtMagic = false;
-  for (const t of totals) {
-    const a = byTotal.get(t);
-    if (!a.everOut) {           // finishing on t (or above, monotone) is safe
-      magicNumber = t;
-      tieAtMagic = a.everTie && !a.everIn ? true : false;
-      // Note: if everIn true and everOut false, it's an unconditional clinch at t;
-      // a stray tie among higher-total branches doesn't taint the magic line.
-      break;
+  for (let i = 0; i < totals.length; i++) {
+    let tailSafe = true;
+    for (let j = i; j < totals.length; j++) {
+      if (byTotal.get(totals[j]).everOut) { tailSafe = false; break; }
     }
+    if (!tailSafe) continue;    // some reachable total >= this one can still go out
+    const t = totals[i];
+    const a = byTotal.get(t);
+    magicNumber = t;
+    // tieAtMagic: at the threshold total itself, does the guarantee rest only on
+    // a points tie at the cut (could come down to goal difference)? A clean 'in'
+    // branch at that total means the magic line itself is unconditional.
+    tieAtMagic = a.everTie && !a.everIn ? true : false;
+    break;
   }
 
   // eliminationThreshold: smallest total at which top 2 is still REACHABLE
@@ -418,7 +433,7 @@ function addTrigger(out, code, predicate, combos, round, ownResult, playsThisRou
   const verb =
     predicate === 'won' ? 'clinch top spot' :
     predicate === 'clinch' ? 'clinch a top-2 place' :
-    'be eliminated';
+    'drop out of the top-two race';
 
   // Map each combo to (ownResult, otherKey->otherResultLabel).
   const otherMatches = round.filter((r) => r.home !== code && r.away !== code);
@@ -534,7 +549,16 @@ function buildStatusLine(status, mc) {
       }
       return 'Qualified for the Round of 32';
     }
-    case 'eliminated': return 'Eliminated';
+    case 'eliminated': {
+      // Top 2 is gone. That is NOT tournament elimination — a best-third berth
+      // (cross-group) may still be live, so reflect the MC advance odds when we
+      // have them rather than declaring the team dead.
+      if (mc) {
+        const pAdv = mc.pAdvance ?? 0;
+        if (pAdv > 0.005) return `Out of the top two — ${pctMC(pAdv)} to advance as a best-third`;
+      }
+      return 'Out of the top two';
+    }
     default: {
       // Contention: drive a realistic headline from the Monte-Carlo advance odds,
       // never claiming top-2 when it is realistically impossible.
@@ -590,21 +614,26 @@ function resultsForDelta(delta, remaining) {
 }
 
 /**
- * The minimal own result that AVOIDS elimination — i.e. reaching the
- * elimination threshold. Expressed as the negative: what leaves them out.
- * Returns a phrase like "out if winless" / "out without a win" / null.
+ * The minimal own result needed to keep a TOP-2 finish mathematically alive —
+ * i.e. to reach the (top-2) elimination threshold. Expressed as the negative:
+ * what drops the team OUT OF THE TOP TWO.
+ *
+ * ⚠️ HONESTY: this module computes TOP-2 reachability only. Falling below the
+ * threshold means top 2 is gone — NOT that the team is eliminated. A best-third
+ * berth (cross-group, never asserted here) may still be live. So the phrasing
+ * is always "out of the top two", never a bare "out" / "eliminated".
  */
 function eliminationResultPhrase(deltaToFloor, remaining) {
   if (deltaToFloor <= 0) return null; // floor already secured -> no risk of dropping
   if (remaining === 2) {
-    if (deltaToFloor === 3) return 'out without a win';        // need ≥3: winless => out
-    if (deltaToFloor === 6) return 'out unless they win both'; // need both wins to survive
-    if (deltaToFloor === 2) return 'out if they take fewer than two points';
-    if (deltaToFloor === 1) return 'out if winless';
+    if (deltaToFloor === 3) return 'out of the top two without a win';
+    if (deltaToFloor === 6) return 'out of the top two unless they win both';
+    if (deltaToFloor === 2) return 'out of the top two with fewer than two points';
+    if (deltaToFloor === 1) return 'out of the top two if winless';
   }
   if (remaining === 1) {
-    if (deltaToFloor === 3) return 'out with anything less than a win';
-    if (deltaToFloor >= 1) return 'out with a loss';
+    if (deltaToFloor === 3) return 'out of the top two with anything less than a win';
+    if (deltaToFloor >= 1) return 'out of the top two with a loss';
   }
   return null;
 }
@@ -612,7 +641,7 @@ function eliminationResultPhrase(deltaToFloor, remaining) {
 function buildNeedLine(status, mt, remaining, curPts, mc) {
   if (status === 'won-group') return 'Already won the group.';
   if (status === 'qualified') return 'Already through to the knockout round.';
-  if (status === 'eliminated') return 'Cannot finish in the top two; eliminated.';
+  if (status === 'eliminated') return 'Cannot finish in the top two (a best-third place would be its only route through).';
 
   const overall = mc && mc.pAdvance != null ? ` — ${pctMC(mc.pAdvance)} to advance overall` : '';
 
@@ -646,7 +675,7 @@ function buildNeedLine(status, mt, remaining, curPts, mc) {
     const elimPhrase = eliminationResultPhrase(deltaToFloor, remaining);
     floorClause = elimPhrase
       ? `; ${elimPhrase}`
-      : `; out if it finishes below ${mt.eliminationThreshold} points`;
+      : `; out of the top two below ${mt.eliminationThreshold} points`;
   }
 
   return `${safeClause}${floorClause}${overall}.`;

@@ -522,6 +522,47 @@ test('MC: Group D final-round headlines + result-based detail (verbatim sign-off
   );
 });
 
+test('MC: Group A KOR/CZE detail names the OTHER-match condition that splits 3rd vs 4th', async () => {
+  const { groups, mcByCode } = await buildMcByCode();
+  const out = summarizeGroup(groups.find((g) => g.name === 'Group A'), { mcByCode });
+  const kor = out.teams.find((t) => t.code === 'KOR');
+  const cze = out.teams.find((t) => t.code === 'CZE');
+
+  // KOR: 2nd with a win or draw; a LOSS names BOTH sides of the split — 3rd if
+  // Mexico avoid defeat, 4th (out) if Czech beat Mexico.
+  assert.match(kor.detail, /^2nd with a win or draw vs South Africa;/, kor.detail);
+  assert.match(
+    kor.detail,
+    /a loss → 3rd \(\d+% to advance\) if Mexico avoid defeat, 4th \(out\) if Czech Republic beat Mexico\.$/,
+    kor.detail
+  );
+
+  // CZE: a WIN (4 pts) is NOT a guaranteed top-2 and must not say "through". The
+  // 2nd is goal-difference-contingent, so it surfaces honestly as a "2nd, or 3rd"
+  // tie, not a clean "2nd". A DRAW is 3rd if Korea avoid defeat, 4th if South
+  // Africa win.
+  assert.doesNotMatch(cze.detail, /through/, `CZE win must not claim "through": ${cze.detail}`);
+  assert.match(
+    cze.detail,
+    /^A win → 2nd, or 3rd \(\d+% to advance\) if South Africa beat South Korea, 3rd \(\d+% to advance\) if South Korea avoid defeat;/,
+    cze.detail
+  );
+  assert.match(
+    cze.detail,
+    /a draw → 3rd \(\d+% to advance\) if South Korea avoid defeat, 4th \(out\) if South Africa beat South Korea/,
+    cze.detail
+  );
+
+  // RSA: the regression case — a DRAW can finish 3rd (low %) if Mexico beat
+  // Czech, NOT a bare "out". Must show the 3rd with its advance %.
+  const rsa = out.teams.find((t) => t.code === 'RSA');
+  assert.match(
+    rsa.detail,
+    /a draw → 3rd \((?:\d+|<1)% to advance\) if Mexico beat Czech Republic, 4th \(out\) if Czech Republic avoid defeat/,
+    rsa.detail
+  );
+});
+
 test('MC: a team that realistically cannot finish 2nd never has a top-2 headline (Bosnia/Qatar guard)', async () => {
   const { groups, mcByCode } = await buildMcByCode();
   // summarizeGroup is the FINAL-ROUND analyzer (1-2 unplayed). Only sweep those.
@@ -619,17 +660,18 @@ test('MC (a): no detail ever has a "4th" token followed by a parenthetical %', a
   }
 });
 
-test('MC (b): Group E Ivory Coast loss clause = "3rd (N% to advance) or 4th (out)"', async () => {
+test('MC (b): Group E Ivory Coast loss clause conditions the 4th on the other match', async () => {
   const { groups, mcByCode } = await buildMcByCode();
   const out = summarizeGroup(groups.find((g) => g.name === 'Group E'), { mcByCode });
   const civ = out.teams.find((t) => t.code === 'CIV');
   assert.ok(civ, 'CIV must be in Group E');
-  // The loss clause must carry a % on the 3rd token and a BARE "(out)" on 4th.
+  // The loss clause carries a % on the 3rd token, a BARE "(out)" on 4th, and the
+  // CONDITION that drops CIV to 4th (Ecuador beating Germany — the other match).
   const lossSeg = (civ.detail.match(/a loss → [^;.]*/) || [])[0] || '';
   assert.match(
     lossSeg,
-    /3rd \(\d+% to advance\) or 4th \(out\)/,
-    `CIV loss clause must be "3rd (N% to advance) or 4th (out)": ${civ.detail}`
+    /3rd \(\d+% to advance\) if Germany avoid defeat, 4th \(out\) if Ecuador beat Germany/,
+    `CIV loss clause must name both sides of the split: ${civ.detail}`
   );
   // 4th carries NO percent.
   assert.ok(!/4th\s*\([^)]*%/.test(civ.detail), `CIV 4th must be bare: ${civ.detail}`);
@@ -742,23 +784,31 @@ test('MC wording (c): an infinitesimal-2nd team (pTop2<0.5%) has no "2nd" in any
   assert.ok(checked >= 1, 'expected at least one infinitesimal-2nd team (BIH/QAT)');
 });
 
-test('MC wording: Group E verbatim — Ecuador loss = "out", Curaçao draw/loss = "out"', async () => {
+test('MC wording: Group E verbatim — conditioned splits; bare "out" only when truly out', async () => {
   const { groups, mcByCode } = await buildMcByCode();
   const out = summarizeGroup(groups.find((g) => g.name === 'Group E'), { mcByCode });
   const ecu = out.teams.find((t) => t.code === 'ECU');
   const cuw = out.teams.find((t) => t.code === 'CUW');
 
-  // Ecuador's loss clause collapses to a bare "out" (its 3rd-place advance % is
-  // near zero), and the win clause is "through" (advances either way).
+  // Ecuador's loss collapses to a bare "out" (4th). A WIN is not a guaranteed
+  // top-2 (4 pts can still be 3rd), so it reads as a conditioned "2nd, or 3rd
+  // (N%)" / "3rd (N%)" split — never an overstated "through". The draw names
+  // both sides (3rd if Ivory Coast avoid defeat, 4th if Curaçao win).
   const ecuLoss = (ecu.detail.match(/a loss → [^;.]*/) || [])[0] || '';
   assert.equal(ecuLoss, 'a loss → out', `ECU loss clause must be "out": ${ecu.detail}`);
-  assert.match(ecu.detail, /^A win → through;/, `ECU must lead "A win → through": ${ecu.detail}`);
-  // The kept 3rd (draw) still shows its % because it rounds to >= 3%.
-  assert.match(ecu.detail, /a draw → 3rd \(\d+% to advance\) or 4th \(out\)/, ecu.detail);
+  assert.doesNotMatch(ecu.detail, /through/, `ECU win must not claim "through": ${ecu.detail}`);
+  assert.match(ecu.detail, /^A win → 2nd, or 3rd \(\d+% to advance\) if /, `ECU win: ${ecu.detail}`);
+  assert.match(
+    ecu.detail,
+    /a draw → 3rd \(\d+% to advance\) if Ivory Coast avoid defeat, 4th \(out\) if Curaçao beat Ivory Coast/,
+    ecu.detail
+  );
 
-  // Curaçao: only show a 3rd when its advance% >= 3%; here both draw and loss
-  // collapse to "out".
-  assert.equal(cuw.detail, 'A win → through; a draw → out; a loss → out.', cuw.detail);
+  // Curaçao: a win is likewise a conditioned 2nd/3rd split (never "through"),
+  // and both a draw and a loss collapse to "out".
+  assert.doesNotMatch(cuw.detail, /through/, `CUW win must not claim "through": ${cuw.detail}`);
+  assert.match(cuw.detail, /^A win → .*3rd \(\d+% to advance\)/, cuw.detail);
+  assert.match(cuw.detail, /; a draw → out; a loss → out\.$/, cuw.detail);
 });
 
 test('MC wording: Group B Bosnia verbatim — win = "3rd (99% to advance)", no "2nd or 3rd"', async () => {
@@ -776,11 +826,44 @@ test('MC wording: Group B Bosnia verbatim — win = "3rd (99% to advance)", no "
   assert.match(bih.detail, /<0\.1%/, bih.detail);
 });
 
-test('MC wording: Switzerland loss = "through" (never "2nd or 3rd (0%)")', async () => {
+test('MC wording: Switzerland loss = "v through" (virtually, never a bare "through")', async () => {
   const { groups, mcByCode } = await buildMcByCode();
   const out = summarizeGroup(groups.find((g) => g.name === 'Group B'), { mcByCode });
   const sui = out.teams.find((t) => t.code === 'SUI');
   assert.ok(sui, 'SUI must be in Group B');
   const suiLoss = (sui.detail.match(/a loss → [^;.]*/) || [])[0] || '';
-  assert.equal(suiLoss, 'a loss → through', `SUI loss must be "through": ${sui.detail}`);
+  // A loss can still leave SUI 3rd — a 3rd-place berth is cross-group-dependent
+  // and not a proven qualification, so it reads "v through" (virtually), never a
+  // bare "through" (which is reserved for a mathematically locked top-2).
+  assert.equal(suiLoss, 'a loss → v through', `SUI loss must be "v through": ${sui.detail}`);
+});
+
+// "through" (bare) must NEVER attach to a result where 3rd is reachable — that
+// would assert a cross-group qualification we cannot prove. Sweep every
+// final-round detail: any "→ through" segment must come from a top-2-locked
+// result (worst rank <= 2 for that own-result).
+test('MC wording: a bare "→ through" never rides on a result where 3rd is reachable', async () => {
+  const { groups, mcByCode } = await buildMcByCode();
+  const finalRound = groups.filter((g) => {
+    const u = g.matches.filter((m) => !m.played).length;
+    return u >= 1 && u <= 2;
+  });
+  for (const g of finalRound) {
+    const out = summarizeGroup(g, { mcByCode });
+    for (const t of out.teams) {
+      if (!t.detail) continue;
+      // A virtually-but-not-certainly-through result uses "v through"; a proven
+      // one uses bare "through". We only assert the negative form is well-formed:
+      // there is never a "3rd" token glued to a "through" claim in one segment.
+      const segs = (t.detail.match(/→ [^;.]*/g) || []);
+      for (const s of segs) {
+        if (/\bthrough\b/.test(s) && !/v through/.test(s)) {
+          assert.ok(
+            !/\b3rd\b/.test(s),
+            `${g.name} ${t.code}: bare "through" glued to a 3rd outcome: "${s}"`
+          );
+        }
+      }
+    }
+  }
 });

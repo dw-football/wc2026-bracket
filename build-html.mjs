@@ -469,6 +469,7 @@ select,input[type=number],input[type=text]{background:#0c0e12;color:var(--txt);
 .scn-team .h .cd{font-weight:700}
 .scn-team .h .nm{color:var(--dim);font-size:12px}
 .scn-team .desc{color:var(--txt);font-size:13px;margin-top:3px}
+.scn-team .descline{padding-left:14px;text-indent:-14px;margin-top:1px}
 .scn-note{color:var(--warn);font-size:12px;margin:8px 0}
 .scn-stage{font-size:14px;margin:2px 0 8px;color:var(--txt)}
 .scn-stage b{color:var(--txt)}
@@ -1691,7 +1692,9 @@ const APP_JS = String.raw`
         var row=document.createElement('div'); row.className='scn-team';
         row.appendChild(teamHeader(team.code, team.name, e, stByCode[team.code]));
         var hl=document.createElement('div'); hl.className='scn-headline'; hl.textContent=s.headline; row.appendChild(hl);
-        if(s.detail){ var dt=document.createElement('div'); dt.className='desc'; dt.textContent=s.detail; row.appendChild(dt); }
+        if(s.detail){ var dt=document.createElement('div'); dt.className='desc';
+          s.detail.replace(/\.$/,'').split(/;\s+/).forEach(function(part){ var ln=document.createElement('div'); ln.className='descline'; ln.textContent=part; dt.appendChild(ln); });
+          row.appendChild(dt); }
         appendDist(row, team.code, dist);
         card.appendChild(row);
       });
@@ -1717,7 +1720,9 @@ const APP_JS = String.raw`
         var hl=document.createElement('div'); hl.className='scn-headline';
         hl.textContent=s.statusLine;
         row.appendChild(hl);
-        var nl=document.createElement('div'); nl.className='desc'; nl.textContent=s.needLine; row.appendChild(nl);
+        var nl=document.createElement('div'); nl.className='desc';
+        s.needLine.replace(/\.$/,'').split(/;\s+/).forEach(function(part){ var ln=document.createElement('div'); ln.className='descline'; ln.textContent=part; nl.appendChild(ln); });
+        row.appendChild(nl);
         appendDist(row, team.code, dist);
         card.appendChild(row);
       });

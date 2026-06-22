@@ -70,6 +70,19 @@ function currentPointsByCode(group) {
   return pts;
 }
 
+/** Current overall goal difference per team code, from PLAYED matches only. */
+function currentGDByCode(group) {
+  const gd = {};
+  for (const t of group.teams) gd[t.code] = 0;
+  for (const m of group.matches) {
+    if (!m.played) continue;
+    if (!(m.home in gd) || !(m.away in gd)) continue;
+    gd[m.home] += m.homeGoals - m.awayGoals;
+    gd[m.away] += m.awayGoals - m.homeGoals;
+  }
+  return gd;
+}
+
 /** P(reach R32 | team finishes on exactly `finalPts`), from advanceByPoints. */
 function advGivenPoints(mc, finalPts) {
   if (!mc || !mc.advanceByPoints) return null;
@@ -430,9 +443,10 @@ function otherMatchPhrase(set, match, nameOf, withOpp = false) {
     if (c === 'L') return `${away} beat ${home}`;
     return `${home} and ${away} draw`;
   }
-  // size 2 -> express as the natural negation of the excluded outcome.
-  if (!set.has('L')) return `${home} avoid defeat${withOpp ? ` against ${away}` : ''}`; // {W,D}
-  if (!set.has('W')) return `${away} avoid defeat${withOpp ? ` against ${home}` : ''}`; // {D,L}
+  // size 2 -> name the two outcomes for the relevant team ("win or draw"),
+  // which reads more directly than "avoid defeat".
+  if (!set.has('L')) return `${home} win or draw${withOpp ? ` vs ${away}` : ''}`; // {W,D}
+  if (!set.has('W')) return `${away} win or draw${withOpp ? ` vs ${home}` : ''}`; // {D,L}
   return `${home} or ${away} win`; // {W,L}, no draw
 }
 
@@ -1142,20 +1156,12 @@ function mcQualifiedHeadline(mc, firstReachable) {
   return base;
 }
 
-/** A 3rd-place advance probability that ROUNDS to "essentially certain" — i.e.
- *  pctWhole would print "99%". A {2nd,3rd} result whose 3rd branch is itself
- *  this likely to advance means the team advances on that result either way, so
- *  the whole result reads "through" (no misleading split). GENERAL rule. */
-function thirdIsThrough(p) {
-  return p != null && p >= 0.985; // pctWhole rounds >= 98.5% up to 99%
-}
-
 /** A 3rd-place advance probability that COLLAPSES to "out": it rounds to <=2%
  *  (covers an exact 0, a "<1%" tail, 1%, and 2%). pctWhole prints "0%"/"<1%"/
  *  "1%"/"2%" for these; we never show that noisy near-zero — we say "out".
  *  GENERAL rule (Fix 1). */
 function thirdIsOut(p) {
-  return p == null || p < 0.025; // < 2.5% rounds to <= 2%
+  return p == null || p < 0.005; // only a truly negligible (<0.5%) 3rd is "out"
 }
 
 /** Monte-Carlo probability the team finishes in `pos` (1..4), or null. */
@@ -1196,7 +1202,125 @@ function posBelowFloor(mc, pos) {
  * Reachable positions come from the deterministic rank set (slot.ranks).
  * If mc is absent, falls back to position-only phrasing (no %).
  */
-function outcomeForResult(x, mc) {
+/**
+ * Condition-aware rendering of ONE own-result branch: when the other (single)
+ * remaining match splits this result between two outcomes, state the split with
+ * its trigger, e.g. "3rd (82% to advance), but 4th (out) if Czech Republic beat
+ * Mexico" or "2nd if South Africa beat South Korea, otherwise 3rd (99% to
+ * advance)". Returns null (defer to the set-based renderer) when the split is
+ * not a clean two-way single-condition one.
+ *
+ * Honors the CORE RULE: a % attaches ONLY to a 3rd-place token (pQualIfThird);
+ * 4th and a near-zero 3rd are bare "out"; a top-2 position below the MC noise
+ * floor is never asserted (we defer so the caller's infinitesimal handling runs).
+ */
+/**
+ * Positional token for the rank SET a single other-match outcome yields, used
+ * inside a conditional branch. Honors the CORE RULE (% only on a 3rd token):
+ *   {2}     -> "2nd"            {3} live -> "3rd (X% to advance)"
+ *   {2,3}   -> "2nd, or 3rd (X% to advance)"   (a goal-difference tie)
+ *   {3,4}   -> "3rd (X% to advance) or 4th (out)"
+ *   {4} / a negligible 3rd / {3,4}-dead-3rd -> "out"
+ * A 3rd whose advance odds are negligible (<0.5%) folds into "out".
+ */
+function posToken(rankSet, pThird) {
+  const top2 = [...rankSet].filter((r) => r <= 2);
+  const has4 = rankSet.has(4);
+  const live3 = rankSet.has(3) && !(pThird == null || pThird < 0.005);
+  // "out-ish" = a genuine 4th, or a 3rd whose advance odds are negligible.
+  const outish = has4 || (rankSet.has(3) && !live3);
+  const parts = [];
+  if (top2.length && live3) {
+    // % must never read as glued to "2nd": separate with a comma.
+    parts.push(`${ordinal(Math.min(...top2))}, or 3rd (${pctWhole(pThird)} to advance)`);
+  } else if (top2.length) {
+    parts.push(ordinal(Math.min(...top2)));
+  } else if (live3) {
+    parts.push(`3rd (${pctWhole(pThird)} to advance)`);
+  }
+  if (outish) {
+    // A real 4th names itself ("4th (out)") so a conditional split reads as a
+    // clear position contrast; a merely-negligible 3rd (no 4th) is just "out".
+    const outTok = has4 ? '4th (out)' : 'out';
+    if (parts.length === 0) return outTok;
+    parts.push(outTok);
+  }
+  return parts.join(' or ');
+}
+
+/**
+ * Condition-aware rendering: when the single other remaining match splits this
+ * own-result across distinct outcomes, state EACH outcome with its trigger,
+ * best first, e.g. "3rd (82% to advance) if Mexico avoid defeat, 4th (out) if
+ * Czech Republic beat Mexico". Goal-difference ties surface honestly as
+ * "2nd, or 3rd (X% to advance)". Returns null (defer to the set renderer) when
+ * the result is unconditional (one outcome), too busy (>3 outcomes), or an
+ * infinitesimal-2nd case (handled by the caller's caveat path).
+ */
+function conditionedOutcome(x, mc, ctx) {
+  const { byOther, otherMatch, nameOf } = ctx;
+  if (!byOther || byOther.size === 0 || !otherMatch) return null;
+
+  // Infinitesimal-2nd guard: a reachable-but-<0.5% top-2 rank is dropped by the
+  // set renderer (+ caveat), so defer rather than assert a 2nd here.
+  for (const set of byOther.values()) {
+    for (const r of set) if (r <= 2 && posBelowFloor(mc, r)) return null;
+  }
+
+  const pThird = qualIfThirdGivenPoints(mc, x.finalPts)?.pQualIfThird ?? null;
+
+  // One positional token per other-match outcome; group outcomes sharing a
+  // token. ALL out-ish outcomes (bare "out" and "4th (out)") collapse into a
+  // single OUT class — splitting "out if X, 4th (out) if Y" is noise when the
+  // team misses out either way.
+  const byKey = new Map(); // key -> { token, minRank, maxRank, others:Set, has4:bool }
+  for (const [oc, set] of byOther) {
+    const tok = posToken(set, pThird);
+    const isOut = tok === 'out' || tok === '4th (out)';
+    const key = isOut ? 'OUT' : tok;
+    const mn = Math.min(...set);
+    const mx = Math.max(...set);
+    if (!byKey.has(key)) byKey.set(key, { token: tok, minRank: mn, maxRank: mx, others: new Set(), has4: false });
+    const e = byKey.get(key);
+    e.minRank = Math.min(e.minRank, mn);
+    e.maxRank = Math.max(e.maxRank, mx);
+    e.others.add(oc);
+    if (set.has(4)) e.has4 = true;
+  }
+
+  // 1 class -> unconditional (set renderer emits it); >3 -> too busy to condition.
+  if (byKey.size < 2 || byKey.size > 3) return null;
+
+  // The OUT class names a genuine 4th as "4th (out)", else bare "out".
+  const out = byKey.get('OUT');
+  if (out) out.token = out.has4 ? '4th (out)' : 'out';
+
+  // Safest outcome first: lower worst-case rank, then lower best-case.
+  const entries = [...byKey.values()].sort((a, b) => a.maxRank - b.maxRank || a.minRank - b.minRank);
+
+  const clauses = entries.map((e) => {
+    const cond = otherMatchPhrase(new Set(e.others), otherMatch, nameOf);
+    return cond ? `${e.token} if ${cond}` : e.token;
+  });
+  return clauses.join(', ');
+}
+
+function outcomeForResult(x, mc, ctx) {
+  // The set-based phrasing (collapses the rank SET into a single token like
+  // "through", "v through", "2nd, or 3rd (X%)", "out", ...).
+  const base = outcomeSet(x, mc);
+  // Prefer a condition-aware rendering that names WHICH other-match result
+  // splits this outcome — but never break a clean "(v) through" into a noisy
+  // conditional, and let the set renderer keep unconditional / infinitesimal
+  // cases.
+  if (mc && ctx && ctx.hasOther && base !== 'through' && base !== 'v through') {
+    const conditioned = conditionedOutcome(x, mc, ctx);
+    if (conditioned != null) return conditioned;
+  }
+  return base;
+}
+
+function outcomeSet(x, mc) {
   const ranks = x.slot.ranks;
   // Fix 3: drop any position that is below the Monte-Carlo noise floor (<0.5%)
   // for this team, so the per-result detail never contradicts the headline.
@@ -1231,18 +1355,25 @@ function outcomeForResult(x, mc) {
   // Result spans top-2 AND 3rd (deterministically). The % must never sit on a
   // phrase containing "2nd" (Fix 2).
   if (canTop2 && ranks.has(3)) {
+    // 3rd is mathematically REACHABLE on this result, so the team is NOT a
+    // guaranteed qualifier — a 3rd-place berth is cross-group-dependent and a
+    // 200k-sim "100%" is evidence, not proof. We therefore never print a bare
+    // "through" here. When advancement is essentially certain (the team is
+    // virtually through overall, or its sole 3rd risk is below the noise floor)
+    // we say "v through" (virtually); otherwise we show the split with the 3rd's
+    // explicit advance % so the residual risk is visible.
     const top2Through = mc && (mc.pAdvance ?? 0) >= 0.985;
     if (!can3rd) {
-      // 3rd dropped to the floor: just the top-2 position (or "through").
-      return mc ? 'through' : top2Word();
+      // 3rd is below the MC floor (<0.5% to finish 3rd): virtually through.
+      return mc ? 'v through' : top2Word();
     }
-    // The team advances on this result either way -> a single honest "through".
-    if (top2Through || thirdIsThrough(pThird)) return mc ? 'through' : top2Word();
+    if (top2Through) return mc ? 'v through' : top2Word();
     // Otherwise split, % ONLY on the 3rd token: "2nd, or 3rd (X%)".
     return `${top2Word()}, or ${third()}`;
   }
 
-  if (!can3rd && !can4th) return mc ? 'through' : top2Word(); // top-2 only
+  // Top-2 LOCKED (3rd mathematically unreachable) -> a genuine, proven "through".
+  if (!can3rd && !can4th) return mc ? 'through' : top2Word();
   if (!can3rd && can4th) return 'out';                         // 4th only (incl. collapsed 3rd)
 
   // 3rd is in play, no top-2 portion. Assemble [3rd(%)] [4th(out)].
@@ -1250,6 +1381,248 @@ function outcomeForResult(x, mc) {
   parts.push(third());
   if (can4th) parts.push('4th (out)');
   return parts.join(' or ');
+}
+
+/**
+ * RESULT-LED final-round detail, engine-derived and MC-aware. Organized around
+ * the subject's own (controllable) result — "Win → …; Draw → …; Loss → …" — with
+ * the placement that follows from the OTHER match stated per branch, and any rare
+ * goal-difference flip folded inline ("2nd if X (or 3rd if Y overturn the N-goal
+ * edge)"). 3rd-place outcomes carry the advance % (P(qualify | finish 3rd on
+ * those points)); a position that finishes 3rd-or-4th with ~0% qualify reads
+ * "(out)". Correct by construction: every rank comes from computeGroupStanding
+ * over the full scoreline enumeration (so H2H-before-GD is applied for us).
+ *
+ * Returns null when the subject plays no relevant match (caller falls back).
+ */
+function mcResultLedDetail(code, group, unplayed, scenarios, mc, nameOf) {
+  const relevant = relevantMatchIndices(code, unplayed, scenarios);
+  if (relevant.length === 0) return null;
+  const { cells } = buildRelevantCells(code, unplayed, scenarios, relevant);
+  const curPts = currentPointsByCode(group)[code] ?? 0;
+  const curGD = currentGDByCode(group);
+
+  const ownRel = relevant.findIndex((j) => unplayed[j].home === code || unplayed[j].away === code);
+  if (ownRel < 0) return null; // rank driven purely by others -> let describeConditional handle it
+  const ownMatch = unplayed[relevant[ownRel]];
+  const otherRel = relevant.findIndex((_, i) => i !== ownRel); // -1 if none (single remaining match)
+  const otherMatch = otherRel >= 0 ? unplayed[relevant[otherRel]] : null;
+  const ownSubj = (coarse) => fromSubjectPerspective(coarse[ownRel], ownMatch, code);
+  const keyOf = (c) => c.coarse.join('|');
+  const allCells = [...cells.values()];
+
+  // Majority rank per cell (the "normal" finish). Counted over actual scenarios
+  // (scorelines), NOT goal margin — a draw is always margin-0 regardless of
+  // score, so a cell decided on GOALS SCORED (level-GD pairs) would otherwise be
+  // mis-ranked. Scenario counts capture which rank is genuinely the common one.
+  const cellMaj = new Map();
+  {
+    const cnt = new Map(); // key -> Map<rank, count>
+    for (const s of scenarios) {
+      const k = relevant.map((j) => s.coarse[j]).join('|');
+      if (!cnt.has(k)) cnt.set(k, new Map());
+      const m = cnt.get(k);
+      const r = s.rankByCode[code];
+      m.set(r, (m.get(r) || 0) + 1);
+    }
+    for (const [k, m] of cnt) {
+      let maj = 99, mx = -1;
+      for (const [r, c] of m) if (c > mx || (c === mx && r < maj)) { mx = c; maj = r; }
+      cellMaj.set(k, maj);
+    }
+  }
+
+  // Position token for a finishing rank at a given points total.
+  const qOf = (pts) => qualIfThirdGivenPoints(mc, pts)?.pQualIfThird ?? null;
+  const liveThird = (pts) => { const q = qOf(pts); return q != null && q >= 0.005; };
+  const posTok = (rank, pts) => {
+    if (rank <= 2) return ordinal(rank);
+    if (rank === 4) return '4th (out)';
+    const q = qOf(pts);
+    return q != null && q >= 0.005 ? `3rd (${pctWhole(q)} to qualify)` : '3rd (out)';
+  };
+
+  // Find the rival the subject swaps with in a GD-split cell (the team at the
+  // majority rank when the subject takes the edge rank).
+  const findRival = (coarseKey, edgeRank, majRank) => {
+    for (const s of scenarios) {
+      if (relevant.map((j) => s.coarse[j]).join('|') !== coarseKey) continue;
+      if (s.rankByCode[code] !== edgeRank) continue;
+      for (const [c2, rk] of Object.entries(s.rankByCode)) if (c2 !== code && rk === majRank) return c2;
+    }
+    return null;
+  };
+  // A goal-difference flip between the subject and one rival LEVEL on points.
+  // The GD edge belongs to whoever is higher on CURRENT goal difference (ahead);
+  // the team behind can only take the better rank by OVERTURNING that edge.
+  const gapInfo = (rival) => {
+    if (!rival) return null;
+    const diff = curGD[code] - curGD[rival];
+    return { rival, ahead: diff >= 0 ? code : rival, behind: diff >= 0 ? rival : code, gap: Math.abs(diff) };
+  };
+  // Phrase the GD decider for the subject's EDGE outcome. edgeIsBetter = the
+  // subject's edge rank is higher (better) than its majority finish.
+  //  - level (gap 0): whoever wins the tiebreak takes the better rank (goals
+  //    scored when the GD is pinned, e.g. both drew).
+  //  - otherwise: an OVERTURN (the team behind on GD out-scores the edge) or a
+  //    HOLD (the team ahead keeps its edge), per which side the subject lands on.
+  const gapText = (gi, edgeIsBetter, gdPinned = false) => {
+    if (gi == null) return 'the goal difference is overturned';
+    if (gi.gap === 0) {
+      const winner = edgeIsBetter ? code : gi.rival;
+      const loser = edgeIsBetter ? gi.rival : code;
+      return gdPinned ? `${nameOf(winner)} win the goals-scored tiebreak` : `${nameOf(winner)} win the tiebreak over ${nameOf(loser)}`;
+    }
+    const overturn = (gi.ahead === code) ? !edgeIsBetter : edgeIsBetter;
+    return overturn
+      ? `${nameOf(gi.behind)} overturn ${nameOf(gi.ahead)}'s ${gi.gap}-goal goal-difference edge`
+      : `${nameOf(gi.ahead)} hold their ${gi.gap}-goal goal-difference edge`;
+  };
+  // Whether the subject's edge is the team BEHIND overturning the GD (vs a hold).
+  const isOverturn = (gi, edgeIsBetter) =>
+    gi != null && gi.gap > 0 && ((gi.ahead === code) ? !edgeIsBetter : edgeIsBetter);
+  // "...and also overturn X's N-goal edge" — only when the branch-named team is
+  // the one doing the overturning (the team behind on GD).
+  const alsoOverturn = (gi, gdPinned = false) =>
+    gi == null ? 'also overturn the goal difference'
+    : gi.gap === 0
+      ? (gdPinned ? 'also win the goals-scored tiebreak' : `also win the tiebreak over ${nameOf(gi.rival)}`)
+    : `also overturn ${nameOf(gi.ahead)}'s ${gi.gap}-goal goal-difference edge`;
+  // Condition phrase for the OTHER match given a set of its home-coarse outcomes.
+  const otherCond = (ocSet) =>
+    otherRel < 0 || ocSet.size >= 3 ? '' : otherMatchPhrase(ocSet, otherMatch, nameOf);
+  // The team whose result the branch condition names (for "and also overturn").
+  const branchActor = (ocSet) => {
+    if (otherRel < 0) return null;
+    const arr = [...ocSet];
+    if (arr.length === 1) return arr[0] === 'W' ? otherMatch.home : arr[0] === 'L' ? otherMatch.away : null;
+    if (arr.length === 2) return !ocSet.has('L') ? otherMatch.home : !ocSet.has('W') ? otherMatch.away : null;
+    return null;
+  };
+
+  const RWORD = { W: 'win', D: 'draw', L: 'loss' };
+  const ORDER = ['W', 'D', 'L'];
+
+  // Build the placement description for each own result present.
+  const descByOwn = new Map();
+  for (const R of ORDER) {
+    const mine = allCells.filter((c) => ownSubj(c.coarse) === R);
+    if (mine.length === 0) continue;
+    const pts = curPts + (R === 'W' ? 3 : R === 'D' ? 1 : 0);
+
+    // When the DOMINANT (majority) rank is the SAME across every branch, the
+    // other match doesn't change the normal finish — so state that one rank and
+    // tack on only the rare goal-difference exception(s): "2nd, but 3rd if Bosnia
+    // beat Qatar and overturn Canada's 9-goal edge". Much shorter than listing
+    // every branch.
+    const majSet = new Set(mine.map((c) => cellMaj.get(keyOf(c))));
+    if (majSet.size === 1) {
+      const M = [...majSet][0];
+      // Key by (edge rank, rival): two cells reaching the same rank via DIFFERENT
+      // rivals (different GD edges) must NOT be merged — their conditions differ.
+      const exByEdge = new Map(); // `${edge}|${rival}` -> { edge, ocs:Set, rival }
+      for (const c of mine) {
+        if (c.rankSet.size <= 1) continue;
+        const edge = [...c.rankSet].filter((r) => r !== M).sort((a, b) => a - b)[0];
+        const rival = findRival(keyOf(c), edge, M);
+        const k = `${edge}|${rival}`;
+        if (!exByEdge.has(k)) exByEdge.set(k, { edge, ocs: new Set(), rival });
+        if (otherRel >= 0) exByEdge.get(k).ocs.add(c.coarse[otherRel]);
+      }
+      const liveBase = M <= 2 || liveThird(pts);
+      if (exByEdge.size === 0) { descByOwn.set(R, liveBase ? posTok(M, pts) : 'out'); continue; }
+      const base = liveBase ? posTok(M, pts) : 'out';
+      const parts = [base];
+      // Build each exception's condition, then group by edge RANK so multiple
+      // routes to the same rank read as one "but Nth if A or if B" (not two buts).
+      const condsByRank = new Map(); // edge rank -> [condition strings]
+      for (const e of [...exByEdge.values()].sort((a, b) => a.edge - b.edge)) {
+        const edge = e.edge;
+        const edgeLive = edge <= 2 || (edge === 3 && liveThird(pts));
+        if (!liveBase && !edgeLive) continue; // "out, but still out" -> nothing to add
+        const branch = otherCond(e.ocs);
+        const gi = gapInfo(e.rival);
+        const edgeIsBetter = edge < M;
+        const gdPinned = R === 'D' && [...e.ocs].every((o) => o === 'D');
+        // If the branch-named team is the one overturning the GD, merge with
+        // "and also overturn …" instead of repeating the team name.
+        const cond = branch && gi && isOverturn(gi, edgeIsBetter) && branchActor(e.ocs) === gi.behind
+          ? `${branch} and ${alsoOverturn(gi, gdPinned)}`
+          : [branch, gapText(gi, edgeIsBetter, gdPinned)].filter(Boolean).join(' and ');
+        if (!condsByRank.has(edge)) condsByRank.set(edge, []);
+        condsByRank.get(edge).push(cond);
+      }
+      for (const [edge, conds] of [...condsByRank].sort((a, b) => a[0] - b[0])) {
+        parts.push(`but ${posTok(edge, pts)} if ${conds.join(' or if ')}`);
+      }
+      descByOwn.set(R, parts.join(', '));
+      continue;
+    }
+
+    // Dominant rank varies by branch -> state each branch, folding any GD flip
+    // inline ("2nd if X (or 3rd if Y overturn the edge), 3rd if Z").
+    const segs = []; // { best, worst, text, live }
+    const cleanByTok = new Map(); // tok -> { rank, ocs:Set }
+    for (const c of mine) {
+      if (c.rankSet.size !== 1) continue;
+      const maj = cellMaj.get(keyOf(c));
+      const tok = posTok(maj, pts);
+      if (!cleanByTok.has(tok)) cleanByTok.set(tok, { rank: maj, ocs: new Set() });
+      if (otherRel >= 0) cleanByTok.get(tok).ocs.add(c.coarse[otherRel]);
+    }
+    for (const [tok, e] of cleanByTok) {
+      const cond = otherCond(e.ocs);
+      segs.push({ best: e.rank, worst: e.rank, live: e.rank <= 2 || liveThird(pts), text: cond ? `${tok} if ${cond}` : tok });
+    }
+    for (const c of mine) {
+      if (c.rankSet.size <= 1) continue;
+      const maj = cellMaj.get(keyOf(c));
+      const edge = [...c.rankSet].filter((r) => r !== maj).sort((a, b) => a - b)[0];
+      const rival = findRival(keyOf(c), edge, maj);
+      const branch = otherRel >= 0 ? otherCond(new Set([c.coarse[otherRel]])) : '';
+      const gi = gapInfo(rival);
+      const edgeIsBetter = edge < maj;
+      const gdPinned = R === 'D' && otherRel >= 0 && c.coarse[otherRel] === 'D';
+      const lo = Math.min(maj, edge), hi = Math.max(maj, edge);
+      let text;
+      if (gi && gi.gap === 0 && !gdPinned) {
+        // Dead heat: level on points AND goal difference, and this result can
+        // still swing the GD (both teams won/lost) -> a true jump ball between
+        // the two positions, decided on goal difference. Don't pick a false default.
+        const pair = `${posTok(lo, pts)} or ${posTok(hi, pts)} on goal difference`;
+        text = branch ? `${pair} if ${branch}` : pair;
+      } else {
+        // Downgrade reads "unless … "; an upgrade reads "or {better} if … ".
+        const inner = edge > maj
+          ? `unless ${gapText(gi, edgeIsBetter, gdPinned)}`
+          : `or ${posTok(edge, pts)} if ${gapText(gi, edgeIsBetter, gdPinned)}`;
+        const head = branch ? `${posTok(maj, pts)} if ${branch}` : posTok(maj, pts);
+        text = `${head} (${inner})`;
+      }
+      segs.push({ best: lo, worst: hi, live: maj <= 2 || edge <= 2 || liveThird(pts), text });
+    }
+
+    if (!segs.some((s) => s.live)) { descByOwn.set(R, 'out'); continue; }
+    segs.sort((a, b) => a.best - b.best || a.worst - b.worst);
+    descByOwn.set(R, segs.map((s) => s.text).join(', '));
+  }
+
+  if (descByOwn.size === 0) return null;
+
+  // Merge consecutive own-results (W,D,L order) sharing an identical description.
+  const order = ORDER.filter((R) => descByOwn.has(R));
+  const groupsOut = [];
+  for (const R of order) {
+    const d = descByOwn.get(R);
+    const last = groupsOut[groupsOut.length - 1];
+    if (last && last.desc === d) last.rs.push(R);
+    else groupsOut.push({ rs: [R], desc: d });
+  }
+  const words = (rs) => {
+    const w = rs.map((r) => RWORD[r]).join(' or ');
+    return w.charAt(0).toUpperCase() + w.slice(1);
+  };
+  return groupsOut.map((g) => `${words(g.rs)} → ${g.desc}`).join('; ') + '.';
 }
 
 /**
@@ -1270,14 +1643,20 @@ function mcFinalRoundDetail(code, group, unplayed, scenarios, mc) {
   const otherIdx = unplayed.map((_, i) => i).filter((i) => i !== ownIdx);
   const hasOther = otherIdx.length === 1; // final round: 0 or 1 other match
 
-  // Per own coarse result (subject perspective): rank set + per-other-outcome rank.
-  const byOwn = new Map(); // 'W'|'D'|'L' -> { ranks:Set, byOther: Map<otherCoarse,rank> }
+  // Per own coarse result (subject perspective): rank set + per-other-outcome
+  // rank SET (a set of size>1 for an other-outcome means goal difference splits
+  // it — that result is left to the set-based renderer, not conditioned).
+  const byOwn = new Map(); // 'W'|'D'|'L' -> { ranks:Set, byOther: Map<otherCoarse,Set<rank>> }
   for (const s of scenarios) {
     const own = fromSubjectPerspective(s.coarse[ownIdx], ownMatch, code);
     if (!byOwn.has(own)) byOwn.set(own, { ranks: new Set(), byOther: new Map() });
     const slot = byOwn.get(own);
     slot.ranks.add(s.rankByCode[code]);
-    if (hasOther) slot.byOther.set(s.coarse[otherIdx[0]], s.rankByCode[code]);
+    if (hasOther) {
+      const oc = s.coarse[otherIdx[0]];
+      if (!slot.byOther.has(oc)) slot.byOther.set(oc, new Set());
+      slot.byOther.get(oc).add(s.rankByCode[code]);
+    }
   }
 
   const finalPtsOf = { W: curPts + 3, D: curPts + 1, L: curPts + 0 };
@@ -1318,8 +1697,16 @@ function mcFinalRoundDetail(code, group, unplayed, scenarios, mc) {
       // Find, within a safe result that can be 1st, the other-match outcomes giving 1st.
       const x = safeLead.find((y) => y.best === 1);
       const firstOutcomes = new Set();
-      for (const [oc, rk] of x.slot.byOther) if (rk === 1) firstOutcomes.add(oc);
-      const cond = otherMatchPhrase(firstOutcomes, unplayed[otherIdx[0]], nameOf);
+      // byOther maps each other-match coarse outcome -> the Set of ranks it
+      // yields for this own-result. An outcome cleanly gives 1st when that set
+      // is exactly {1}. (An empty firstOutcomes must NOT reach otherMatchPhrase,
+      // which would misread it as an "avoid defeat" condition.)
+      for (const [oc, rkSet] of x.slot.byOther) {
+        if (rkSet.size === 1 && rkSet.has(1)) firstOutcomes.add(oc);
+      }
+      const cond = firstOutcomes.size > 0
+        ? otherMatchPhrase(firstOutcomes, unplayed[otherIdx[0]], nameOf)
+        : '';
       if (cond) lead += ` (1st if ${cond})`;
     }
     segs.push(lead);
@@ -1329,9 +1716,11 @@ function mcFinalRoundDetail(code, group, unplayed, scenarios, mc) {
   // position(s). CORE RULE: a qualification % may attach ONLY to a 3rd-place
   // token, using pQualIfThird (P(advance | finish 3rd on this total)). 4th is
   // NEVER given a % — it is always bare "(out)". Top-2 portions read "through".
+  const otherMatch = hasOther ? unplayed[otherIdx[0]] : null;
   for (let i = k; i < info.length; i++) {
     const x = info[i];
-    segs.push(`a ${resultPhrase[x.res]} → ${outcomeForResult(x, mc)}`);
+    const ctx = { byOther: x.slot.byOther, otherMatch, nameOf, hasOther };
+    segs.push(`a ${resultPhrase[x.res]} → ${outcomeForResult(x, mc, ctx)}`);
   }
 
   if (segs.length === 0) return null;
@@ -1510,7 +1899,7 @@ export function summarizeGroup(group, opts = {}) {
     // best achievable POSITION is 3rd.
     if (minRank === 3) {
       let detail = null;
-      if (mc) detail = mcFinalRoundDetail(code, group, unplayed, scenarios, mc);
+      if (mc) detail = mcResultLedDetail(code, group, unplayed, scenarios, mc, nameOf);
       if (detail == null && maxRank > 3) {
         detail = describeConditional(code, team.name, unplayed, scenarios, relevant, nameOf);
       }
@@ -1522,7 +1911,7 @@ export function summarizeGroup(group, opts = {}) {
 
     // ---- conditional ----
     let detail = null;
-    if (mc) detail = mcFinalRoundDetail(code, group, unplayed, scenarios, mc);
+    if (mc) detail = mcResultLedDetail(code, group, unplayed, scenarios, mc, nameOf);
     if (detail == null) {
       detail = describeConditional(code, team.name, unplayed, scenarios, relevant, nameOf);
     }
@@ -1530,9 +1919,10 @@ export function summarizeGroup(group, opts = {}) {
       ? mcContentionHeadline(mc, minRank)
       : conditionalHeadline(code, allRanks, unplayed, scenarios, relevant);
     // Infinitesimal-2nd: when MC says top-2 ≈ 0% but 2nd is still mathematically
-    // reachable, the headline states the team is out of the top 2; explain the
-    // vanishing tail in the detail so the prose agrees with the bars.
-    if (mc && detail != null && isInfinitesimalSecond(mc, minRank)) {
+    // reachable, explain the vanishing tail — but ONLY if the rank-led detail
+    // hasn't already surfaced that 2nd inline (it now states it as the rare
+    // goal-difference flip, so the extra caveat would just be redundant).
+    if (mc && detail != null && isInfinitesimalSecond(mc, minRank) && !/2nd/.test(detail)) {
       detail = detail.replace(/\.?\s*$/, '') + '; ' + INFINITESIMAL_SECOND_CAVEAT;
     }
     return mk(code, team.name, 'conditional', headline, detail, maxRank, minRank);
