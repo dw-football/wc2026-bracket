@@ -1,12 +1,22 @@
 # WC2026 Bracket Projector
 
 ## RESUME
+Next action: **UPDATE THE TEST SUITE** — `scenario-summary.test.js` and
+`group-situation.test.js` are STALE/FAILING after this session's big scenario-text
+rewrite (verbatim assertions still expect the old wording). Rewrite their assertions
+for the new result-led renderer (see "SCENARIO TEXT (rewritten 2026-06-22)" below),
+`node --test` to green, then commit + push. The live app is already deployed and
+correct; only the tests lag.
+Then read: SCENARIO TEXT (rewritten 2026-06-22), then HOW TO UPDATE RESULTS.
+
 **"Find new scores and GO"** (or "GO" + a score) = update the live bracket. Run the
 **HOW TO UPDATE RESULTS** routine below: `node build-html.mjs --refresh` (auto-pulls
 any overnight results from the feed) → `cp dist/index.html docs/index.html` → commit →
 push → GitHub Pages redeploys https://dw-football.github.io/wc2026-bracket/ (~1 min).
 A score the feed hasn't published yet → add to `manual-results.json` first.
-Next action: nothing pending — await David's next "GO". Then read: HOW TO UPDATE RESULTS.
+(Push note: the tokenized push from `.env` doesn't update the local `origin/main`
+tracking ref, so `git log @{u}..` may show a commit as "unpushed" when it's actually
+on GitHub — verify with the push output, not the tracking ref.)
 
 A self-contained, shareable web app that ingests live 2026 World Cup results,
 computes group standings (full FIFA-2026 tiebreakers), ranks the 8 best
@@ -85,6 +95,31 @@ Pure client-side JS baked into one HTML file. Same engine .js runs in Node
 - Title odds land ~ARG/ESP 18-21%, FRA ~13%, ENG ~9% (matches the market-aligned
   cluster of the Towards-Data-Science 11-model piece).
 
+## SCENARIO TEXT (rewritten 2026-06-22)
+Per-group "what each result means" prose. TWO renderers by # unplayed in the group:
+- **1–2 unplayed → `scenario-summary.js` `summarizeGroup` → `mcResultLedDetail`** (the
+  rewrite). RESULT-LED: "Win → …; Draw → …; Loss → …", each own-result on its own line
+  (the app splits the detail on "; "; see `build-html.mjs` `.descline`). Engine-derived
+  & brute-force-correct (ranks from the full scoreline enumeration, so H2H-before-GD is
+  applied for free). Key conventions David signed off on:
+  - Opponent results read "Belgium win or draw" (NOT "avoid defeat").
+  - When the dominant rank is uniform across branches, collapse to "2nd, but 3rd if X"
+    (one "but"; multiple routes to a rank join as "but Nth if A or if B").
+  - Goal-difference flips: the edge belongs to the team AHEAD on CURRENT GD; the team
+    BEHIND "overturn"s it ("Belgium overturn Egypt's 2-goal goal-difference edge"), the
+    leader "hold"s it ("Egypt hold their 2-goal goal-difference edge"). Teams LEVEL on
+    GD → "win the tiebreak over X"; both-drew (GD pinned) → "win the goals-scored
+    tiebreak"; a true dead heat (both win/lose, GD swingable) → JUMP BALL
+    "1st or 2nd on goal difference if …" (no false default).
+  - 3rd-place outcomes carry P(qualify | finish 3rd on those points); ~0% → "(out)".
+  - "through" reserved for a guaranteed top-2; a virtually-certain (cross-group) advance
+    is "v through".
+- **3+ unplayed → `group-situation.js` `groupSituation`** (magic-number view: statusLine
+  + needLine). Honest "out of the top two" (a best-third berth is cross-group, never
+  asserted as "eliminated"); non-monotone magic-number bug fixed (a higher points total
+  can be LESS safe, so the guarantee requires the whole upper tail to be safe).
+- ⚠️ TESTS LAG: both `*.test.js` still assert the OLD wording → failing. See RESUME.
+
 ## SHARING — LIVE
 - **Live URL (share with friends): https://dw-football.github.io/wc2026-bracket/**
 - GitHub repo: https://github.com/dw-football/wc2026-bracket (PUBLIC). Account: dw-football.
@@ -97,6 +132,12 @@ Pure client-side JS baked into one HTML file. Same engine .js runs in Node
 - (The claude.ai Artifact path was abandoned — kept failing for David.)
 
 ## OPEN / PARKED
+- [ ] **NEXT SESSION: update the test suite** to the rewritten scenario text (see RESUME).
+- [ ] (Parked, revisit ~late June once more games played) Third-place points-distribution
+      analysis — definitive bounds ("≥N groups WILL have a 3rd on ≥X pts", cutoff range)
+      + Elo-MC probabilistic statements (cutoff = 3 pts ~85%, P(advance | 3rd on N pts),
+      etc.). David found it not yet interesting enough to send out; wants to discuss as
+      the field firms up. Throwaway analysis scripts were not kept; reconstruct from this note.
 - [x] GitHub + Pages live: https://dw-football.github.io/wc2026-bracket/ (2026-06-21).
 - [ ] (Parked, David's call) Market-odds overlay: de-vigged 1X2 as the engine +
       tournament-winner market as a "model vs market" sanity column.
@@ -111,7 +152,7 @@ https://raw.githubusercontent.com/openfootball/worldcup.json/master/2026/worldcu
 API-Football key in .env (gitignored) is UNUSABLE on the free tier for 2026
 (capped to seasons 2022-24). football-data.org is a possible fallback (free token).
 
-State as of 2026-06-21. ~38/104 matches played; group stage in progress.
+State as of 2026-06-22. 40/104 matches played (last: New Zealand 1-3 Egypt); group stage in progress.
 
 ## Session Notes
 - 2026-06-21 — Built the full projector end-to-end: engine + FIFA-2026 tiebreakers
@@ -122,3 +163,16 @@ State as of 2026-06-21. ~38/104 matches played; group stage in progress.
   magic numbers + next-round triggers), live-score entry (manual-results.json:
   Belgium 0-0, Uruguay 2-2). Deployed live to GitHub Pages (dw-football/wc2026-bracket).
   44 tests green. "Find new scores and GO" defined in RESUME above (NOT in global CLAUDE.md).
+- 2026-06-22 — Two distinct logic fixes in `group-situation.js` (false "two-draws
+  guarantees top-2" from a non-monotone magic number; "out" → "out of the top two"),
+  then a full REWRITE of the final-round scenario text into the result-led
+  `mcResultLedDetail` (see SCENARIO TEXT section): "Win→/Draw→/Loss→" one per line,
+  "win or draw", uniform-rank "but X", GD-edge ownership (ahead holds / behind
+  overturns), level→"win the tiebreak", dead-heat jump ball "1st or 2nd on goal
+  difference", 3rd-place qualify %s, "v through". Heavy back-and-forth with David on
+  exact wording (Groups A/B/C/E/F/G/H all reviewed via a throwaway `_scenario-review.html`
+  he opened in-browser — artifacts don't work for him, use a local HTML file + Start-Process).
+  Refreshed data (NZ 1-3 EGY → 40/104) and pushed live (commit 1444970). Also explored a
+  parked 3rd-place points-distribution analysis (definitive bounds + Elo MC) — David wants
+  to revisit it in a few days once more games are played; NOT productionized. ⚠️ Test
+  suite left STALE/failing — top priority next session (see RESUME).
