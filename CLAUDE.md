@@ -1,5 +1,13 @@
 # WC2026 Bracket Projector
 
+## RESUME
+**"Find new scores and GO"** (or "GO" + a score) = update the live bracket. Run the
+**HOW TO UPDATE RESULTS** routine below: `node build-html.mjs --refresh` (auto-pulls
+any overnight results from the feed) → `cp dist/index.html docs/index.html` → commit →
+push → GitHub Pages redeploys https://dw-football.github.io/wc2026-bracket/ (~1 min).
+A score the feed hasn't published yet → add to `manual-results.json` first.
+Next action: nothing pending — await David's next "GO". Then read: HOW TO UPDATE RESULTS.
+
 A self-contained, shareable web app that ingests live 2026 World Cup results,
 computes group standings (full FIFA-2026 tiebreakers), ranks the 8 best
 third-place teams, maps everything into the Round-of-32 via FIFA's Annex C
@@ -104,3 +112,13 @@ API-Football key in .env (gitignored) is UNUSABLE on the free tier for 2026
 (capped to seasons 2022-24). football-data.org is a possible fallback (free token).
 
 State as of 2026-06-21. ~38/104 matches played; group stage in progress.
+
+## Session Notes
+- 2026-06-21 — Built the full projector end-to-end: engine + FIFA-2026 tiebreakers
+  (H2H before GD; lots abolished), double-sourced bracket (R16 transposition fixed),
+  Elo-Poisson Monte Carlo (200k baked + 10k live for My-Picks), interactive knockout
+  bracket (tree layout, click-to-pin per-slot popover, R32 seeds/clinch-pop/top-two,
+  3rd-place declutter), scenario calculator (result-based prose + qualification odds,
+  magic numbers + next-round triggers), live-score entry (manual-results.json:
+  Belgium 0-0, Uruguay 2-2). Deployed live to GitHub Pages (dw-football/wc2026-bracket).
+  44 tests green. "Find new scores and GO" defined in RESUME above (NOT in global CLAUDE.md).
