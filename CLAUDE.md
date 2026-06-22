@@ -9,11 +9,31 @@ authorization to build + push (score refreshes are pre-approved). Everything els
 (new UI, logic, layout, copy) stops at localhost until David approves the push.
 
 ## RESUME
-Next action: **nothing pending** — tests are green (47/47) and the live app is
-current. Routine work resumes via **"Find new scores and GO"** when matches finish
-(see HOW TO UPDATE RESULTS). For any NEW feature/edit, follow the WORKFLOW RULE above
-(localhost first, push only on David's command).
-Then read: HOW TO UPDATE RESULTS, then WORKFLOW RULE.
+Next action: **finish the model-vs-market "odds of advancing" comparison** (David's
+ask, parked mid-flight). OUR side is done — Elo P(advance to R32) for all 48 from
+`mc.perTeam[].pAdvance` (200k); snapshot below in "MARKET-VS-ELO". STILL NEEDED: live
+market "to qualify from group" odds (de-vigged Yes/No) to sit beside ours, focused on
+the contested teams (the ~30 between 5–95%). Market odds require a WEB source
+(APISPORTS key in .env is useless for 2026; try oddschecker/oddsportal "to qualify"
+pages or a WebSearch for a consolidated table). Build the 48-row table, highlight
+where market and Elo disagree.
+⚠️ **CROSS-MACHINE (David moved off the laptop NYLDWARREN3):** this repo is local+git
+ONLY (not synced). On the new machine: `git clone
+https://github.com/dw-football/wc2026-bracket.git` then recreate gitignored `.env`
+with `GITHUB_TOKEN=<PAT>` (needed only to PUSH; the token + exact steps are in the
+synced pickup note `~/My Drive/Computing/Claude/session-notes/2026-06-22-17.md`).
+Tests green 55/55; live app current. NEW feature/edit → WORKFLOW RULE (localhost first).
+Then read: MARKET-VS-ELO (below), HOW TO UPDATE RESULTS, WORKFLOW RULE.
+
+## MARKET-VS-ELO (parked — Elo side, snapshot 2026-06-22, 41/104 played)
+Our Elo P(advance to R32), 200k sims. Regenerate any time: run monteCarlo (see
+verify-model.mjs) and read `mc.perTeam[].pAdvance`. Through/near-locked (≥99%): MEX,
+CAN, SUI, BRA, USA, GER, NED, JPN, ESP, ARG, MAR, EGY (all 100%), ENG 99.6, FRA 99.4,
+COL 98.8, NOR 98.6. CONTESTED (the interesting ones): KOR 94, AUT 94, SWE 94, AUS 94,
+CIV 93, SCO 88, BEL 85, PAR 85, POR 81, CRO 78, GHA 72, IRN 70, CPV 65, SEN 63, BIH 51,
+COD 51, ALG 50, URU 46, UZB 38, KSA 36, ECU 31, QAT 24, PAN 21, JOR 21, RSA 19, CZE 18,
+CUW 16, NZL 15, IRQ 12. Out (~0%): HAI, TUR, TUN. (Throwaway extractor not kept;
+reconstruct from this note + verify-model.mjs.)
 
 **"Find new scores and GO"** (or "GO" + a score) = update the live bracket. Run the
 **HOW TO UPDATE RESULTS** routine below: `node build-html.mjs --refresh` (auto-pulls
@@ -57,12 +77,12 @@ the one rebuild. (TODO nicety: have build-html.mjs also emit docs/index.html so
 step 3 is automatic.)
 
 Already entered manually this tournament: Belgium 0-0 Iran (G), Uruguay 2-2 Cape
-Verde (H).
+Verde (H), Argentina 2-0 Austria (J).
 
 ## COMMANDS
 - `node build-html.mjs`            — rebuild dist from cached feed + manual results (+200k bake)
 - `node build-html.mjs --refresh`  — also re-pull the openfootball feed
-- `node --test`                    — full suite (47 tests, all green)
+- `node --test`                    — full suite (55 tests, all green; incl. claims-validator.test.js)
 - `node verify-model.mjs`          — print title odds / group odds / modal R32
 - `node verify-standings.mjs`      — current standings all 12 groups
 - `node export-image.mjs`          — hi-res PNG + PDF of the bracket (uses installed Edge/Chrome)
@@ -78,8 +98,18 @@ Pure client-side JS baked into one HTML file. Same engine .js runs in Node
   From openfootball; carries BOTH `venue` (metro, e.g. "Boston") and `ground`
   (stadium suburb, e.g. "Boston (Foxborough)") so the label is a one-line swap.
   `koLabel()` in build-html.mjs renders "venue · date · time EDT" beside each M-number.
-- `scenario-summary.js` — final-round (1-2 unplayed) per-team result-based prose + qualify odds
-- `group-situation.js`  — pre-final (3+ unplayed) status + magic numbers + next-round triggers
+- `scenario-summary.js` — final-round (1-2 unplayed) per-team result-based prose + qualify odds;
+  carries the deterministic best-third CLINCH (opts.allGroups) so "Clinched a Round-of-32
+  place" never regresses to "99%" when a group drops to 1-2 unplayed.
+- `group-situation.js`  — pre-final (3+ unplayed). needLine is an ADVANCEMENT reward LADDER
+  (`safeRequirement` per target r32/top2/first): "X guarantees a Round-of-32 place; Y clinches
+  a top-2 place; Z clinches top spot" — only tie-free, advancement-correct guarantees (folds in
+  the best-third cushion; fixes the RPS false "(or better) guarantees top-2"). Also the
+  deterministic best-third clinch ("advanced" status).
+- `claims-validator.test.js` — INDEPENDENT cross-validation oracle: exhaustive within-group
+  enumeration + Monte Carlo, fails the build on ANY false guarantee/clinch. Add new scenario
+  wording? It must pass this. (Built after a hand-written test had itself enshrined a false
+  "two draws (or better)" guarantee.)
 - `adapter.js`        — openfootball feed → engine schema; merges manual-results.json
 - `teams.json`        — 48 teams: name, FIFA code, live Elo (scraped from eloratings.net via build-teams.mjs)
 - `build-html.mjs`    — the build: fetch + bake + inline → dist/index.html
@@ -164,7 +194,7 @@ https://raw.githubusercontent.com/openfootball/worldcup.json/master/2026/worldcu
 API-Football key in .env (gitignored) is UNUSABLE on the free tier for 2026
 (capped to seasons 2022-24). football-data.org is a possible fallback (free token).
 
-State as of 2026-06-22. 40/104 matches played (last: New Zealand 1-3 Egypt); group stage in progress.
+State as of 2026-06-22. 41/104 (feed 40 + manual ARG 2-0 AUT); group stage in progress.
 
 ## Session Notes
 - 2026-06-21 — Built the full projector end-to-end: engine + FIFA-2026 tiebreakers
@@ -198,3 +228,21 @@ State as of 2026-06-22. 40/104 matches played (last: New Zealand 1-3 Egypt); gro
   row) → moved EDT onto each match line and restored the short stamp. Established + recorded
   the **localhost-first / push-only-on-command** WORKFLOW RULE (top of file). Deployed
   (commits 4771071, c04de73).
+- 2026-06-22 (eve) — Big session, all DEPLOYED (commit f581d52). (1) Full **light theme**
+  (David disliked dark, hated it for print): :root swap + ~30 SVG color literals + print
+  forced white + image exports. (2) **"Print this group"** button + active-tab printing
+  (named @page portrait/landscape). (3) Group-stage **gold best-third highlight** (top-8
+  thirds). (4) Bracket header collision fix (TITLE_H 46→62). (5) **ARG 2-0 AUT** manual.
+  (6) The MAIN work — scenario correctness: deterministic **best-third clinch** in BOTH
+  renderers ("Clinched a Round-of-32 place", never regresses to 99%); needLines reframed
+  as an **advancement reward ladder** (R32 → top-2 → top spot), fixing the recurring
+  **rock-paper-scissors false guarantee** ("two draws (or better) guarantees top-2" is FALSE
+  when a win+loss = 6 can be a 3-way-tie 3rd — but 6 ADVANCES as a best third, so framed
+  around advancement it's honest). Root cause it "didn't take" before: a hand-written test
+  had ENSHRINED the false wording + the prior fix only guarded 'strictly out', not 'tie→3rd'.
+  (7) Built **claims-validator.test.js** (David's idea: check prose vs the scenario runs) —
+  independent enumeration + MC oracle; it immediately caught a 2nd false guarantee. 55/55.
+  Wording David signed off: "guarantees a Round-of-32 place / clinches a top-2 place /
+  clinches top spot", each clause capitalized, "to be safe"→advancement framing. Then David
+  re-raised the **model-vs-market advance-odds** ask (Elo side computed — see MARKET-VS-ELO;
+  market side still TODO) and switched machines off the laptop → see RESUME + synced pickup.
