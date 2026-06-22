@@ -428,9 +428,15 @@ export function monteCarlo(groups, bracket, opts = {}) {
         g1: 0, g2: 0, g3: 0, g4: 0, // full final group-position distribution
         reachR32: 0, reachR16: 0, reachQF: 0, reachSF: 0, reachFinal: 0, winCup: 0,
         // conditional-advancement: keyed by final group points value ->
-        //   { finishes, advances }  (advances = finished on that points total
-        //   AND reached the R32 this sim). Lets the UI translate a remaining
-        //   result (win/draw/loss) into a P(advance) for the resulting total.
+        //   { finishes, advances, thirds, thirdAdvances }
+        //     finishes      = sims the team finished on exactly this points total
+        //     advances      = finishes that ALSO reached the R32 this sim
+        //     thirds        = finishes where the team was groupRank 3 on this total
+        //     thirdAdvances = thirds that ALSO reached the R32 (3rd AND qualified)
+        //   Lets the UI translate a remaining result (win/draw/loss) into both a
+        //   P(advance | total) and, crucially, a P(qualify | finish 3rd on total)
+        //   — the latter being the ONLY % that may legitimately attach to a
+        //   3rd-place outcome (a 4th-place finish never qualifies).
         ptsTally: {},
       };
     }
@@ -483,10 +489,15 @@ export function monteCarlo(groups, bracket, opts = {}) {
     for (const [code, pts] of Object.entries(r.groupPoints)) {
       const c = C[code];
       let bucket = c.ptsTally[pts];
-      if (!bucket) bucket = c.ptsTally[pts] = { finishes: 0, advances: 0 };
+      if (!bucket) bucket = c.ptsTally[pts] = { finishes: 0, advances: 0, thirds: 0, thirdAdvances: 0 };
       bucket.finishes++;
       const idx = r.reached[code];
-      if (idx !== undefined && idx >= ROUND_INDEX.R32) bucket.advances++;
+      const advanced = idx !== undefined && idx >= ROUND_INDEX.R32;
+      if (advanced) bucket.advances++;
+      if (r.groupRank[code] === 3) {
+        bucket.thirds++;
+        if (advanced) bucket.thirdAdvances++; // 3rd on this total AND qualified
+      }
     }
 
     // furthest round reached (cumulative: reaching SF implies reached R16, etc.)
@@ -524,10 +535,22 @@ export function monteCarlo(groups, bracket, opts = {}) {
       // remaining win/draw/loss (which maps to a specific final total) into a
       // P(advance) like "a draw -> 98%, a loss -> 50%".
       const advanceByPoints = {};
+      // qualifyIfThirdByPoints: final-points value -> { p3rd, pQualIfThird }.
+      //   p3rd          = P(team finishes 3rd | it finished on this point total)
+      //   pQualIfThird  = P(reach R32 | it finished 3rd on this total)  [0 if no
+      //                   3rd finishes on this total]
+      // This is the ONLY conditional that may legitimately attach a % to a
+      // 3rd-place outcome: it is restricted to the 3rd-place portion of the
+      // points total, excluding any 4th-place (never-qualifies) mass.
+      const qualifyIfThirdByPoints = {};
       for (const [pts, b] of Object.entries(c.ptsTally)) {
         advanceByPoints[pts] = {
           pFinish: b.finishes / n,
           pAdvanceGiven: b.finishes ? b.advances / b.finishes : 0,
+        };
+        qualifyIfThirdByPoints[pts] = {
+          p3rd: b.finishes ? b.thirds / b.finishes : 0,
+          pQualIfThird: b.thirds ? b.thirdAdvances / b.thirds : 0,
         };
       }
       return {
@@ -550,6 +573,7 @@ export function monteCarlo(groups, bracket, opts = {}) {
         pAdvance: c.reachR32 / n,                              // overall P(reach R32)
         pQualifyIfThird: c.g3 ? c.thirdQualify / c.g3 : 0,     // P(qualify | finish 3rd)
         advanceByPoints,
+        qualifyIfThirdByPoints,
       };
     })
     .sort((a, b) => b.pWinCup - a.pWinCup);

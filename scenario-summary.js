@@ -77,6 +77,29 @@ function advGivenPoints(mc, finalPts) {
   return b ? b.pAdvanceGiven : null;
 }
 
+/**
+ * P(qualify | finish 3rd on exactly `finalPts`) and P(finish 3rd | finish on
+ * `finalPts`), from qualifyIfThirdByPoints. This is the ONLY probability that may
+ * be attached to a 3rd-place outcome — it is conditioned on actually finishing
+ * 3rd, so it excludes the 4th-place (never-qualifies) mass entirely.
+ * @returns {{p3rd:number, pQualIfThird:number}|null}
+ */
+function qualIfThirdGivenPoints(mc, finalPts) {
+  if (!mc || !mc.qualifyIfThirdByPoints) return null;
+  const b = mc.qualifyIfThirdByPoints[String(finalPts)];
+  return b || null;
+}
+
+/** Whole-number percent for an advance probability attached to a 3rd-place
+ *  token. Never prints a bare 100% (a Monte-Carlo advance is never a certainty);
+ *  caps at 99%. Tiny non-zero prints "<1%"; an exact 0 prints "0%". */
+function pctWhole(p) {
+  if (p == null) return '';
+  if (p >= 0.995) return '99%';
+  if (p > 0 && p < 0.005) return '<1%';
+  return Math.round(p * 100) + '%';
+}
+
 // ---------------------------------------------------------------------------
 // Enumeration
 // ---------------------------------------------------------------------------
@@ -1073,16 +1096,38 @@ function cap(s) {
  * @param {object} mc   perTeam entry (pAdvance, pGroup1, pGroup2, ...)
  * @returns {string}
  */
-function mcContentionHeadline(mc) {
+function mcContentionHeadline(mc, minRank = 1) {
   const pAdv = mc.pAdvance ?? 0;
   const pTop2 = (mc.pGroup1 ?? 0) + (mc.pGroup2 ?? 0);
   if (pAdv >= 0.99) return `Virtually through — ${pctMC(pAdv)} to qualify`;
-  // Realistically cannot finish top-2 (the Bosnia/Qatar guard): frame around 3rd
-  // and NEVER imply a 2nd-place finish even if a ~0% goal-difference path exists.
-  if (pTop2 < 0.01) return `Realistically fighting for 3rd — ${pctMC(pAdv)} to advance`;
+  // MC top-2 probability rounds to 0% (< 0.5%): the team is, for all practical
+  // purposes, out of the top 2. State it DEFINITIVELY and agree with the bars
+  // (which show 0% top-2) — never a vague "fighting for 3rd" that implies a live
+  // 2nd-place shot. The detail carries the <0.1% tail caveat (added by the
+  // caller) only when 2nd is deterministically reachable (minRank <= 2).
+  if (pTop2 < 0.005) {
+    const p3 = pctMC(mc.pGroup3);
+    const p4 = pctMC(mc.pGroup4);
+    if (minRank >= 3) {
+      // 2nd is mathematically impossible — flat statement, no caveat.
+      return `Can finish only 3rd or 4th — playing for 3rd (${p3}) or 4th (${p4})`;
+    }
+    return `Out of the top 2 — playing for 3rd (${p3}) or 4th (${p4})`;
+  }
   if (pAdv >= 0.85) return `In good shape — ${pctMC(pAdv)} to qualify`;
   return `In contention — ${pctMC(pAdv)} to qualify`;
 }
+
+/** Whether the infinitesimal-2nd caveat applies: MC top-2 rounds to 0% yet a
+ *  2nd-place finish is deterministically reachable (minRank <= 2). */
+function isInfinitesimalSecond(mc, minRank) {
+  const pTop2 = (mc.pGroup1 ?? 0) + (mc.pGroup2 ?? 0);
+  return pTop2 < 0.005 && minRank <= 2;
+}
+
+/** The tail caveat appended to a detail when 2nd is alive-but-infinitesimal. */
+const INFINITESIMAL_SECOND_CAVEAT =
+  'a 2nd-place finish is mathematically alive but <0.1% (needs an extreme goal swing).';
 
 /**
  * For a clinched top-2 team that can still win the group, the headline append.
@@ -1095,6 +1140,46 @@ function mcQualifiedHeadline(mc, firstReachable) {
     return `${base} — ${pctMC(mc.pWinGroup)} to win the group`;
   }
   return base;
+}
+
+/**
+ * Render the outcome token(s) for ONE remaining result `x` (a {res, slot, best,
+ * worst, finalPts} record), honoring the CORE RULE:
+ *   - a % may appear ONLY on a 3rd-place token, and it is pQualIfThird (the
+ *     probability of advancing GIVEN a 3rd-place finish on that points total);
+ *   - 4th is always bare "(out)" — never a %;
+ *   - a top-2 portion is "through" (no %).
+ * Reachable positions come from the deterministic rank set (slot.ranks).
+ * If mc is absent, falls back to position-only phrasing (no %).
+ */
+function outcomeForResult(x, mc) {
+  const ranks = x.slot.ranks;
+  const canTop2 = [...ranks].some((r) => r <= 2);
+  const can3rd = ranks.has(3);
+  const can4th = ranks.has(4);
+
+  // 3rd-place token, with its conditional advance % (the ONLY % allowed here).
+  const q = can3rd ? qualIfThirdGivenPoints(mc, x.finalPts) : null;
+  const third = () =>
+    q && q.pQualIfThird != null
+      ? `3rd (${pctWhole(q.pQualIfThird)} to advance)`
+      : '3rd';
+
+  // Top-2 portion: the highest reachable top-2 rank, stated as a bare position.
+  const top2Word = () => {
+    const best = Math.min(...ranks);
+    return ordinal(Math.min(best, 2));
+  };
+
+  if (!can3rd && !can4th) return mc ? 'through' : top2Word(); // top-2 only
+  if (!can3rd && can4th) return 'out';                         // 4th only
+
+  // 3rd is in play. Assemble: [top-2] [3rd(%)] [4th(out)].
+  const parts = [];
+  if (canTop2) parts.push(top2Word());
+  parts.push(third());
+  if (can4th) parts.push('4th (out)');
+  return parts.join(' or ');
 }
 
 /**
@@ -1170,17 +1255,13 @@ function mcFinalRoundDetail(code, group, unplayed, scenarios, mc) {
     segs.push(lead);
   }
 
-  // Remaining results (can leave the team 3rd-or-out): attach advance odds.
-  // "a draw → 3rd (97%)" / "a loss → 2nd or 3rd (99%)" / "a loss → out (~6%)".
+  // Remaining results (can leave the team 3rd-or-out): render the reachable
+  // position(s). CORE RULE: a qualification % may attach ONLY to a 3rd-place
+  // token, using pQualIfThird (P(advance | finish 3rd on this total)). 4th is
+  // NEVER given a % — it is always bare "(out)". Top-2 portions read "through".
   for (let i = k; i < info.length; i++) {
     const x = info[i];
-    const adv = advGivenPoints(mc, x.finalPts);
-    let pos;
-    if (x.best >= 4) pos = 'out';
-    else if (x.best === x.worst) pos = ordinal(x.best);
-    else pos = `${ordinal(x.best)} or ${ordinal(x.worst)}`;
-    const tail = adv == null ? '' : ` (${x.best >= 4 ? '~' : ''}${pctMC(adv)})`;
-    segs.push(`a ${resultPhrase[x.res]} → ${pos}${tail}`);
+    segs.push(`a ${resultPhrase[x.res]} → ${outcomeForResult(x, mc)}`);
   }
 
   if (segs.length === 0) return null;
@@ -1363,7 +1444,7 @@ export function summarizeGroup(group, opts = {}) {
         detail = describeConditional(code, team.name, unplayed, scenarios, relevant, nameOf);
       }
       const headline = mc
-        ? mcContentionHeadline(mc)
+        ? mcContentionHeadline(mc, minRank)
         : 'Can finish no higher than 3rd — advancing then depends on other groups';
       return mk(code, team.name, 'best-3rd', headline, detail, maxRank, minRank);
     }
@@ -1375,8 +1456,14 @@ export function summarizeGroup(group, opts = {}) {
       detail = describeConditional(code, team.name, unplayed, scenarios, relevant, nameOf);
     }
     const headline = mc
-      ? mcContentionHeadline(mc)
+      ? mcContentionHeadline(mc, minRank)
       : conditionalHeadline(code, allRanks, unplayed, scenarios, relevant);
+    // Infinitesimal-2nd: when MC says top-2 ≈ 0% but 2nd is still mathematically
+    // reachable, the headline states the team is out of the top 2; explain the
+    // vanishing tail in the detail so the prose agrees with the bars.
+    if (mc && detail != null && isInfinitesimalSecond(mc, minRank)) {
+      detail = detail.replace(/\.?\s*$/, '') + '; ' + INFINITESIMAL_SECOND_CAVEAT;
+    }
     return mk(code, team.name, 'conditional', headline, detail, maxRank, minRank);
   });
 

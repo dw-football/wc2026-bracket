@@ -508,13 +508,18 @@ test('MC: Group D final-round headlines + result-based detail (verbatim sign-off
   assert.equal(get('TUR').headline, 'Eliminated');
 
   // AUS: top-2-safe with a win or draw; a loss drops to 3rd WITH advance odds.
+  // The % is now the CONDITIONAL advance-if-3rd (pQualIfThird), labelled
+  // "to advance", and attaches to the 3rd token only.
   const aus = get('AUS');
   assert.match(aus.headline, /to qualify$/);
-  assert.match(aus.detail, /^2nd with a win or draw vs Paraguay; a loss → 3rd \(\d/);
+  assert.match(aus.detail, /^2nd with a win or draw vs Paraguay; a loss → 3rd \(\d+% to advance\)\.$/);
 
-  // PAR: 2nd with a win; a draw/loss → 3rd, EACH with a %.
+  // PAR: 2nd with a win; a draw/loss → 3rd, EACH with a 3rd-only advance %.
   const par = get('PAR');
-  assert.match(par.detail, /^2nd with a win over Australia; a draw → 3rd \(\d+%\); a loss → 3rd \(\d+%\)\.$/);
+  assert.match(
+    par.detail,
+    /^2nd with a win over Australia; a draw → 3rd \(\d+% to advance\); a loss → 3rd \(\d+% to advance\)\.$/
+  );
 });
 
 test('MC: a team that realistically cannot finish 2nd never has a top-2 headline (Bosnia/Qatar guard)', async () => {
@@ -544,9 +549,59 @@ test('MC: a team that realistically cannot finish 2nd never has a top-2 headline
   }
 });
 
-test('MC: every 3rd-place (or "out") result mention in the detail carries a %', async () => {
+test('MC: every 3rd-place outcome carries a % and no 4th/out ever does (CORE RULE)', async () => {
   const { groups, mcByCode } = await buildMcByCode();
   // summarizeGroup is the FINAL-ROUND analyzer (1-2 unplayed). Only sweep those.
+  const finalRound = groups.filter((g) => {
+    const u = g.matches.filter((m) => !m.played).length;
+    return u >= 1 && u <= 2;
+  });
+  // A "%" may attach to a 3rd token via "(N% to advance)"; never to a 4th token
+  // and never to a bare "out". This regex finds "4th" followed (after optional
+  // whitespace) by a parenthetical that contains a digit and a "%": that is the
+  // forbidden form.
+  const fourthPct = /4th\s*\([^)]*\d%[^)]*\)/;
+  // A bare "out" must NOT be immediately wrapped in a parenthetical % either.
+  const outPct = /\bout\s*\([^)]*\d%[^)]*\)/;
+
+  for (const g of finalRound) {
+    const out = summarizeGroup(g, { mcByCode });
+    for (const t of out.teams) {
+      if (!t.detail) continue;
+
+      // (a) No detail string ever attaches a % to "4th" or to a bare "out".
+      assert.ok(
+        !fourthPct.test(t.detail),
+        `${g.name} ${t.code} attaches a % to 4th: ${t.detail}`
+      );
+      assert.ok(
+        !outPct.test(t.detail),
+        `${g.name} ${t.code} attaches a % to a bare "out": ${t.detail}`
+      );
+
+      // Every "→ ..." result that can leave the team 3rd must carry a 3rd-only
+      // advance %. Results that are top-2 only ("through") or 4th only ("out")
+      // carry no %.
+      const arrows = t.detail.match(/→ [^;.]*/g) || [];
+      for (const seg of arrows) {
+        if (/\b3rd\b/.test(seg)) {
+          assert.match(
+            seg,
+            /3rd \((?:[~<]?\d+%|<1%) to advance\)/,
+            `${g.name} ${t.code} 3rd result lacks a "(N% to advance)" tail: "${seg}"`
+          );
+        }
+      }
+    }
+  }
+});
+
+// ===========================================================================
+// CORE RULE — % attaches ONLY to 3rd; 4th is always bare "(out)".
+// ===========================================================================
+
+test('MC (a): no detail ever has a "4th" token followed by a parenthetical %', async () => {
+  const { groups, mcByCode } = await buildMcByCode();
   const finalRound = groups.filter((g) => {
     const u = g.matches.filter((m) => !m.played).length;
     return u >= 1 && u <= 2;
@@ -555,17 +610,59 @@ test('MC: every 3rd-place (or "out") result mention in the detail carries a %', 
     const out = summarizeGroup(g, { mcByCode });
     for (const t of out.teams) {
       if (!t.detail) continue;
-      // Any "→ 3rd", "→ 2nd or 3rd", or "→ out" arrow result must be followed by
-      // a parenthetical percentage.
-      const re = /→ (?:3rd|2nd or 3rd|out)(?:\s*\([~<]?\d|\s*\(99%\))/g;
-      const arrows = t.detail.match(/→ (?:3rd|2nd or 3rd|out)[^;.]*/g) || [];
-      for (const seg of arrows) {
-        assert.match(
-          seg,
-          /\([~<]?\d|\(99%\)|\(<1%\)/,
-          `${g.name} ${t.code} 3rd/out result lacks a %: "${seg}" in ${t.detail}`
-        );
-      }
+      // "4th" must never be followed by a parenthetical containing a percent.
+      assert.ok(
+        !/4th\s*\([^)]*%[^)]*\)/.test(t.detail),
+        `${g.name} ${t.code} detail attaches % to 4th: ${t.detail}`
+      );
     }
   }
+});
+
+test('MC (b): Group E Ivory Coast loss clause = "3rd (N% to advance) or 4th (out)"', async () => {
+  const { groups, mcByCode } = await buildMcByCode();
+  const out = summarizeGroup(groups.find((g) => g.name === 'Group E'), { mcByCode });
+  const civ = out.teams.find((t) => t.code === 'CIV');
+  assert.ok(civ, 'CIV must be in Group E');
+  // The loss clause must carry a % on the 3rd token and a BARE "(out)" on 4th.
+  const lossSeg = (civ.detail.match(/a loss → [^;.]*/) || [])[0] || '';
+  assert.match(
+    lossSeg,
+    /3rd \(\d+% to advance\) or 4th \(out\)/,
+    `CIV loss clause must be "3rd (N% to advance) or 4th (out)": ${civ.detail}`
+  );
+  // 4th carries NO percent.
+  assert.ok(!/4th\s*\([^)]*%/.test(civ.detail), `CIV 4th must be bare: ${civ.detail}`);
+});
+
+test('MC (c): a Group B team with pTop2<0.5% has no 2nd-place headline + carries the <0.1% caveat', async () => {
+  const { groups, mcByCode } = await buildMcByCode();
+  const out = summarizeGroup(groups.find((g) => g.name === 'Group B'), { mcByCode });
+  let checked = 0;
+  for (const t of out.teams) {
+    const mc = mcByCode[t.code];
+    if (!mc) continue;
+    const pTop2 = (mc.pGroup1 || 0) + (mc.pGroup2 || 0);
+    if (pTop2 >= 0.005) continue;
+    if (t.status === 'qualified' || t.status === 'won-group') continue;
+    checked++;
+    // Headline must NOT assert a 2nd-place finish; it states the team is out of
+    // the top 2.
+    assert.doesNotMatch(
+      t.headline,
+      /finish 2nd|as high as 2nd|still finish 2nd|fighting for 3rd/,
+      `${t.code} (pTop2≈0) headline implies a top-2 shot: ${t.headline}`
+    );
+    assert.match(t.headline, /Out of the top 2|Can finish only 3rd or 4th/, `${t.code}: ${t.headline}`);
+    // When 2nd is deterministically reachable (minRank<=2), the detail must
+    // explain the vanishing tail.
+    if (t.minRank <= 2) {
+      assert.match(
+        t.detail,
+        /<0\.1%/,
+        `${t.code} detail must carry the <0.1% caveat: ${t.detail}`
+      );
+    }
+  }
+  assert.ok(checked >= 1, 'expected at least one Group B infinitesimal-2nd team (BIH/QAT)');
 });
