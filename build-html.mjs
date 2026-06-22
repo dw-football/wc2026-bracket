@@ -666,6 +666,9 @@ const APP_JS = String.raw`
   var root=document.getElementById('app');
 
   function render(){
+    // tear down any open popover (its slot element is about to be replaced) so we
+    // don't leave a stray node or dangling document-level listeners behind.
+    if(typeof closePop==='function') closePop();
     root.innerHTML='';
     root.appendChild(header());
     root.appendChild(controls());
@@ -724,6 +727,14 @@ const APP_JS = String.raw`
       tabs.appendChild(b);
     });
     wrap.appendChild(tabs);
+
+    // faint one-line affordance hint (bracket tab, projected mode only)
+    if(state.tab==='bracket' && state.mode==='projected'){
+      var hint=document.createElement('div'); hint.className='muted tiny';
+      hint.style.margin='2px 0 0';
+      hint.textContent='Tip: click any matchup to see the full list of teams that could fill it.';
+      wrap.appendChild(hint);
+    }
     return wrap;
   }
 
@@ -733,7 +744,7 @@ const APP_JS = String.raw`
     if(state.mode==='projected'){
       var bar=document.createElement('div'); bar.className='row tiny muted';
       if(state.simming){ bar.innerHTML='<span class="simstate"><span class="spinner"></span> simulating '+SIM_N.toLocaleString()+' tournaments&hellip;</span>'; }
-      else { bar.innerHTML='<span>Each slot shows the most-likely team and the true share of sims in which that team reaches and occupies that exact slot. Hover (or tap) any slot for the full candidate distribution.</span>'; }
+      else { bar.innerHTML='<span>Each slot shows the most-likely team and the true share of sims in which that team reaches and occupies that exact slot. Click any slot for the full candidate distribution.</span>'; }
       sec.appendChild(bar);
       sec.appendChild(exportBar());
       if(!state.mc){ if(!state.simming){ var p=document.createElement('div'); p.className='muted'; p.textContent='Preparing simulation…'; sec.appendChild(p);} sec.appendChild(bracketShell(null)); return sec; }
@@ -1092,16 +1103,19 @@ const APP_JS = String.raw`
       }
     }
 
-    // interaction — UNIVERSAL hover/tap popover (all rounds) in projected mode.
+    // interaction — CLICK-TO-PIN popover (all rounds) in projected mode.
+    // No hover-open and no mouseleave auto-dismiss: opening, moving, and closing
+    // are all driven by explicit clicks/taps (see showCandidates). The whole slot
+    // row is the click target (the transparent .slot-bg rect spans COL_W×SLOT_H),
+    // so the seed/label and team line are equally easy to hit.
     if(state.mode==='projected'){
       var slotDef=(round==='R32'? m[side] : null);
-      var open=function(ev){ showCandidates(ev, si.cands||[], m.match, side, round, slotDef, clinched, code); };
-      g.addEventListener('click', open);
-      g.addEventListener('mouseenter', open);
-      g.addEventListener('mouseleave', function(){
-        if(_popPinned) return;
-        // give the pointer a beat to land on the popover (then it stays open)
-        setTimeout(function(){ if(!_popPinned && !_popHover) closePop(); }, 120);
+      var slotKey=m.match+':'+side;
+      g.addEventListener('click', function(ev){
+        ev.stopPropagation();
+        // same slot → toggle closed; any other slot → (re)open pinned here.
+        if(_popKey===slotKey){ closePop(); return; }
+        showCandidates(ev, si.cands||[], m.match, side, round, slotDef, clinched, code, slotKey);
       });
     } else {
       g.addEventListener('click', function(){ if(code){ state.picks[m.match]=code; render(); } });
@@ -1191,19 +1205,21 @@ const APP_JS = String.raw`
     return bar;
   }
 
-  // _popPinned: a click (tap) pins the popover so it survives mouse-leave; a pure
-  // hover popover dismisses on leave. Either way it dismisses on outside-tap.
-  var _popPinned=false, _popHover=false;
+  // _popKey identifies which slot ("<matchNo>:<side>") currently owns the open,
+  // pinned popover (null = none). Clicking the same slot toggles it closed;
+  // clicking a different slot moves it; an outside click or Esc closes it.
+  // There is NO hover-open and NO mouseleave auto-dismiss — every open/close is
+  // an explicit click/tap, which is what eliminates the old flashing.
+  var _popKey=null;
 
   // UNIVERSAL popover (all rounds, both sides). Lists the FULL candidate
   // distribution for the slot: every team with p >= ~0.5%, sorted desc, with %.
   // For R32 third-place slots each candidate is prefixed with its group tag
   // ("3B"). Locked single-occupant (100%) -> trivial "Locked — <team>".
   // cands = si.cands (perSlot tail, now up to 32 long).
-  function showCandidates(ev, cands, matchNo, side, round, slotDef, clinched, modalCode){
-    var pinned = ev && ev.type==='click';
+  function showCandidates(ev, cands, matchNo, side, round, slotDef, clinched, modalCode, slotKey){
     closePop();
-    _popPinned=pinned;
+    _popKey=slotKey||(matchNo+':'+side);
     var list=(cands||[]).filter(function(c){ return c&&c.code && (c.p||0)>=0.005; });
     var isThird = round==='R32' && slotDef && slotDef.type==='third';
 
@@ -1211,14 +1227,14 @@ const APP_JS = String.raw`
     // LOCKED: single occupant at 100% -> trivial label, no distribution.
     if(clinched || (list.length<=1 && (list[0]?(list[0].p||0):0)>=0.9995)){
       var lc=(list[0]&&list[0].code)||modalCode;
-      pop.innerHTML=(pinned?'<span class="x">&times;</span>':'')+
+      pop.innerHTML='<span class="x">&times;</span>'+
         '<h4>M'+matchNo+' &middot; '+esc(side)+' slot</h4>'+
         '<div class="cand"><span class="code" style="color:'+accentFor(lc)+'">'+esc(lc||'—')+'</span>'+
         '<span class="nm">Locked &mdash; '+esc(nameByCode[lc]||lc||'')+'</span></div>';
     } else {
       var sum=0; list.forEach(function(c){ sum+=(c.p||0); });
       var head='<h4>M'+matchNo+' &middot; '+esc(side)+' slot &mdash; full distribution <span style="color:#6b7280">('+Math.round(sum*100)+'%)</span></h4>';
-      pop.innerHTML=(pinned?'<span class="x">&times;</span>':'')+head;
+      pop.innerHTML='<span class="x">&times;</span>'+head;
       list.forEach(function(c){
         var row=document.createElement('div'); row.className='cand';
         var tag = isThird ? '<span class="code" style="color:#6b7280;min-width:22px">'+groupTag(c.code)+'</span>' : '';
@@ -1229,24 +1245,42 @@ const APP_JS = String.raw`
         pop.appendChild(row);
       });
     }
-    var xBtn=pop.querySelector('.x'); if(xBtn) xBtn.onclick=closePop;
-    // hover popovers: keep open while the pointer is over the popover itself
-    // (so a long distribution can be scrolled); close when it leaves.
-    if(!pinned){
-      pop.addEventListener('mouseenter', function(){ _popHover=true; });
-      pop.addEventListener('mouseleave', function(){ _popHover=false; closePop(); });
-    }
+    // clicks inside the popover (scrolling, the × button) must not bubble out to
+    // the document outside-click handler that would close it.
+    pop.addEventListener('click', function(e){ e.stopPropagation(); });
+    var xBtn=pop.querySelector('.x'); if(xBtn) xBtn.onclick=function(e){ e.stopPropagation(); closePop(); };
+
     document.body.appendChild(pop);
-    // position near the pointer, clamped on-screen.
+    // position near the pointer; flip/clamp so it never runs off the right/bottom.
     var px=(ev&&ev.clientX!=null)?ev.clientX:window.innerWidth/2;
     var py=(ev&&ev.clientY!=null)?ev.clientY:window.innerHeight/2;
-    var x=Math.min(px+12, window.innerWidth-pop.offsetWidth-10);
-    var y=Math.min(py+8, window.innerHeight-pop.offsetHeight-10);
-    pop.style.left=Math.max(8,x)+'px'; pop.style.top=Math.max(8,y)+'px';
-    if(pinned){ setTimeout(function(){ document.addEventListener('click', outsidePop, {once:true}); },0); }
+    var pw=pop.offsetWidth, ph=pop.offsetHeight, M=10;
+    // prefer right/below the pointer; flip to left/above if it would overflow.
+    var x=px+12; if(x+pw > window.innerWidth-M) x=Math.min(px-12-pw, window.innerWidth-pw-M);
+    var y=py+8;  if(y+ph > window.innerHeight-M) y=Math.min(py-8-ph, window.innerHeight-ph-M);
+    pop.style.left=Math.max(M,x)+'px'; pop.style.top=Math.max(M,y)+'px';
+
+    // dismiss on any click outside the popover-or-slots, and on Esc. Deferred so
+    // the click that opened the popover doesn't immediately close it.
+    setTimeout(function(){
+      document.addEventListener('click', outsidePop);
+      document.addEventListener('keydown', escPop);
+    },0);
   }
-  function outsidePop(e){ var p=document.querySelector('.pop'); if(p&&!p.contains(e.target)) closePop(); }
-  function closePop(){ var p=document.querySelector('.pop'); if(p) p.remove(); _popPinned=false; _popHover=false; }
+  function outsidePop(e){
+    var p=document.querySelector('.pop');
+    // a click on a slot is handled by the slot's own click handler (toggle/move);
+    // here we only close when the click is truly outside the popover. Slot clicks
+    // stopPropagation, so they never reach this document-level listener.
+    if(p && !p.contains(e.target)) closePop();
+  }
+  function escPop(e){ if(e.key==='Escape'||e.keyCode===27) closePop(); }
+  function closePop(){
+    var p=document.querySelector('.pop'); if(p) p.remove();
+    _popKey=null;
+    document.removeEventListener('click', outsidePop);
+    document.removeEventListener('keydown', escPop);
+  }
 
   // ---------------- GROUP STAGE ----------------
   function renderGroups(){
@@ -1622,7 +1656,7 @@ const APP_JS = String.raw`
         'Knockout ties go to an Elo-weighted shootout coin.</p>'+
       '<p><b>Per-round percentages are TRUE Monte-Carlo frequencies.</b> Every knockout slot — Round of 32 through the Final — '+
         'shows the most-likely team and the exact share of simulated tournaments in which that team <i>reaches and occupies that exact slot</i> '+
-        '(an unconditional probability, tallied directly from the sims; deeper rounds are not renormalized approximations). Tap a slot to see the top candidates with their true probabilities.</p>'+
+        '(an unconditional probability, tallied directly from the sims; deeper rounds are not renormalized approximations). Click a slot to see the top candidates with their true probabilities.</p>'+
       '<p><b>Coin-flips are real:</b> a ⚖ marks teams a standing could separate only by drawing of lots — a genuine random draw, '+
         'which we render deterministically (alphabetical) but flag honestly.</p>'+
       '<p><b>Data:</b> openfootball/worldcup.json (public domain). '+FRESH.playedCount+' of 104 matches in the build. '+
