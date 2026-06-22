@@ -17,15 +17,20 @@ The app is one self-contained file (`dist/index.html`) — all code, data, and t
 simulator inlined. localhost is preferred over double-clicking the file so the
 My-Picks live worker runs cleanly.
 
-## HOW TO UPDATE RESULTS  ("GO" flow)
-When a game finishes and David gives a score:
+## HOW TO UPDATE RESULTS  ("GO" flow) + DEPLOY
+When a game finishes and David gives a score, run the full routine:
 1. Add it to `manual-results.json` (entry: group, team1, team2 [exact openfootball
    names], ft:[h,a]). The feed silently supersedes a manual entry once openfootball
    publishes the same match (already-played matches are skipped).
-2. Rebuild: `node build-html.mjs --refresh`  (re-pulls openfootball + applies
-   manual results + re-runs the 200k bake; ~1.5 min).
-3. David (and friends) hard-refresh the browser.
-Everything (standings, sim, bracket, scenario odds) recomputes off the one rebuild.
+2. `node build-html.mjs --refresh`   (re-pull feed + apply manual + re-bake 200k; ~1.5 min)
+3. `cp dist/index.html docs/index.html`   (docs/ is what GitHub Pages serves)
+4. `git add -A && git commit -m "Result: <...>"`
+5. Push (token from gitignored .env, kept OUT of git config):
+   `TOKEN=$(grep '^GITHUB_TOKEN=' .env|cut -d= -f2); git push "https://dw-football:${TOKEN}@github.com/dw-football/wc2026-bracket.git" main`
+GitHub Pages auto-redeploys main:/docs in ~1 min. David + friends hard-refresh
+the live URL. Everything (standings, sim, bracket, scenario odds) recomputes off
+the one rebuild. (TODO nicety: have build-html.mjs also emit docs/index.html so
+step 3 is automatic.)
 
 Already entered manually this tournament: Belgium 0-0 Iran (G), Uruguay 2-2 Cape
 Verde (H).
@@ -72,13 +77,19 @@ Pure client-side JS baked into one HTML file. Same engine .js runs in Node
 - Title odds land ~ARG/ESP 18-21%, FRA ~13%, ENG ~9% (matches the market-aligned
   cluster of the Towards-Data-Science 11-model piece).
 
-## SHARING (see GitHub recommendation in chat)
-- Now: localhost for David; send dist/index.html to friends (no auto-update).
-- Recommended: push to GitHub + enable Pages (public URL, auto-updates on push).
-  The claude.ai Artifact path was abandoned (kept failing for David).
+## SHARING — LIVE
+- **Live URL (share with friends): https://dw-football.github.io/wc2026-bracket/**
+- GitHub repo: https://github.com/dw-football/wc2026-bracket (PUBLIC). Account: dw-football.
+- GitHub Pages serves `main:/docs/index.html`; auto-redeploys on every push (~1 min).
+- Push credential: classic PAT (`repo` scope, ~90-day) in gitignored `.env` as
+  GITHUB_TOKEN. Used inline at push time (see GO flow); NOT stored in .git/config.
+  If pushes start 401'ing, the token expired — David regenerates at
+  github.com/settings/tokens and replaces GITHUB_TOKEN in .env.
+- localhost still works for David: `python -m http.server 8000 --directory dist`.
+- (The claude.ai Artifact path was abandoned — kept failing for David.)
 
 ## OPEN / PARKED
-- [ ] Push to GitHub + GitHub Pages for a shareable friends URL (David deciding).
+- [x] GitHub + Pages live: https://dw-football.github.io/wc2026-bracket/ (2026-06-21).
 - [ ] (Parked, David's call) Market-odds overlay: de-vigged 1X2 as the engine +
       tournament-winner market as a "model vs market" sanity column.
 - [ ] (Optional) Real FIFA World Ranking data for the step-7 tiebreaker (Elo proxy now).
