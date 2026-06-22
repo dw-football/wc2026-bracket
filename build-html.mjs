@@ -1017,7 +1017,7 @@ const APP_JS = String.raw`
     var t1=svgText(PAD_X, Math.round(22*_PS), '2026 World Cup — '+(state.mode==='picks'?'My-Picks bracket':'projected bracket'),
       { fill:'#e7eaf0','font-size':String(FS(17)),'font-weight':'700' });
     svg.appendChild(t1);
-    var stamp='data through '+FRESH.dataThrough+' · '+FRESH.playedCount+'/'+FRESH.totalCount+' played · built '+localBuilt(FRESH.builtAtISO)+' · knockout times EDT';
+    var stamp='data through '+FRESH.dataThrough+' · '+FRESH.playedCount+'/'+FRESH.totalCount+' played · built '+localBuilt(FRESH.builtAtISO);
     svg.appendChild(svgText(PAD_X, Math.round(39*_PS), stamp, { fill:'#9aa3b2','font-size':String(FS(11)) }));
 
     // round headers
@@ -1071,7 +1071,7 @@ const APP_JS = String.raw`
   // carries a single "all times EDT" note). Empty string if no schedule entry.
   function koLabel(matchNo){
     var k=KOSCHED[matchNo]||KOSCHED[String(matchNo)]; if(!k) return '';
-    return [k.venue, k.dateLabel, k.timeEDT].filter(Boolean).join(' · ');
+    return [k.venue, k.dateLabel, k.timeEDT? k.timeEDT+' EDT':''].filter(Boolean).join(' · ');
   }
   // Append the schedule line to the right of the "M##" header.
   function matchHeader(g, matchNo, x, top){
