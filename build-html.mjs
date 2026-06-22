@@ -18,6 +18,8 @@ import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
 
 import { toGroups, fetchRaw } from './adapter.js';
+import { resolveThirdPlaceSlots } from './allocation.js';
+import { monteCarlo } from './model.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const readText = (f) => readFile(join(__dirname, f), 'utf8');
@@ -128,6 +130,53 @@ function computeFreshness(raw) {
 }
 
 // ----------------------------------------------------------------------------
+// Build-time Monte-Carlo bake
+// ----------------------------------------------------------------------------
+// Run the SAME simulation the browser would (same data, fixed seed, hosts, 32
+// top candidates) but at high n, ONCE, in Node. The default Projected view ships
+// these precise numbers and paints instantly with no worker.
+//
+// Must mirror the browser's projection params exactly (see APP_JS: SIM_SEED,
+// HOSTS, topCandidates:32) so that "no overrides" == baked == what a live worker
+// run over the pristine feed would produce (modulo n).
+const BAKE_N = 200000;
+const BAKE_SEED = 12345;
+const BAKE_HOSTS = ['USA', 'MEX', 'CAN'];
+const BAKE_TOP = 32;          // full candidate breadth (matches browser topCandidates)
+const PERSLOT_KEEP = 16;      // trim per-slot candidate lists to top-16/side to bound size
+
+// Trim a perSlot/perR32Slot array's home/away candidate lists to the top K.
+function trimSlotList(arr, k) {
+  return (arr || []).map((s) => ({
+    ...s,
+    home: (s.home || []).slice(0, k),
+    away: (s.away || []).slice(0, k),
+  }));
+}
+
+// Produce the embeddable bakedMc. perTeam is kept complete (the scenario tab + Elo
+// distributions need every team and its full ptsTally); perSlot / perR32Slot are
+// trimmed to the top PERSLOT_KEEP candidates per side (the popover shows the full
+// distribution it has, and 16 deep covers every realistically-reachable team).
+function bakeMonteCarlo(groups, bracket) {
+  const mc = monteCarlo(groups, bracket, {
+    n: BAKE_N,
+    seed: BAKE_SEED,
+    hostCodes: new Set(BAKE_HOSTS),
+    topCandidates: BAKE_TOP,
+    resolveThirdPlaceSlots,
+  });
+  return {
+    n: mc.n,
+    perTeam: mc.perTeam,                              // complete
+    perR32Slot: trimSlotList(mc.perR32Slot, PERSLOT_KEEP),
+    modalBracket: mc.modalBracket,                    // tiny (modal only)
+    perSlot: trimSlotList(mc.perSlot, PERSLOT_KEEP),  // trimmed
+    modalKnockout: mc.modalKnockout,                  // tiny (modal only)
+  };
+}
+
+// ----------------------------------------------------------------------------
 // Build
 // ----------------------------------------------------------------------------
 async function main() {
@@ -192,7 +241,14 @@ async function main() {
     throw new Error(`bundled logic failed to parse: ${e.message}`);
   }
 
-  const data = { teams, bracket, allocation, groups, freshness };
+  // ---- bake the high-n Monte Carlo ONCE (the slow step; ~50s at n=200k) ----
+  console.log(`Baking Monte Carlo: n=${BAKE_N.toLocaleString()}, seed ${BAKE_SEED}, hosts ${BAKE_HOSTS.join('/')} …`);
+  const mcT0 = Date.now();
+  const bakedMc = bakeMonteCarlo(groups, bracket);
+  const mcMs = Date.now() - mcT0;
+  console.log(`Bake done in ${(mcMs / 1000).toFixed(1)}s  (${(mcMs / BAKE_N * 1000).toFixed(1)} µs/sim)`);
+
+  const data = { teams, bracket, allocation, groups, freshness, bakedMc };
 
   const html = renderHTML(logicBundle, data);
 
@@ -211,6 +267,7 @@ async function main() {
   const httpRefs = (html.match(/\bhttps?:\/\//g) || []).length;
   console.log(`http(s):// occurrences in output: ${httpRefs} (expect 0)`);
   console.log(`embeds __APP_DATA__: ${html.includes('__APP_DATA__')}`);
+  console.log(`embeds bakedMc: ${html.includes('bakedMc')} (perTeam ${bakedMc.perTeam.length}, perSlot ${bakedMc.perSlot.length}, n=${bakedMc.n.toLocaleString()})`);
 }
 
 // ----------------------------------------------------------------------------
@@ -248,7 +305,8 @@ var __APP_DATA__ = {
   teams: ${embed(data.teams)},
   bracket: ${embed(data.bracket)},
   groups: ${embed(data.groups)},
-  freshness: ${embed(data.freshness)}
+  freshness: ${embed(data.freshness)},
+  bakedMc: ${embed(data.bakedMc)}
 };
 
 /* ============================================================================
@@ -496,8 +554,9 @@ const APP_JS = String.raw`
   var TEAMS = DATA.teams;
   var BRACKET = DATA.bracket;
   var FRESH = DATA.freshness;
+  var BAKED_MC = DATA.bakedMc || null;   // high-n Monte Carlo baked at build time
   var HOSTS = ['USA','MEX','CAN'];
-  var SIM_N = 10000;
+  var SIM_N = 10000;                      // live-worker sim count (My-Picks overrides only)
   var SIM_SEED = 12345;
 
   // team lookups
@@ -554,6 +613,34 @@ const APP_JS = String.raw`
   function letterOf(g){ var m=/Group\s+([A-L])/i.exec(g.name); return m?m[1].toUpperCase():g.name.slice(-1); }
   function groupsForCompute(){ return state.mode==='picks'? workGroups : baseGroups; }
 
+  // ---- "overrides active" detection ----
+  // The baked Monte Carlo was computed over the PRISTINE feed (baseGroups). It is
+  // therefore the exact (high-n) answer whenever the groups feeding the sim have
+  // not been edited. The only way to edit them is My-Picks group-score changes,
+  // which mutate workGroups. So: overrides are active iff groupsForCompute() (=
+  // workGroups in picks mode) diverges from baseGroups on any match's
+  // played/score. Knockout picks (state.picks) don't feed the sim, only the
+  // deterministic picks bracket — so they don't invalidate the baked sim.
+  // (We compare against baseGroups directly, not the mode, so an unedited My-Picks
+  //  session still gets the instant baked numbers.)
+  function groupsEdited(){
+    for(var i=0;i<workGroups.length;i++){
+      var wg=workGroups[i], bg=baseGroups[i];
+      if(!bg||wg.matches.length!==bg.matches.length) return true;
+      for(var j=0;j<wg.matches.length;j++){
+        var w=wg.matches[j], b=bg.matches[j];
+        if(!!w.played!==!!b.played) return true;
+        if(w.played && (w.homeGoals!==b.homeGoals || w.awayGoals!==b.awayGoals)) return true;
+      }
+    }
+    return false;
+  }
+  // True when the groups that will FEED the sim differ from what the bake assumed
+  // (pristine feed). Projected mode always feeds baseGroups, so the bake is always
+  // valid there; only My-Picks mode with edited group scores invalidates it. (A
+  // recompute is then required instead of the baked numbers.)
+  function overridesActive(){ return state.mode==='picks' && groupsEdited(); }
+
   // ====================================================================
   // MONTE CARLO (Projected mode) — Web Worker w/ synchronous fallback
   // ====================================================================
@@ -568,6 +655,12 @@ const APP_JS = String.raw`
   }
 
   function runProjection(){
+    // FAST PATH: no overrides -> the baked high-n sim IS the answer. No worker,
+    // no spinner, instant. (The bake used the pristine feed = these exact groups.)
+    if(!overridesActive() && BAKED_MC){
+      state.mc=BAKED_MC; state.simming=false; render(); return;
+    }
+    // LIVE PATH: My-Picks group edits changed the inputs -> recompute (10k worker).
     state.simming=true; render();
     var groups=groupsForCompute();
     var payload={ groups:groups, bracket:BRACKET, n:SIM_N, seed:SIM_SEED,
@@ -679,22 +772,27 @@ const APP_JS = String.raw`
     root.appendChild(s);
     root.appendChild(about());
 
-    // kick a projection if needed (poster mode computes synchronously up front,
-    // so we never schedule the async worker there — capture must see a full bracket).
-    // The scenario tab also wants mc (for the per-team Elo P1-4 distribution), so
-    // it no longer opts out — it renders the deterministic content immediately and
-    // backfills the Elo line when the sim returns.
-    if(!POSTER && state.mode==='projected' && !state.mc && !state.simming){
+    // Ensure mc is available. With NO overrides this resolves INSTANTLY to the
+    // baked high-n sim (runProjection's fast path — no worker, no spinner). With
+    // My-Picks group edits active it schedules the 10k worker recompute. Both the
+    // projected bracket AND the scenario tab (per-team Elo P1-4 distribution) want
+    // mc, so we kick it in either mode; poster mode is handled synchronously up
+    // front, so we never schedule the async worker there.
+    if(!POSTER && !state.mc && !state.simming){
       runProjection();
     }
   }
+
+  // The count of sims actually backing the CURRENT view: the baked high-n run
+  // when no overrides are active, else the live 10k worker run.
+  function simCount(){ return (!overridesActive() && BAKED_MC) ? (BAKED_MC.n||SIM_N) : SIM_N; }
 
   function header(){
     var d=document.createElement('div'); d.className='app-header';
     var note = 'Very-recently-finished or in-progress games may not yet be in the feed — switch to My Picks to enter a just-final result by hand.';
     d.innerHTML =
       '<h1>2026 World Cup &mdash; Bracket Projector</h1>'+
-      '<div class="muted tiny">Elo&ndash;Poisson supremacy model &middot; '+SIM_N.toLocaleString()+' Monte-Carlo sims &middot; data via openfootball</div>'+
+      '<div class="muted tiny">Elo&ndash;Poisson supremacy model &middot; '+simCount().toLocaleString()+' Monte-Carlo sims &middot; data via openfootball</div>'+
       '<div class="fresh"><div><b>Data through:</b> '+esc(FRESH.dataThrough)+
         ' &middot; '+FRESH.playedCount+'/'+FRESH.totalCount+' matches played &middot; built '+esc(localBuilt(FRESH.builtAtISO))+'</div>'+
         '<div class="note">'+note+'</div></div>';
@@ -1650,7 +1748,7 @@ const APP_JS = String.raw`
       '<p><b>Strength signal:</b> soccer Elo ratings (eloratings.net-style). A rating gap maps to expected goal <i>supremacy</i> ('+
         '~0.0036 goals per Elo point), split into a Poisson mean for each side around a '+
         'base of 2.6 total goals. Co-host bonus (+80 Elo) for USA/Mexico/Canada.</p>'+
-      '<p><b>Projection:</b> '+SIM_N.toLocaleString()+' Monte-Carlo tournaments. Each unplayed group game is a Poisson scoreline draw; '+
+      '<p><b>Projection:</b> '+simCount().toLocaleString()+' Monte-Carlo tournaments. Each unplayed group game is a Poisson scoreline draw; '+
         'standings use the full FIFA tiebreaker cascade (points → GD → GF → head-to-head → fair-play → drawing of lots). '+
         'The best 8 third-place teams are mapped into the Round of 32 by FIFA’s Annex C table. '+
         'Knockout ties go to an Elo-weighted shootout coin.</p>'+
@@ -1667,9 +1765,12 @@ const APP_JS = String.raw`
 
   // first paint
   if(POSTER){
-    // hi-res capture path: run the sim synchronously so the bracket is fully
-    // populated on the very first paint (no async worker for the screenshotter).
-    try{ state.mc=syncMonte(groupsForCompute()); }catch(e){ /* leave bracket empty */ }
+    // hi-res capture path: the bracket must be fully populated on the very first
+    // paint (no async worker for the screenshotter). Poster is always projected /
+    // no overrides, so the baked high-n sim IS the answer — use it directly and
+    // instantly. (Fall back to a synchronous 10k sim only if the bake is missing.)
+    try{ state.mc = (BAKED_MC && !overridesActive()) ? BAKED_MC : syncMonte(groupsForCompute()); }
+    catch(e){ /* leave bracket empty */ }
     state.simming=false;
   }
   render();
