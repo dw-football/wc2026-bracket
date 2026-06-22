@@ -1,83 +1,95 @@
 # WC2026 Bracket Projector
 
-Tool that ingests 2026 World Cup results, computes group standings (full FIFA
-tiebreakers), ranks the 8 best third-place teams, maps them into the Round-of-32
-bracket via FIFA's Annex C allocation table, and projects unplayed games to
-visualize likely knockout matchups. Shareable with friends as a self-contained
-HTML Artifact.
+A self-contained, shareable web app that ingests live 2026 World Cup results,
+computes group standings (full FIFA-2026 tiebreakers), ranks the 8 best
+third-place teams, maps everything into the Round-of-32 via FIFA's Annex C
+allocation, runs a Monte-Carlo projection, and renders an interactive knockout
+bracket + a per-group scenario calculator. Built to share with friends.
 
-## Architecture (locked 2026-06-21)
-- **Engine:** pure client-side JS, baked into ONE self-contained HTML file →
-  published as a claude.ai Artifact (private link, shareable, renders on phones).
-  All logic runs in the browser: standings, tiebreakers, third-place ranking,
-  Annex C bracket mapping, Elo-Poisson Monte Carlo, interactive overrides.
-- **Projection:** probabilistic by DEFAULT (Elo-driven Poisson scoreline model,
-  Monte Carlo ~10k sims). Must simulate SCORELINES, not just W/D/L — group
-  advancement turns on goal difference and goals scored. Friends can click any
-  unplayed game to force a result; bracket + downstream odds recompute live.
-- **Strength signal:** soccer Elo (eloratings.net), mapped rating diff →
-  expected goal supremacy → per-side lambda.
-- **Data refresh:** small build step pulls results + Elo, bakes them into the
-  HTML's JSON block. Re-run as games finish, redeploy to the same Artifact URL.
+Location: `C:\Users\dwarren\src\wc2026-bracket` (local + git). **Only on THIS
+machine** until pushed to GitHub (see "Sharing" — not on Drive, not synced).
 
-## DATA SOURCE DECISION (2026-06-21)
-- **PRIMARY = openfootball/worldcup.json** (public domain, NO key):
-  https://raw.githubusercontent.com/openfootball/worldcup.json/master/2026/worldcup.json
-  All 104 fixtures w/ dates, venues, goal scorers, score.ft [a,b], group label.
-  Confirmed current (37 played as of 2026-06-21). Team names are full strings
-  (e.g. "Mexico") — need a name→FIFA-3-letter-code + Elo-rating map for the 48.
-- **API-Football (api-sports.io) free tier CANNOT serve 2026** (capped to
-  seasons 2022–2024). Key IS stored in .env (works, just wrong season access).
-  Only usable if upgraded to a paid plan — do NOT rely on it.
-- **football-data.org** = optional fallback (free token, covers WC, 10/min) if
-  openfootball lags during knockouts.
+## HOW TO RUN (localhost)
+```
+python -m http.server 8000 --directory dist      # then open http://localhost:8000/
+```
+The app is one self-contained file (`dist/index.html`) — all code, data, and the
+simulator inlined. localhost is preferred over double-clicking the file so the
+My-Picks live worker runs cleanly.
 
-## Three tools, one engine
-1. **Live bracket** — probabilistic default + interactive override. The viz.
-2. **Scenario calculator** — before each match (and the two simultaneous
-   final-round games per group), enumerate the scoreline grid, run each combo
-   through the engine, collapse to minimal human-readable conditions per team.
-   - Within-group position (1st/2nd/3rd/4th): DETERMINISTIC — state as fact.
-   - 3rd-place qualification + knockout opponent: CROSS-GROUP dependent —
-     state as probability ("qualifies in ~78% of live scenarios; 4 pts safe").
-     Never blur the two.
-3. **Python data-refresh step.**
+## HOW TO UPDATE RESULTS  ("GO" flow)
+When a game finishes and David gives a score:
+1. Add it to `manual-results.json` (entry: group, team1, team2 [exact openfootball
+   names], ft:[h,a]). The feed silently supersedes a manual entry once openfootball
+   publishes the same match (already-played matches are skipped).
+2. Rebuild: `node build-html.mjs --refresh`  (re-pulls openfootball + applies
+   manual results + re-runs the 200k bake; ~1.5 min).
+3. David (and friends) hard-refresh the browser.
+Everything (standings, sim, bracket, scenario odds) recomputes off the one rebuild.
 
-## R32 structure
-Group winners A,B,D,E,G,I,K,L draw a best-third-place team. C,F,H,J winners draw
-a runner-up. A 3rd-place team never faces its own group winner.
-⚠️ The exact winner-group→match-number mapping is being parsed programmatically
-from Wikipedia (the web-search summary was self-contradictory — do NOT trust any
-hand-noted M74/M79/M81 mapping). Authoritative version → bracket.json.
-Which group each of USA/Mexico/Germany actually won comes from the openfootball
-data + standings, NOT from memory.
+Already entered manually this tournament: Belgium 0-0 Iran (G), Uruguay 2-2 Cape
+Verde (H).
 
-## FIFA 2026 tiebreakers (group stage) — CHANGED for 2026, get this right
-For 2026 FIFA moved head-to-head AHEAD of overall goal difference (UEFA-style)
-and ABOLISHED drawing of lots. Order for teams level on points:
-(1) H2H points → (2) H2H GD → (3) H2H GF → [re-apply 1-3 to any still-tied
-subset] → (4) overall GD → (5) overall GF → (6) fair-play (cards) →
-(7) FIFA World Ranking.
-Third-place ranking (different groups, so NO H2H step):
-points → overall GD → overall GF → fair-play → FIFA World Ranking.
-⚠️ Engine currently PROXIES (7) FIFA World Ranking with Elo (higher = better);
-swap in real FIFA ranking via team.worldRank when available. This was the
-source of a real bug (old GD-first order put Türkiye 3rd over Paraguay despite
-Paraguay's H2H win) — fixed 2026-06-21; regression test in engine.test.js.
+## COMMANDS
+- `node build-html.mjs`            — rebuild dist from cached feed + manual results (+200k bake)
+- `node build-html.mjs --refresh`  — also re-pull the openfootball feed
+- `node --test`                    — full suite (44 tests)
+- `node verify-model.mjs`          — print title odds / group odds / modal R32
+- `node verify-standings.mjs`      — current standings all 12 groups
+- `node export-image.mjs`          — hi-res PNG + PDF of the bracket (uses installed Edge/Chrome)
 
-## OPEN / NEXT
-- [x] Data source resolved → openfootball (see above). No signup needed.
-- [~] Build standings + tiebreaker engine + scenario calculator (JS) —
-      RUNNING in background agent as of 2026-06-21; review on completion.
-- [ ] Name→FIFA-code + Elo-rating map for the 48 teams.
-- [ ] Data adapter: openfootball JSON → engine group/match schema
-      ({name, teams:[{code,name}], matches:[{home,away,homeGoals,awayGoals,played}]}).
-- [ ] Parse the 495-row Annex C allocation table from Wikipedia HTML
-      programmatically (NOT via model summarization) → JSON.
-- [ ] Elo-Poisson Monte Carlo.
-- [ ] Bracket render + interactive overrides.
-- [ ] Build/refresh script (fetch openfootball + Elo → bake into HTML).
+## ARCHITECTURE
+Pure client-side JS baked into one HTML file. Same engine .js runs in Node
+(build + tests) and in the browser (live sim). The build inlines everything.
+- `engine.js`         — standings, FIFA-2026 tiebreakers, 3rd-place ranking, scenarioGrid
+- `model.js`          — Elo→Poisson supremacy model + Monte-Carlo (per-team, per-slot, advanceByPoints, qualifyIfThirdByPoints)
+- `allocation.js` + `allocation.json` — Annex C 495-combination 3rd-place allocation
+- `bracket.json`      — knockout structure (R32→Final)
+- `scenario-summary.js` — final-round (1-2 unplayed) per-team result-based prose + qualify odds
+- `group-situation.js`  — pre-final (3+ unplayed) status + magic numbers + next-round triggers
+- `adapter.js`        — openfootball feed → engine schema; merges manual-results.json
+- `teams.json`        — 48 teams: name, FIFA code, live Elo (scraped from eloratings.net via build-teams.mjs)
+- `build-html.mjs`    — the build: fetch + bake + inline → dist/index.html
+- `export-image.mjs`  — headless hi-res export
+- `*.test.js`         — node:test suites
 
-## State as of 2026-06-21 (mid group stage)
-WC started 2026-06-11. Mexico = Group E winner, USA = Group I winner, Germany =
-Group D winner all confirmed qualified. Group stage final matches ~late June.
+## ENGINE FACTS (get these right)
+- **FIFA 2026 group tiebreakers (CHANGED for 2026):** points → H2H points → H2H GD
+  → H2H GF → overall GD → overall GF → fair play → FIFA World Ranking.
+  Head-to-head now OUTRANKS overall goal difference; drawing of lots ABOLISHED.
+  ⚠️ Step 7 (World Ranking) is PROXIED with Elo (higher = better) — swap in real
+  FIFA ranking via team.worldRank if desired (last-resort tiebreaker, rarely hit).
+- **Bracket:** R32 + Annex C independently confirmed vs FIFA's official regs PDF +
+  ESPN/CBS/Fox/openfootball. R16 match numbers 91-94 had a Wikipedia-parse
+  transposition — FIXED. Don't reintroduce.
+- USA won Group D, Mexico Group A, Germany Group E (all clinched 1st).
+
+## MODEL / SIM
+- Elo→Poisson "supremacy" model; host bonus +80 Elo for USA/MEX/CAN.
+- Knockout ties → Elo-weighted shootout coin.
+- **200k sims baked at build time** into the default Projected view (instant load,
+  tight tails). A live 10k Web-Worker sim runs ONLY when My-Picks edits a result.
+- Title odds land ~ARG/ESP 18-21%, FRA ~13%, ENG ~9% (matches the market-aligned
+  cluster of the Towards-Data-Science 11-model piece).
+
+## SHARING (see GitHub recommendation in chat)
+- Now: localhost for David; send dist/index.html to friends (no auto-update).
+- Recommended: push to GitHub + enable Pages (public URL, auto-updates on push).
+  The claude.ai Artifact path was abandoned (kept failing for David).
+
+## OPEN / PARKED
+- [ ] Push to GitHub + GitHub Pages for a shareable friends URL (David deciding).
+- [ ] (Parked, David's call) Market-odds overlay: de-vigged 1X2 as the engine +
+      tournament-winner market as a "model vs market" sanity column.
+- [ ] (Optional) Real FIFA World Ranking data for the step-7 tiebreaker (Elo proxy now).
+- [ ] (Cosmetic) Visual-design polish pass; tighten the widest R32 3rd-place
+      two-candidate lines; title/freshness-stamp crowding at top.
+
+## DATA SOURCE
+PRIMARY: openfootball/worldcup.json (public domain, no key):
+https://raw.githubusercontent.com/openfootball/worldcup.json/master/2026/worldcup.json
+— community/PR-maintained, ~daily lag → hence the manual-results.json stopgap.
+API-Football key in .env (gitignored) is UNUSABLE on the free tier for 2026
+(capped to seasons 2022-24). football-data.org is a possible fallback (free token).
+
+State as of 2026-06-21. ~38/104 matches played; group stage in progress.
