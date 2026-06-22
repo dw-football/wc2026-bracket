@@ -63,6 +63,7 @@ h2{font-size:16px;margin:18px 0 8px;font-weight:650}
 /* candidate popover */
 .pop{position:fixed;z-index:50;background:var(--panel2);border:1px solid var(--accent);
   border-radius:10px;padding:8px;min-width:200px;max-width:80vw;
+  max-height:70vh;overflow-y:auto;
   box-shadow:0 10px 40px rgba(0,0,0,.6)}
 .pop h4{margin:0 0 6px;font-size:12px;color:var(--dim)}
 .pop .cand{display:flex;gap:8px;align-items:center;padding:5px 6px;border-radius:6px;cursor:pointer}
@@ -207,7 +208,7 @@ var __APP_DATA__ = {
   teams: [{"name":"Spain","code":"ESP","elo":2129},{"name":"Argentina","code":"ARG","elo":2128},{"name":"France","code":"FRA","elo":2084},{"name":"England","code":"ENG","elo":2055},{"name":"Colombia","code":"COL","elo":1998},{"name":"Brazil","code":"BRA","elo":1986},{"name":"Netherlands","code":"NED","elo":1972},{"name":"Portugal","code":"POR","elo":1967},{"name":"Germany","code":"GER","elo":1954},{"name":"Norway","code":"NOR","elo":1929},{"name":"Japan","code":"JPN","elo":1925},{"name":"Mexico","code":"MEX","elo":1896},{"name":"Switzerland","code":"SUI","elo":1885},{"name":"Croatia","code":"CRO","elo":1881},{"name":"Belgium","code":"BEL","elo":1879},{"name":"Uruguay","code":"URU","elo":1870},{"name":"Morocco","code":"MAR","elo":1866},{"name":"Ecuador","code":"ECU","elo":1864},{"name":"Austria","code":"AUT","elo":1857},{"name":"Senegal","code":"SEN","elo":1839},{"name":"USA","code":"USA","elo":1820},{"name":"Paraguay","code":"PAR","elo":1816},{"name":"Turkey","code":"TUR","elo":1813},{"name":"Australia","code":"AUS","elo":1799},{"name":"Canada","code":"CAN","elo":1777},{"name":"South Korea","code":"KOR","elo":1771},{"name":"Scotland","code":"SCO","elo":1768},{"name":"Algeria","code":"ALG","elo":1759},{"name":"Iran","code":"IRN","elo":1756},{"name":"Ivory Coast","code":"CIV","elo":1728},{"name":"Sweden","code":"SWE","elo":1727},{"name":"Egypt","code":"EGY","elo":1711},{"name":"Uzbekistan","code":"UZB","elo":1698},{"name":"Czech Republic","code":"CZE","elo":1696},{"name":"Panama","code":"PAN","elo":1683},{"name":"DR Congo","code":"COD","elo":1674},{"name":"Jordan","code":"JOR","elo":1653},{"name":"Cape Verde","code":"CPV","elo":1606},{"name":"Saudi Arabia","code":"KSA","elo":1598},{"name":"Bosnia & Herzegovina","code":"BIH","elo":1596},{"name":"Iraq","code":"IRQ","elo":1592},{"name":"New Zealand","code":"NZL","elo":1578},{"name":"Tunisia","code":"TUN","elo":1570},{"name":"Ghana","code":"GHA","elo":1557},{"name":"Haiti","code":"HAI","elo":1528},{"name":"South Africa","code":"RSA","elo":1527},{"name":"Curaçao","code":"CUW","elo":1453},{"name":"Qatar","code":"QAT","elo":1437}],
   bracket: {"source":"R32 + Annex C: Wikipedia raw wikitext, INDEPENDENTLY CONFIRMED against FIFA official regulations PDF + openfootball + ESPN/CBS/Fox (R32 byte-identical; allocation 495/495 exact). R16 matches 91-94 CORRECTED 2026-06-21: Wikipedia had them transposed (M91/M93 and M92/M94 swapped), which misrouted R16 winners into the wrong SF half; fixed to openfootball/ESPN/CBS/Fox venue-anchored order (M91=W76/W78, M92=W79/W80, M93=W83/W84, M94=W81/W82).","thirdPlaceSlotLabels":["1A","1B","1D","1E","1G","1I","1K","1L"],"rounds":{"R32":[{"match":73,"home":{"type":"runnerup","group":"A"},"away":{"type":"runnerup","group":"B"}},{"match":74,"home":{"type":"winner","group":"E"},"away":{"type":"third","from":["A","B","C","D","F"]}},{"match":75,"home":{"type":"winner","group":"F"},"away":{"type":"runnerup","group":"C"}},{"match":76,"home":{"type":"winner","group":"C"},"away":{"type":"runnerup","group":"F"}},{"match":77,"home":{"type":"winner","group":"I"},"away":{"type":"third","from":["C","D","F","G","H"]}},{"match":78,"home":{"type":"runnerup","group":"E"},"away":{"type":"runnerup","group":"I"}},{"match":79,"home":{"type":"winner","group":"A"},"away":{"type":"third","from":["C","E","F","H","I"]}},{"match":80,"home":{"type":"winner","group":"L"},"away":{"type":"third","from":["E","H","I","J","K"]}},{"match":81,"home":{"type":"winner","group":"D"},"away":{"type":"third","from":["B","E","F","I","J"]}},{"match":82,"home":{"type":"winner","group":"G"},"away":{"type":"third","from":["A","E","H","I","J"]}},{"match":83,"home":{"type":"runnerup","group":"K"},"away":{"type":"runnerup","group":"L"}},{"match":84,"home":{"type":"winner","group":"H"},"away":{"type":"runnerup","group":"J"}},{"match":85,"home":{"type":"winner","group":"B"},"away":{"type":"third","from":["E","F","G","I","J"]}},{"match":86,"home":{"type":"winner","group":"J"},"away":{"type":"runnerup","group":"H"}},{"match":87,"home":{"type":"winner","group":"K"},"away":{"type":"third","from":["D","E","I","J","L"]}},{"match":88,"home":{"type":"runnerup","group":"D"},"away":{"type":"runnerup","group":"G"}}],"R16":[{"match":89,"home":{"type":"winnerOf","match":74},"away":{"type":"winnerOf","match":77}},{"match":90,"home":{"type":"winnerOf","match":73},"away":{"type":"winnerOf","match":75}},{"match":91,"home":{"type":"winnerOf","match":76},"away":{"type":"winnerOf","match":78}},{"match":92,"home":{"type":"winnerOf","match":79},"away":{"type":"winnerOf","match":80}},{"match":93,"home":{"type":"winnerOf","match":83},"away":{"type":"winnerOf","match":84}},{"match":94,"home":{"type":"winnerOf","match":81},"away":{"type":"winnerOf","match":82}},{"match":95,"home":{"type":"winnerOf","match":86},"away":{"type":"winnerOf","match":88}},{"match":96,"home":{"type":"winnerOf","match":85},"away":{"type":"winnerOf","match":87}}],"QF":[{"match":97,"home":{"type":"winnerOf","match":89},"away":{"type":"winnerOf","match":90}},{"match":98,"home":{"type":"winnerOf","match":93},"away":{"type":"winnerOf","match":94}},{"match":99,"home":{"type":"winnerOf","match":91},"away":{"type":"winnerOf","match":92}},{"match":100,"home":{"type":"winnerOf","match":95},"away":{"type":"winnerOf","match":96}}],"SF":[{"match":101,"home":{"type":"winnerOf","match":97},"away":{"type":"winnerOf","match":98}},{"match":102,"home":{"type":"winnerOf","match":99},"away":{"type":"winnerOf","match":100}}],"ThirdPlace":[{"match":103,"home":{"type":"loserOf","match":101},"away":{"type":"loserOf","match":102}}],"Final":[{"match":104,"home":{"type":"winnerOf","match":101},"away":{"type":"winnerOf","match":102}}]}},
   groups: [{"name":"Group A","teams":[{"code":"CZE","name":"Czech Republic","elo":1696},{"code":"KOR","name":"South Korea","elo":1771},{"code":"MEX","name":"Mexico","elo":1896},{"code":"RSA","name":"South Africa","elo":1527}],"matches":[{"home":"MEX","away":"RSA","homeGoals":2,"awayGoals":0,"played":true,"date":"2026-06-11","time":"13:00 UTC-6"},{"home":"KOR","away":"CZE","homeGoals":2,"awayGoals":1,"played":true,"date":"2026-06-11","time":"20:00 UTC-6"},{"home":"CZE","away":"RSA","homeGoals":1,"awayGoals":1,"played":true,"date":"2026-06-18","time":"12:00 UTC-4"},{"home":"MEX","away":"KOR","homeGoals":1,"awayGoals":0,"played":true,"date":"2026-06-18","time":"19:00 UTC-6"},{"home":"CZE","away":"MEX","homeGoals":null,"awayGoals":null,"played":false,"date":"2026-06-24","time":"19:00 UTC-6"},{"home":"RSA","away":"KOR","homeGoals":null,"awayGoals":null,"played":false,"date":"2026-06-24","time":"19:00 UTC-6"}]},{"name":"Group B","teams":[{"code":"BIH","name":"Bosnia & Herzegovina","elo":1596},{"code":"CAN","name":"Canada","elo":1777},{"code":"QAT","name":"Qatar","elo":1437},{"code":"SUI","name":"Switzerland","elo":1885}],"matches":[{"home":"CAN","away":"BIH","homeGoals":1,"awayGoals":1,"played":true,"date":"2026-06-12","time":"15:00 UTC-4"},{"home":"QAT","away":"SUI","homeGoals":1,"awayGoals":1,"played":true,"date":"2026-06-13","time":"12:00 UTC-7"},{"home":"SUI","away":"BIH","homeGoals":4,"awayGoals":1,"played":true,"date":"2026-06-18","time":"12:00 UTC-7"},{"home":"CAN","away":"QAT","homeGoals":6,"awayGoals":0,"played":true,"date":"2026-06-18","time":"15:00 UTC-7"},{"home":"SUI","away":"CAN","homeGoals":null,"awayGoals":null,"played":false,"date":"2026-06-24","time":"12:00 UTC-7"},{"home":"BIH","away":"QAT","homeGoals":null,"awayGoals":null,"played":false,"date":"2026-06-24","time":"12:00 UTC-7"}]},{"name":"Group C","teams":[{"code":"BRA","name":"Brazil","elo":1986},{"code":"HAI","name":"Haiti","elo":1528},{"code":"MAR","name":"Morocco","elo":1866},{"code":"SCO","name":"Scotland","elo":1768}],"matches":[{"home":"BRA","away":"MAR","homeGoals":1,"awayGoals":1,"played":true,"date":"2026-06-13","time":"18:00 UTC-4"},{"home":"HAI","away":"SCO","homeGoals":0,"awayGoals":1,"played":true,"date":"2026-06-13","time":"21:00 UTC-4"},{"home":"SCO","away":"MAR","homeGoals":0,"awayGoals":1,"played":true,"date":"2026-06-19","time":"18:00 UTC-4"},{"home":"BRA","away":"HAI","homeGoals":3,"awayGoals":0,"played":true,"date":"2026-06-19","time":"20:30 UTC-4"},{"home":"SCO","away":"BRA","homeGoals":null,"awayGoals":null,"played":false,"date":"2026-06-24","time":"18:00 UTC-4"},{"home":"MAR","away":"HAI","homeGoals":null,"awayGoals":null,"played":false,"date":"2026-06-24","time":"18:00 UTC-4"}]},{"name":"Group D","teams":[{"code":"AUS","name":"Australia","elo":1799},{"code":"PAR","name":"Paraguay","elo":1816},{"code":"TUR","name":"Turkey","elo":1813},{"code":"USA","name":"USA","elo":1820}],"matches":[{"home":"USA","away":"PAR","homeGoals":4,"awayGoals":1,"played":true,"date":"2026-06-12","time":"18:00 UTC-7"},{"home":"AUS","away":"TUR","homeGoals":2,"awayGoals":0,"played":true,"date":"2026-06-13","time":"21:00 UTC-7"},{"home":"USA","away":"AUS","homeGoals":2,"awayGoals":0,"played":true,"date":"2026-06-19","time":"12:00 UTC-7"},{"home":"TUR","away":"PAR","homeGoals":0,"awayGoals":1,"played":true,"date":"2026-06-19","time":"20:00 UTC-7"},{"home":"TUR","away":"USA","homeGoals":null,"awayGoals":null,"played":false,"date":"2026-06-25","time":"19:00 UTC-7"},{"home":"PAR","away":"AUS","homeGoals":null,"awayGoals":null,"played":false,"date":"2026-06-25","time":"19:00 UTC-7"}]},{"name":"Group E","teams":[{"code":"CIV","name":"Ivory Coast","elo":1728},{"code":"CUW","name":"Curaçao","elo":1453},{"code":"ECU","name":"Ecuador","elo":1864},{"code":"GER","name":"Germany","elo":1954}],"matches":[{"home":"GER","away":"CUW","homeGoals":7,"awayGoals":1,"played":true,"date":"2026-06-14","time":"12:00 UTC-5"},{"home":"CIV","away":"ECU","homeGoals":1,"awayGoals":0,"played":true,"date":"2026-06-14","time":"19:00 UTC-4"},{"home":"GER","away":"CIV","homeGoals":2,"awayGoals":1,"played":true,"date":"2026-06-20","time":"16:00 UTC-4"},{"home":"ECU","away":"CUW","homeGoals":0,"awayGoals":0,"played":true,"date":"2026-06-20","time":"19:00 UTC-5"},{"home":"CUW","away":"CIV","homeGoals":null,"awayGoals":null,"played":false,"date":"2026-06-25","time":"16:00 UTC-4"},{"home":"ECU","away":"GER","homeGoals":null,"awayGoals":null,"played":false,"date":"2026-06-25","time":"16:00 UTC-4"}]},{"name":"Group F","teams":[{"code":"JPN","name":"Japan","elo":1925},{"code":"NED","name":"Netherlands","elo":1972},{"code":"SWE","name":"Sweden","elo":1727},{"code":"TUN","name":"Tunisia","elo":1570}],"matches":[{"home":"NED","away":"JPN","homeGoals":2,"awayGoals":2,"played":true,"date":"2026-06-14","time":"15:00 UTC-5"},{"home":"SWE","away":"TUN","homeGoals":5,"awayGoals":1,"played":true,"date":"2026-06-14","time":"20:00 UTC-6"},{"home":"NED","away":"SWE","homeGoals":5,"awayGoals":1,"played":true,"date":"2026-06-20","time":"12:00 UTC-5"},{"home":"TUN","away":"JPN","homeGoals":0,"awayGoals":4,"played":true,"date":"2026-06-20","time":"22:00 UTC-6"},{"home":"JPN","away":"SWE","homeGoals":null,"awayGoals":null,"played":false,"date":"2026-06-25","time":"18:00 UTC-5"},{"home":"TUN","away":"NED","homeGoals":null,"awayGoals":null,"played":false,"date":"2026-06-25","time":"18:00 UTC-5"}]},{"name":"Group G","teams":[{"code":"BEL","name":"Belgium","elo":1879},{"code":"EGY","name":"Egypt","elo":1711},{"code":"IRN","name":"Iran","elo":1756},{"code":"NZL","name":"New Zealand","elo":1578}],"matches":[{"home":"BEL","away":"EGY","homeGoals":1,"awayGoals":1,"played":true,"date":"2026-06-15","time":"12:00 UTC-7"},{"home":"IRN","away":"NZL","homeGoals":2,"awayGoals":2,"played":true,"date":"2026-06-15","time":"18:00 UTC-7"},{"home":"BEL","away":"IRN","homeGoals":0,"awayGoals":0,"played":true,"date":"2026-06-21","time":"12:00 UTC-7"},{"home":"NZL","away":"EGY","homeGoals":null,"awayGoals":null,"played":false,"date":"2026-06-21","time":"18:00 UTC-7"},{"home":"EGY","away":"IRN","homeGoals":null,"awayGoals":null,"played":false,"date":"2026-06-26","time":"20:00 UTC-7"},{"home":"NZL","away":"BEL","homeGoals":null,"awayGoals":null,"played":false,"date":"2026-06-26","time":"20:00 UTC-7"}]},{"name":"Group H","teams":[{"code":"CPV","name":"Cape Verde","elo":1606},{"code":"ESP","name":"Spain","elo":2129},{"code":"KSA","name":"Saudi Arabia","elo":1598},{"code":"URU","name":"Uruguay","elo":1870}],"matches":[{"home":"ESP","away":"CPV","homeGoals":0,"awayGoals":0,"played":true,"date":"2026-06-15","time":"12:00 UTC-4"},{"home":"KSA","away":"URU","homeGoals":1,"awayGoals":1,"played":true,"date":"2026-06-15","time":"18:00 UTC-4"},{"home":"ESP","away":"KSA","homeGoals":4,"awayGoals":0,"played":true,"date":"2026-06-21","time":"12:00 UTC-4"},{"home":"URU","away":"CPV","homeGoals":2,"awayGoals":2,"played":true,"date":"2026-06-21","time":"18:00 UTC-4"},{"home":"CPV","away":"KSA","homeGoals":null,"awayGoals":null,"played":false,"date":"2026-06-26","time":"19:00 UTC-5"},{"home":"URU","away":"ESP","homeGoals":null,"awayGoals":null,"played":false,"date":"2026-06-26","time":"18:00 UTC-6"}]},{"name":"Group I","teams":[{"code":"FRA","name":"France","elo":2084},{"code":"IRQ","name":"Iraq","elo":1592},{"code":"NOR","name":"Norway","elo":1929},{"code":"SEN","name":"Senegal","elo":1839}],"matches":[{"home":"FRA","away":"SEN","homeGoals":3,"awayGoals":1,"played":true,"date":"2026-06-16","time":"15:00 UTC-4"},{"home":"IRQ","away":"NOR","homeGoals":1,"awayGoals":4,"played":true,"date":"2026-06-16","time":"18:00 UTC-4"},{"home":"FRA","away":"IRQ","homeGoals":null,"awayGoals":null,"played":false,"date":"2026-06-22","time":"17:00 UTC-4"},{"home":"NOR","away":"SEN","homeGoals":null,"awayGoals":null,"played":false,"date":"2026-06-22","time":"20:00 UTC-4"},{"home":"NOR","away":"FRA","homeGoals":null,"awayGoals":null,"played":false,"date":"2026-06-26","time":"15:00 UTC-4"},{"home":"SEN","away":"IRQ","homeGoals":null,"awayGoals":null,"played":false,"date":"2026-06-26","time":"15:00 UTC-4"}]},{"name":"Group J","teams":[{"code":"ALG","name":"Algeria","elo":1759},{"code":"ARG","name":"Argentina","elo":2128},{"code":"AUT","name":"Austria","elo":1857},{"code":"JOR","name":"Jordan","elo":1653}],"matches":[{"home":"ARG","away":"ALG","homeGoals":3,"awayGoals":0,"played":true,"date":"2026-06-16","time":"20:00 UTC-5"},{"home":"AUT","away":"JOR","homeGoals":3,"awayGoals":1,"played":true,"date":"2026-06-16","time":"21:00 UTC-7"},{"home":"ARG","away":"AUT","homeGoals":null,"awayGoals":null,"played":false,"date":"2026-06-22","time":"12:00 UTC-5"},{"home":"JOR","away":"ALG","homeGoals":null,"awayGoals":null,"played":false,"date":"2026-06-22","time":"20:00 UTC-7"},{"home":"ALG","away":"AUT","homeGoals":null,"awayGoals":null,"played":false,"date":"2026-06-27","time":"21:00 UTC-5"},{"home":"JOR","away":"ARG","homeGoals":null,"awayGoals":null,"played":false,"date":"2026-06-27","time":"21:00 UTC-5"}]},{"name":"Group K","teams":[{"code":"COD","name":"DR Congo","elo":1674},{"code":"COL","name":"Colombia","elo":1998},{"code":"POR","name":"Portugal","elo":1967},{"code":"UZB","name":"Uzbekistan","elo":1698}],"matches":[{"home":"POR","away":"COD","homeGoals":1,"awayGoals":1,"played":true,"date":"2026-06-17","time":"12:00 UTC-5"},{"home":"UZB","away":"COL","homeGoals":1,"awayGoals":3,"played":true,"date":"2026-06-17","time":"20:00 UTC-6"},{"home":"POR","away":"UZB","homeGoals":null,"awayGoals":null,"played":false,"date":"2026-06-23","time":"12:00 UTC-5"},{"home":"COL","away":"COD","homeGoals":null,"awayGoals":null,"played":false,"date":"2026-06-23","time":"20:00 UTC-6"},{"home":"COL","away":"POR","homeGoals":null,"awayGoals":null,"played":false,"date":"2026-06-27","time":"19:30 UTC-4"},{"home":"COD","away":"UZB","homeGoals":null,"awayGoals":null,"played":false,"date":"2026-06-27","time":"19:30 UTC-4"}]},{"name":"Group L","teams":[{"code":"CRO","name":"Croatia","elo":1881},{"code":"ENG","name":"England","elo":2055},{"code":"GHA","name":"Ghana","elo":1557},{"code":"PAN","name":"Panama","elo":1683}],"matches":[{"home":"ENG","away":"CRO","homeGoals":4,"awayGoals":2,"played":true,"date":"2026-06-17","time":"15:00 UTC-5"},{"home":"GHA","away":"PAN","homeGoals":1,"awayGoals":0,"played":true,"date":"2026-06-17","time":"19:00 UTC-4"},{"home":"ENG","away":"GHA","homeGoals":null,"awayGoals":null,"played":false,"date":"2026-06-23","time":"16:00 UTC-4"},{"home":"PAN","away":"CRO","homeGoals":null,"awayGoals":null,"played":false,"date":"2026-06-23","time":"19:00 UTC-4"},{"home":"PAN","away":"ENG","homeGoals":null,"awayGoals":null,"played":false,"date":"2026-06-27","time":"17:00 UTC-4"},{"home":"CRO","away":"GHA","homeGoals":null,"awayGoals":null,"played":false,"date":"2026-06-27","time":"17:00 UTC-4"}]}],
-  freshness: {"dataThrough":"Uruguay 2-2 Cape Verde","lastDate":"2026-06-21","playedCount":39,"totalCount":104,"builtAtISO":"2026-06-22T00:58:20.322Z"}
+  freshness: {"dataThrough":"Uruguay 2-2 Cape Verde","lastDate":"2026-06-21","playedCount":39,"totalCount":104,"builtAtISO":"2026-06-22T01:02:38.275Z"}
 };
 
 /* ============================================================================
@@ -7883,7 +7884,7 @@ self.onmessage = function (e) {
   var opts = {
     n: d.n, seed: d.seed,
     hostCodes: hostCodes,
-    topCandidates: d.topCandidates || 6,
+    topCandidates: d.topCandidates || 32,
     resolveThirdPlaceSlots: function (letters, bracket) {
       return resolveThirdPlaceSlots(letters, bracket);
     }
@@ -7981,7 +7982,7 @@ self.onmessage = function (e) {
     state.simming=true; render();
     var groups=groupsForCompute();
     var payload={ groups:groups, bracket:BRACKET, n:SIM_N, seed:SIM_SEED,
-      hostCodes:HOSTS, topCandidates:6 };
+      hostCodes:HOSTS, topCandidates:32 };
     var w=buildWorker();
     if(w){
       w.onmessage=function(ev){
@@ -7999,7 +8000,7 @@ self.onmessage = function (e) {
   }
   function syncMonte(groups){
     return monteCarlo(groups, BRACKET, { n:SIM_N, seed:SIM_SEED,
-      hostCodes:new Set(HOSTS), topCandidates:6, resolveThirdPlaceSlots:resolveThirdPlaceSlots });
+      hostCodes:new Set(HOSTS), topCandidates:32, resolveThirdPlaceSlots:resolveThirdPlaceSlots });
   }
 
   // ====================================================================
@@ -8143,7 +8144,7 @@ self.onmessage = function (e) {
     if(state.mode==='projected'){
       var bar=document.createElement('div'); bar.className='row tiny muted';
       if(state.simming){ bar.innerHTML='<span class="simstate"><span class="spinner"></span> simulating '+SIM_N.toLocaleString()+' tournaments&hellip;</span>'; }
-      else { bar.innerHTML='<span>Each slot shows the most-likely team and the true share of sims in which that team reaches and occupies that exact slot. Tap a slot for the top candidates.</span>'; }
+      else { bar.innerHTML='<span>Each slot shows the most-likely team and the true share of sims in which that team reaches and occupies that exact slot. Hover (or tap) any slot for the full candidate distribution.</span>'; }
       sec.appendChild(bar);
       sec.appendChild(exportBar());
       if(!state.mc){ if(!state.simming){ var p=document.createElement('div'); p.className='muted'; p.textContent='Preparing simulation…'; sec.appendChild(p);} sec.appendChild(bracketShell(null)); return sec; }
@@ -8393,39 +8394,64 @@ self.onmessage = function (e) {
     return g;
   }
 
-  // R32-ONLY seed/group designation built from the bracket.json slot definition.
-  // winner G -> "G1"; runnerup G -> "G2"; third [list] -> "3rd a/b/e/f/i" with the
-  // single candidate letter the projected occupant comes from highlighted.
-  // Returns 0 for non-R32 rounds or unrecognized slot types.
-  // Renders into g starting at chipX; returns the x-offset (px) the code/name
-  // text should start at (so a third-place label can push them further right).
-  function renderSeedLabel(g, round, slotDef, occupantCode, chipX, midY){
-    if(round!=='R32' || !slotDef) return 0;
-    var fs=FS(9.5);
-    if(slotDef.type==='winner' || slotDef.type==='runnerup'){
-      var lab=(slotDef.group||'?')+(slotDef.type==='winner'?'1':'2');
-      g.appendChild(svgText(chipX, midY, lab,
-        { fill:'#6b7280','font-size':String(fs),'font-weight':'700' }));
-      // fixed-width reservation for a 2-char chip
-      return Math.round(20*_PS);
+  // Group tag for a code, used by R32 third-place slots ("3B" = 3rd in Group B).
+  function groupTag(code){ var L=code?(groupLetterByCode[code]||null):null; return L?('3'+L.toUpperCase()):'3?'; }
+
+  // Seed prefix for an R32 winner/runner-up slot ("D1", "A2"); null otherwise.
+  function r32SeedPrefix(slotDef){
+    if(!slotDef) return null;
+    if(slotDef.type==='winner') return (slotDef.group||'?')+'1';
+    if(slotDef.type==='runnerup') return (slotDef.group||'?')+'2';
+    return null;
+  }
+
+  // R32-ONLY compact inline label. Builds a single <text> with tspans:
+  //   - winner/runnerup: seed chip ("D1") + code + %  ; if modal<50% and not
+  //     clinched, append a second candidate "· EGY 26%".
+  //   - third: projected source "3B · BIH 50%" ; if modal<50% append a second
+  //     tagged candidate "· 3E ECU 14%". Clinched (100%) -> single popped team,
+  //     no %. The full five-group candidate list lives in the hover.
+  // Renders into g; returns nothing (occupies the slot's text area itself).
+  function renderR32Inline(g, slotDef, si, x, midY, clinched){
+    var pad=Math.round(7*_PS);
+    var codeX=x+Math.round(11*_PS);
+    var isThird = slotDef && slotDef.type==='third';
+    var seed = r32SeedPrefix(slotDef);
+    var cands=(si.cands||[]).filter(function(c){return c&&c.code;});
+    var modal=cands[0]||{code:si.code,p:si.p};
+    var second=cands[1]||null;
+    var showTwo = state.mode==='projected' && !clinched && (si.p<0.5) && !!second && second.p>=0.005;
+
+    var t=svgEl('text',{ x:codeX, y:midY });
+    function span(txt, attrs){ var s=svgEl('tspan',attrs||{}); s.textContent=txt; t.appendChild(s); }
+
+    // ---- seed / group prefix ----
+    if(isThird){
+      span(groupTag(modal.code)+' ', { fill:'#6b7280','font-size':String(FS(9.5)),'font-weight':'700' });
+    } else if(seed){
+      span(seed+' ', { fill:'#6b7280','font-size':String(FS(9.5)),'font-weight':'700' });
     }
-    if(slotDef.type==='third' && Array.isArray(slotDef.from)){
-      var occLetter = occupantCode ? (groupLetterByCode[occupantCode]||null) : null;
-      var t=svgEl('text',{ x:chipX, y:midY, 'font-size':String(fs) });
-      // "3rd " prefix
-      var pre=svgEl('tspan',{ fill:'#6b7280' }); pre.textContent='3rd '; t.appendChild(pre);
-      slotDef.from.forEach(function(L,i){
-        if(i>0){ var sep=svgEl('tspan',{ fill:'#3a3f4a' }); sep.textContent='/'; t.appendChild(sep); }
-        var hot = occLetter && L.toUpperCase()===occLetter;
-        var ts=svgEl('tspan',{ fill: hot?'#4ea1ff':'#6b7280', 'font-weight': hot?'700':'400' });
-        ts.textContent=L.toLowerCase(); t.appendChild(ts);
-      });
-      g.appendChild(t);
-      // "3rd " + N letters + (N-1) separators, ~ per-char width
-      var chars = 4 + slotDef.from.length + (slotDef.from.length-1);
-      return Math.round((chars*5.3+6)*_PS);
+
+    // ---- modal code ----
+    if(clinched){
+      // popped team, no %
+      span(modal.code||'—', { fill:'#7fc0ff','font-size':String(FS(12.5)),'font-weight':'800' });
+      span('  '+(modal.code?truncName(nameByCode[modal.code]||'', COL_W-Math.round(70*_PS)):''), { fill:'#cfe6ff','font-size':String(FS(10)),'font-weight':'600' });
+    } else if(state.mode==='projected' && modal.code){
+      span(modal.code, { fill:'#e7eaf0','font-size':String(FS(12)),'font-weight':'700' });
+      span(' '+pct(modal.p), { fill:'#4ea1ff','font-size':String(FS(11)) });
+      if(showTwo){
+        span(' · ', { fill:'#3a3f4a','font-size':String(FS(10)) });
+        if(isThird){ span(groupTag(second.code)+' ', { fill:'#6b7280','font-size':String(FS(9)),'font-weight':'700' }); }
+        span(second.code, { fill:'#c2c9d6','font-size':String(FS(11)),'font-weight':'700' });
+        span(' '+pct(second.p), { fill:'#7da7c8','font-size':String(FS(10)) });
+      }
+    } else {
+      // picks/empty
+      span(modal.code||'—', { fill: modal.code?'#e7eaf0':'#6b7280', 'font-size':String(FS(12)),'font-weight':'700' });
+      if(modal.code){ span('  '+truncName(nameByCode[modal.code]||'', COL_W-Math.round(70*_PS)), { fill:'#9aa3b2','font-size':String(FS(10)) }); }
     }
-    return 0;
+    g.appendChild(t);
   }
 
   function slotGroup(round, m, side, si, x, sy){
@@ -8445,39 +8471,48 @@ self.onmessage = function (e) {
     g.appendChild(svgEl('rect',{ x:x+Math.round(3*_PS), y:sy+Math.round(4*_PS), width:Math.round(3*_PS), height:SLOT_H-Math.round(8*_PS), rx:1.5*_PS,
       fill: code? accentFor(code) : '#6b7280' }));
 
-    // R32-ONLY: seed/group designation chip BEFORE the team code.
-    var seedW=renderSeedLabel(g, round, (round==='R32'? m[side] : null), code, x+Math.round(11*_PS), midY);
-    var codeX=x+Math.round(13*_PS)+seedW, nameX=x+Math.round(44*_PS)+seedW;
-
     // CLINCHED (projected, p≈100%): pop the team (bold + accent + glow) and DROP %.
     var clinched = state.mode==='projected' && code && si.p>=0.9995;
 
-    // code
-    if(clinched){
-      var glow=svgText(codeX, midY, code,
-        { fill:'#4ea1ff','font-size':String(FS(12.5)),'font-weight':'800',
-          stroke:'#4ea1ff','stroke-width':String(0.6*_PS),'opacity':'0.35' });
-      g.appendChild(glow);
-      g.appendChild(svgText(codeX, midY, code,
-        { fill:'#7fc0ff','font-size':String(FS(12.5)),'font-weight':'800' }));
+    if(round==='R32'){
+      // R32 gets the compact seed-aware inline label (declutter + optional top-two).
+      renderR32Inline(g, m[side], si, x, midY, clinched);
     } else {
-      g.appendChild(svgText(codeX, midY, code||'—',
-        { fill: code? '#e7eaf0':'#6b7280', 'font-size':String(FS(12)),'font-weight':'700' }));
+      var codeX=x+Math.round(13*_PS), nameX=x+Math.round(44*_PS);
+      // code
+      if(clinched){
+        var glow=svgText(codeX, midY, code,
+          { fill:'#4ea1ff','font-size':String(FS(12.5)),'font-weight':'800',
+            stroke:'#4ea1ff','stroke-width':String(0.6*_PS),'opacity':'0.35' });
+        g.appendChild(glow);
+        g.appendChild(svgText(codeX, midY, code,
+          { fill:'#7fc0ff','font-size':String(FS(12.5)),'font-weight':'800' }));
+      } else {
+        g.appendChild(svgText(codeX, midY, code||'—',
+          { fill: code? '#e7eaf0':'#6b7280', 'font-size':String(FS(12)),'font-weight':'700' }));
+      }
+      // name (clipped via truncation)
+      var nm=code?(nameByCode[code]||''):'TBD';
+      var nameMaxW=COL_W-(nameX-x)-(clinched?Math.round(10*_PS):Math.round(40*_PS));
+      g.appendChild(svgText(nameX, midY, truncName(nm, nameMaxW),
+        { fill: clinched?'#cfe6ff':'#9aa3b2','font-size':String(FS(10)),'font-weight': clinched?'600':'400' }));
+      // probability (projected) at right — clinched slots show no %.
+      if(state.mode==='projected' && code && !clinched){
+        g.appendChild(svgText(x+COL_W-pad, midY, pct(si.p),
+          { fill:'#4ea1ff','font-size':String(FS(11)),'text-anchor':'end' }));
+      }
     }
-    // name (clipped via truncation)
-    var nm=code?(nameByCode[code]||''):'TBD';
-    var nameMaxW=COL_W-(nameX-x)-(clinched?Math.round(10*_PS):Math.round(40*_PS));
-    g.appendChild(svgText(nameX, midY, truncName(nm, nameMaxW),
-      { fill: clinched?'#cfe6ff':'#9aa3b2','font-size':String(FS(10)),'font-weight': clinched?'600':'400' }));
-    // probability (projected) at right — clinched slots show no %.
-    if(state.mode==='projected' && code && !clinched){
-      g.appendChild(svgText(x+COL_W-pad, midY, pct(si.p),
-        { fill:'#4ea1ff','font-size':String(FS(11)),'text-anchor':'end' }));
-    }
-    // interaction
+
+    // interaction — UNIVERSAL hover/tap popover (all rounds) in projected mode.
     if(state.mode==='projected'){
-      g.addEventListener('click', function(ev){
-        if(si.cands && si.cands.length) showCandidates(ev, si.cands, m.match, side);
+      var slotDef=(round==='R32'? m[side] : null);
+      var open=function(ev){ showCandidates(ev, si.cands||[], m.match, side, round, slotDef, clinched, code); };
+      g.addEventListener('click', open);
+      g.addEventListener('mouseenter', open);
+      g.addEventListener('mouseleave', function(){
+        if(_popPinned) return;
+        // give the pointer a beat to land on the popover (then it stays open)
+        setTimeout(function(){ if(!_popPinned && !_popHover) closePop(); }, 120);
       });
     } else {
       g.addEventListener('click', function(){ if(code){ state.picks[m.match]=code; render(); } });
@@ -8567,27 +8602,62 @@ self.onmessage = function (e) {
     return bar;
   }
 
-  function showCandidates(ev, cands, matchNo, side){
+  // _popPinned: a click (tap) pins the popover so it survives mouse-leave; a pure
+  // hover popover dismisses on leave. Either way it dismisses on outside-tap.
+  var _popPinned=false, _popHover=false;
+
+  // UNIVERSAL popover (all rounds, both sides). Lists the FULL candidate
+  // distribution for the slot: every team with p >= ~0.5%, sorted desc, with %.
+  // For R32 third-place slots each candidate is prefixed with its group tag
+  // ("3B"). Locked single-occupant (100%) -> trivial "Locked — <team>".
+  // cands = si.cands (perSlot tail, now up to 32 long).
+  function showCandidates(ev, cands, matchNo, side, round, slotDef, clinched, modalCode){
+    var pinned = ev && ev.type==='click';
     closePop();
+    _popPinned=pinned;
+    var list=(cands||[]).filter(function(c){ return c&&c.code && (c.p||0)>=0.005; });
+    var isThird = round==='R32' && slotDef && slotDef.type==='third';
+
     var pop=document.createElement('div'); pop.className='pop';
-    pop.innerHTML='<span class="x">&times;</span><h4>M'+matchNo+' &middot; '+side+' slot &mdash; top candidates</h4>';
-    cands.slice(0,5).forEach(function(c){
-      if(!c||!c.code) return;
-      var row=document.createElement('div'); row.className='cand';
-      row.innerHTML='<span class="code" style="color:'+accentFor(c.code)+'">'+c.code+'</span>'+
-        '<span class="nm">'+esc(nameByCode[c.code]||'')+'</span>'+
-        '<span class="p">'+pct1(c.p)+'</span>';
-      pop.appendChild(row);
-    });
-    pop.querySelector('.x').onclick=closePop;
+    // LOCKED: single occupant at 100% -> trivial label, no distribution.
+    if(clinched || (list.length<=1 && (list[0]?(list[0].p||0):0)>=0.9995)){
+      var lc=(list[0]&&list[0].code)||modalCode;
+      pop.innerHTML=(pinned?'<span class="x">&times;</span>':'')+
+        '<h4>M'+matchNo+' &middot; '+esc(side)+' slot</h4>'+
+        '<div class="cand"><span class="code" style="color:'+accentFor(lc)+'">'+esc(lc||'—')+'</span>'+
+        '<span class="nm">Locked &mdash; '+esc(nameByCode[lc]||lc||'')+'</span></div>';
+    } else {
+      var sum=0; list.forEach(function(c){ sum+=(c.p||0); });
+      var head='<h4>M'+matchNo+' &middot; '+esc(side)+' slot &mdash; full distribution <span style="color:#6b7280">('+Math.round(sum*100)+'%)</span></h4>';
+      pop.innerHTML=(pinned?'<span class="x">&times;</span>':'')+head;
+      list.forEach(function(c){
+        var row=document.createElement('div'); row.className='cand';
+        var tag = isThird ? '<span class="code" style="color:#6b7280;min-width:22px">'+groupTag(c.code)+'</span>' : '';
+        row.innerHTML=tag+
+          '<span class="code" style="color:'+accentFor(c.code)+'">'+esc(c.code)+'</span>'+
+          '<span class="nm">'+esc(nameByCode[c.code]||'')+'</span>'+
+          '<span class="p">'+pct1(c.p)+'</span>';
+        pop.appendChild(row);
+      });
+    }
+    var xBtn=pop.querySelector('.x'); if(xBtn) xBtn.onclick=closePop;
+    // hover popovers: keep open while the pointer is over the popover itself
+    // (so a long distribution can be scrolled); close when it leaves.
+    if(!pinned){
+      pop.addEventListener('mouseenter', function(){ _popHover=true; });
+      pop.addEventListener('mouseleave', function(){ _popHover=false; closePop(); });
+    }
     document.body.appendChild(pop);
-    var x=Math.min(ev.clientX, window.innerWidth-pop.offsetWidth-10);
-    var y=Math.min(ev.clientY+8, window.innerHeight-pop.offsetHeight-10);
+    // position near the pointer, clamped on-screen.
+    var px=(ev&&ev.clientX!=null)?ev.clientX:window.innerWidth/2;
+    var py=(ev&&ev.clientY!=null)?ev.clientY:window.innerHeight/2;
+    var x=Math.min(px+12, window.innerWidth-pop.offsetWidth-10);
+    var y=Math.min(py+8, window.innerHeight-pop.offsetHeight-10);
     pop.style.left=Math.max(8,x)+'px'; pop.style.top=Math.max(8,y)+'px';
-    setTimeout(function(){ document.addEventListener('click', outsidePop, {once:true}); },0);
+    if(pinned){ setTimeout(function(){ document.addEventListener('click', outsidePop, {once:true}); },0); }
   }
   function outsidePop(e){ var p=document.querySelector('.pop'); if(p&&!p.contains(e.target)) closePop(); }
-  function closePop(){ var p=document.querySelector('.pop'); if(p) p.remove(); }
+  function closePop(){ var p=document.querySelector('.pop'); if(p) p.remove(); _popPinned=false; _popHover=false; }
 
   // ---------------- GROUP STAGE ----------------
   function renderGroups(){

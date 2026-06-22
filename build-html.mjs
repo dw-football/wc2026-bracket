@@ -272,7 +272,7 @@ self.onmessage = function (e) {
   var opts = {
     n: d.n, seed: d.seed,
     hostCodes: hostCodes,
-    topCandidates: d.topCandidates || 6,
+    topCandidates: d.topCandidates || 32,
     resolveThirdPlaceSlots: function (letters, bracket) {
       return resolveThirdPlaceSlots(letters, bracket);
     }
@@ -355,6 +355,7 @@ h2{font-size:16px;margin:18px 0 8px;font-weight:650}
 /* candidate popover */
 .pop{position:fixed;z-index:50;background:var(--panel2);border:1px solid var(--accent);
   border-radius:10px;padding:8px;min-width:200px;max-width:80vw;
+  max-height:70vh;overflow-y:auto;
   box-shadow:0 10px 40px rgba(0,0,0,.6)}
 .pop h4{margin:0 0 6px;font-size:12px;color:var(--dim)}
 .pop .cand{display:flex;gap:8px;align-items:center;padding:5px 6px;border-radius:6px;cursor:pointer}
@@ -570,7 +571,7 @@ const APP_JS = String.raw`
     state.simming=true; render();
     var groups=groupsForCompute();
     var payload={ groups:groups, bracket:BRACKET, n:SIM_N, seed:SIM_SEED,
-      hostCodes:HOSTS, topCandidates:6 };
+      hostCodes:HOSTS, topCandidates:32 };
     var w=buildWorker();
     if(w){
       w.onmessage=function(ev){
@@ -588,7 +589,7 @@ const APP_JS = String.raw`
   }
   function syncMonte(groups){
     return monteCarlo(groups, BRACKET, { n:SIM_N, seed:SIM_SEED,
-      hostCodes:new Set(HOSTS), topCandidates:6, resolveThirdPlaceSlots:resolveThirdPlaceSlots });
+      hostCodes:new Set(HOSTS), topCandidates:32, resolveThirdPlaceSlots:resolveThirdPlaceSlots });
   }
 
   // ====================================================================
@@ -732,7 +733,7 @@ const APP_JS = String.raw`
     if(state.mode==='projected'){
       var bar=document.createElement('div'); bar.className='row tiny muted';
       if(state.simming){ bar.innerHTML='<span class="simstate"><span class="spinner"></span> simulating '+SIM_N.toLocaleString()+' tournaments&hellip;</span>'; }
-      else { bar.innerHTML='<span>Each slot shows the most-likely team and the true share of sims in which that team reaches and occupies that exact slot. Tap a slot for the top candidates.</span>'; }
+      else { bar.innerHTML='<span>Each slot shows the most-likely team and the true share of sims in which that team reaches and occupies that exact slot. Hover (or tap) any slot for the full candidate distribution.</span>'; }
       sec.appendChild(bar);
       sec.appendChild(exportBar());
       if(!state.mc){ if(!state.simming){ var p=document.createElement('div'); p.className='muted'; p.textContent='Preparing simulation…'; sec.appendChild(p);} sec.appendChild(bracketShell(null)); return sec; }
@@ -982,39 +983,64 @@ const APP_JS = String.raw`
     return g;
   }
 
-  // R32-ONLY seed/group designation built from the bracket.json slot definition.
-  // winner G -> "G1"; runnerup G -> "G2"; third [list] -> "3rd a/b/e/f/i" with the
-  // single candidate letter the projected occupant comes from highlighted.
-  // Returns 0 for non-R32 rounds or unrecognized slot types.
-  // Renders into g starting at chipX; returns the x-offset (px) the code/name
-  // text should start at (so a third-place label can push them further right).
-  function renderSeedLabel(g, round, slotDef, occupantCode, chipX, midY){
-    if(round!=='R32' || !slotDef) return 0;
-    var fs=FS(9.5);
-    if(slotDef.type==='winner' || slotDef.type==='runnerup'){
-      var lab=(slotDef.group||'?')+(slotDef.type==='winner'?'1':'2');
-      g.appendChild(svgText(chipX, midY, lab,
-        { fill:'#6b7280','font-size':String(fs),'font-weight':'700' }));
-      // fixed-width reservation for a 2-char chip
-      return Math.round(20*_PS);
+  // Group tag for a code, used by R32 third-place slots ("3B" = 3rd in Group B).
+  function groupTag(code){ var L=code?(groupLetterByCode[code]||null):null; return L?('3'+L.toUpperCase()):'3?'; }
+
+  // Seed prefix for an R32 winner/runner-up slot ("D1", "A2"); null otherwise.
+  function r32SeedPrefix(slotDef){
+    if(!slotDef) return null;
+    if(slotDef.type==='winner') return (slotDef.group||'?')+'1';
+    if(slotDef.type==='runnerup') return (slotDef.group||'?')+'2';
+    return null;
+  }
+
+  // R32-ONLY compact inline label. Builds a single <text> with tspans:
+  //   - winner/runnerup: seed chip ("D1") + code + %  ; if modal<50% and not
+  //     clinched, append a second candidate "· EGY 26%".
+  //   - third: projected source "3B · BIH 50%" ; if modal<50% append a second
+  //     tagged candidate "· 3E ECU 14%". Clinched (100%) -> single popped team,
+  //     no %. The full five-group candidate list lives in the hover.
+  // Renders into g; returns nothing (occupies the slot's text area itself).
+  function renderR32Inline(g, slotDef, si, x, midY, clinched){
+    var pad=Math.round(7*_PS);
+    var codeX=x+Math.round(11*_PS);
+    var isThird = slotDef && slotDef.type==='third';
+    var seed = r32SeedPrefix(slotDef);
+    var cands=(si.cands||[]).filter(function(c){return c&&c.code;});
+    var modal=cands[0]||{code:si.code,p:si.p};
+    var second=cands[1]||null;
+    var showTwo = state.mode==='projected' && !clinched && (si.p<0.5) && !!second && second.p>=0.005;
+
+    var t=svgEl('text',{ x:codeX, y:midY });
+    function span(txt, attrs){ var s=svgEl('tspan',attrs||{}); s.textContent=txt; t.appendChild(s); }
+
+    // ---- seed / group prefix ----
+    if(isThird){
+      span(groupTag(modal.code)+' ', { fill:'#6b7280','font-size':String(FS(9.5)),'font-weight':'700' });
+    } else if(seed){
+      span(seed+' ', { fill:'#6b7280','font-size':String(FS(9.5)),'font-weight':'700' });
     }
-    if(slotDef.type==='third' && Array.isArray(slotDef.from)){
-      var occLetter = occupantCode ? (groupLetterByCode[occupantCode]||null) : null;
-      var t=svgEl('text',{ x:chipX, y:midY, 'font-size':String(fs) });
-      // "3rd " prefix
-      var pre=svgEl('tspan',{ fill:'#6b7280' }); pre.textContent='3rd '; t.appendChild(pre);
-      slotDef.from.forEach(function(L,i){
-        if(i>0){ var sep=svgEl('tspan',{ fill:'#3a3f4a' }); sep.textContent='/'; t.appendChild(sep); }
-        var hot = occLetter && L.toUpperCase()===occLetter;
-        var ts=svgEl('tspan',{ fill: hot?'#4ea1ff':'#6b7280', 'font-weight': hot?'700':'400' });
-        ts.textContent=L.toLowerCase(); t.appendChild(ts);
-      });
-      g.appendChild(t);
-      // "3rd " + N letters + (N-1) separators, ~ per-char width
-      var chars = 4 + slotDef.from.length + (slotDef.from.length-1);
-      return Math.round((chars*5.3+6)*_PS);
+
+    // ---- modal code ----
+    if(clinched){
+      // popped team, no %
+      span(modal.code||'—', { fill:'#7fc0ff','font-size':String(FS(12.5)),'font-weight':'800' });
+      span('  '+(modal.code?truncName(nameByCode[modal.code]||'', COL_W-Math.round(70*_PS)):''), { fill:'#cfe6ff','font-size':String(FS(10)),'font-weight':'600' });
+    } else if(state.mode==='projected' && modal.code){
+      span(modal.code, { fill:'#e7eaf0','font-size':String(FS(12)),'font-weight':'700' });
+      span(' '+pct(modal.p), { fill:'#4ea1ff','font-size':String(FS(11)) });
+      if(showTwo){
+        span(' · ', { fill:'#3a3f4a','font-size':String(FS(10)) });
+        if(isThird){ span(groupTag(second.code)+' ', { fill:'#6b7280','font-size':String(FS(9)),'font-weight':'700' }); }
+        span(second.code, { fill:'#c2c9d6','font-size':String(FS(11)),'font-weight':'700' });
+        span(' '+pct(second.p), { fill:'#7da7c8','font-size':String(FS(10)) });
+      }
+    } else {
+      // picks/empty
+      span(modal.code||'—', { fill: modal.code?'#e7eaf0':'#6b7280', 'font-size':String(FS(12)),'font-weight':'700' });
+      if(modal.code){ span('  '+truncName(nameByCode[modal.code]||'', COL_W-Math.round(70*_PS)), { fill:'#9aa3b2','font-size':String(FS(10)) }); }
     }
-    return 0;
+    g.appendChild(t);
   }
 
   function slotGroup(round, m, side, si, x, sy){
@@ -1034,39 +1060,48 @@ const APP_JS = String.raw`
     g.appendChild(svgEl('rect',{ x:x+Math.round(3*_PS), y:sy+Math.round(4*_PS), width:Math.round(3*_PS), height:SLOT_H-Math.round(8*_PS), rx:1.5*_PS,
       fill: code? accentFor(code) : '#6b7280' }));
 
-    // R32-ONLY: seed/group designation chip BEFORE the team code.
-    var seedW=renderSeedLabel(g, round, (round==='R32'? m[side] : null), code, x+Math.round(11*_PS), midY);
-    var codeX=x+Math.round(13*_PS)+seedW, nameX=x+Math.round(44*_PS)+seedW;
-
     // CLINCHED (projected, p≈100%): pop the team (bold + accent + glow) and DROP %.
     var clinched = state.mode==='projected' && code && si.p>=0.9995;
 
-    // code
-    if(clinched){
-      var glow=svgText(codeX, midY, code,
-        { fill:'#4ea1ff','font-size':String(FS(12.5)),'font-weight':'800',
-          stroke:'#4ea1ff','stroke-width':String(0.6*_PS),'opacity':'0.35' });
-      g.appendChild(glow);
-      g.appendChild(svgText(codeX, midY, code,
-        { fill:'#7fc0ff','font-size':String(FS(12.5)),'font-weight':'800' }));
+    if(round==='R32'){
+      // R32 gets the compact seed-aware inline label (declutter + optional top-two).
+      renderR32Inline(g, m[side], si, x, midY, clinched);
     } else {
-      g.appendChild(svgText(codeX, midY, code||'—',
-        { fill: code? '#e7eaf0':'#6b7280', 'font-size':String(FS(12)),'font-weight':'700' }));
+      var codeX=x+Math.round(13*_PS), nameX=x+Math.round(44*_PS);
+      // code
+      if(clinched){
+        var glow=svgText(codeX, midY, code,
+          { fill:'#4ea1ff','font-size':String(FS(12.5)),'font-weight':'800',
+            stroke:'#4ea1ff','stroke-width':String(0.6*_PS),'opacity':'0.35' });
+        g.appendChild(glow);
+        g.appendChild(svgText(codeX, midY, code,
+          { fill:'#7fc0ff','font-size':String(FS(12.5)),'font-weight':'800' }));
+      } else {
+        g.appendChild(svgText(codeX, midY, code||'—',
+          { fill: code? '#e7eaf0':'#6b7280', 'font-size':String(FS(12)),'font-weight':'700' }));
+      }
+      // name (clipped via truncation)
+      var nm=code?(nameByCode[code]||''):'TBD';
+      var nameMaxW=COL_W-(nameX-x)-(clinched?Math.round(10*_PS):Math.round(40*_PS));
+      g.appendChild(svgText(nameX, midY, truncName(nm, nameMaxW),
+        { fill: clinched?'#cfe6ff':'#9aa3b2','font-size':String(FS(10)),'font-weight': clinched?'600':'400' }));
+      // probability (projected) at right — clinched slots show no %.
+      if(state.mode==='projected' && code && !clinched){
+        g.appendChild(svgText(x+COL_W-pad, midY, pct(si.p),
+          { fill:'#4ea1ff','font-size':String(FS(11)),'text-anchor':'end' }));
+      }
     }
-    // name (clipped via truncation)
-    var nm=code?(nameByCode[code]||''):'TBD';
-    var nameMaxW=COL_W-(nameX-x)-(clinched?Math.round(10*_PS):Math.round(40*_PS));
-    g.appendChild(svgText(nameX, midY, truncName(nm, nameMaxW),
-      { fill: clinched?'#cfe6ff':'#9aa3b2','font-size':String(FS(10)),'font-weight': clinched?'600':'400' }));
-    // probability (projected) at right — clinched slots show no %.
-    if(state.mode==='projected' && code && !clinched){
-      g.appendChild(svgText(x+COL_W-pad, midY, pct(si.p),
-        { fill:'#4ea1ff','font-size':String(FS(11)),'text-anchor':'end' }));
-    }
-    // interaction
+
+    // interaction — UNIVERSAL hover/tap popover (all rounds) in projected mode.
     if(state.mode==='projected'){
-      g.addEventListener('click', function(ev){
-        if(si.cands && si.cands.length) showCandidates(ev, si.cands, m.match, side);
+      var slotDef=(round==='R32'? m[side] : null);
+      var open=function(ev){ showCandidates(ev, si.cands||[], m.match, side, round, slotDef, clinched, code); };
+      g.addEventListener('click', open);
+      g.addEventListener('mouseenter', open);
+      g.addEventListener('mouseleave', function(){
+        if(_popPinned) return;
+        // give the pointer a beat to land on the popover (then it stays open)
+        setTimeout(function(){ if(!_popPinned && !_popHover) closePop(); }, 120);
       });
     } else {
       g.addEventListener('click', function(){ if(code){ state.picks[m.match]=code; render(); } });
@@ -1156,27 +1191,62 @@ const APP_JS = String.raw`
     return bar;
   }
 
-  function showCandidates(ev, cands, matchNo, side){
+  // _popPinned: a click (tap) pins the popover so it survives mouse-leave; a pure
+  // hover popover dismisses on leave. Either way it dismisses on outside-tap.
+  var _popPinned=false, _popHover=false;
+
+  // UNIVERSAL popover (all rounds, both sides). Lists the FULL candidate
+  // distribution for the slot: every team with p >= ~0.5%, sorted desc, with %.
+  // For R32 third-place slots each candidate is prefixed with its group tag
+  // ("3B"). Locked single-occupant (100%) -> trivial "Locked — <team>".
+  // cands = si.cands (perSlot tail, now up to 32 long).
+  function showCandidates(ev, cands, matchNo, side, round, slotDef, clinched, modalCode){
+    var pinned = ev && ev.type==='click';
     closePop();
+    _popPinned=pinned;
+    var list=(cands||[]).filter(function(c){ return c&&c.code && (c.p||0)>=0.005; });
+    var isThird = round==='R32' && slotDef && slotDef.type==='third';
+
     var pop=document.createElement('div'); pop.className='pop';
-    pop.innerHTML='<span class="x">&times;</span><h4>M'+matchNo+' &middot; '+side+' slot &mdash; top candidates</h4>';
-    cands.slice(0,5).forEach(function(c){
-      if(!c||!c.code) return;
-      var row=document.createElement('div'); row.className='cand';
-      row.innerHTML='<span class="code" style="color:'+accentFor(c.code)+'">'+c.code+'</span>'+
-        '<span class="nm">'+esc(nameByCode[c.code]||'')+'</span>'+
-        '<span class="p">'+pct1(c.p)+'</span>';
-      pop.appendChild(row);
-    });
-    pop.querySelector('.x').onclick=closePop;
+    // LOCKED: single occupant at 100% -> trivial label, no distribution.
+    if(clinched || (list.length<=1 && (list[0]?(list[0].p||0):0)>=0.9995)){
+      var lc=(list[0]&&list[0].code)||modalCode;
+      pop.innerHTML=(pinned?'<span class="x">&times;</span>':'')+
+        '<h4>M'+matchNo+' &middot; '+esc(side)+' slot</h4>'+
+        '<div class="cand"><span class="code" style="color:'+accentFor(lc)+'">'+esc(lc||'—')+'</span>'+
+        '<span class="nm">Locked &mdash; '+esc(nameByCode[lc]||lc||'')+'</span></div>';
+    } else {
+      var sum=0; list.forEach(function(c){ sum+=(c.p||0); });
+      var head='<h4>M'+matchNo+' &middot; '+esc(side)+' slot &mdash; full distribution <span style="color:#6b7280">('+Math.round(sum*100)+'%)</span></h4>';
+      pop.innerHTML=(pinned?'<span class="x">&times;</span>':'')+head;
+      list.forEach(function(c){
+        var row=document.createElement('div'); row.className='cand';
+        var tag = isThird ? '<span class="code" style="color:#6b7280;min-width:22px">'+groupTag(c.code)+'</span>' : '';
+        row.innerHTML=tag+
+          '<span class="code" style="color:'+accentFor(c.code)+'">'+esc(c.code)+'</span>'+
+          '<span class="nm">'+esc(nameByCode[c.code]||'')+'</span>'+
+          '<span class="p">'+pct1(c.p)+'</span>';
+        pop.appendChild(row);
+      });
+    }
+    var xBtn=pop.querySelector('.x'); if(xBtn) xBtn.onclick=closePop;
+    // hover popovers: keep open while the pointer is over the popover itself
+    // (so a long distribution can be scrolled); close when it leaves.
+    if(!pinned){
+      pop.addEventListener('mouseenter', function(){ _popHover=true; });
+      pop.addEventListener('mouseleave', function(){ _popHover=false; closePop(); });
+    }
     document.body.appendChild(pop);
-    var x=Math.min(ev.clientX, window.innerWidth-pop.offsetWidth-10);
-    var y=Math.min(ev.clientY+8, window.innerHeight-pop.offsetHeight-10);
+    // position near the pointer, clamped on-screen.
+    var px=(ev&&ev.clientX!=null)?ev.clientX:window.innerWidth/2;
+    var py=(ev&&ev.clientY!=null)?ev.clientY:window.innerHeight/2;
+    var x=Math.min(px+12, window.innerWidth-pop.offsetWidth-10);
+    var y=Math.min(py+8, window.innerHeight-pop.offsetHeight-10);
     pop.style.left=Math.max(8,x)+'px'; pop.style.top=Math.max(8,y)+'px';
-    setTimeout(function(){ document.addEventListener('click', outsidePop, {once:true}); },0);
+    if(pinned){ setTimeout(function(){ document.addEventListener('click', outsidePop, {once:true}); },0); }
   }
   function outsidePop(e){ var p=document.querySelector('.pop'); if(p&&!p.contains(e.target)) closePop(); }
-  function closePop(){ var p=document.querySelector('.pop'); if(p) p.remove(); }
+  function closePop(){ var p=document.querySelector('.pop'); if(p) p.remove(); _popPinned=false; _popHover=false; }
 
   // ---------------- GROUP STAGE ----------------
   function renderGroups(){
