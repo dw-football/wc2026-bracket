@@ -666,3 +666,121 @@ test('MC (c): a Group B team with pTop2<0.5% has no 2nd-place headline + carries
   }
   assert.ok(checked >= 1, 'expected at least one Group B infinitesimal-2nd team (BIH/QAT)');
 });
+
+// ===========================================================================
+// FINAL-ROUND WORDING WRINKLES — three fixes + capitalization
+//   1. near-zero 3rd ("3rd (0%)") collapses to "out"
+//   2. a % is never attached to a phrase containing "2nd" ("2nd or 3rd (0%)")
+//   3. an infinitesimal-2nd team shows no "2nd" in any per-result clause
+//   4. the first word of every detail is capitalized
+// ===========================================================================
+
+test('MC wording: no detail attaches "(0%", none emits "2nd or 3rd (", capitalized first word', async () => {
+  const { groups, mcByCode } = await buildMcByCode();
+  const finalRound = groups.filter((g) => {
+    const u = g.matches.filter((m) => !m.played).length;
+    return u >= 1 && u <= 2;
+  });
+  for (const g of finalRound) {
+    const out = summarizeGroup(g, { mcByCode });
+    for (const t of out.teams) {
+      if (!t.detail) continue;
+
+      // (a) A near-zero 3rd is rendered "out", never "3rd (0% to advance)".
+      assert.ok(
+        !t.detail.includes('(0%'),
+        `${g.name} ${t.code} detail still shows a "(0%" token: ${t.detail}`
+      );
+
+      // (b) A % is never attached to a phrase containing "2nd": the misleading
+      //     "2nd or 3rd (…%)" form must never appear. (The honest split form is
+      //     "2nd, or 3rd (…%)" with the comma, % on the 3rd token only.)
+      assert.ok(
+        !/2nd or 3rd \(/.test(t.detail),
+        `${g.name} ${t.code} emits "2nd or 3rd (": ${t.detail}`
+      );
+
+      // (d) The first word of every detail is capitalized.
+      assert.match(
+        t.detail,
+        /^[A-Z0-9]/,
+        `${g.name} ${t.code} detail does not start capitalized: ${t.detail}`
+      );
+    }
+  }
+});
+
+test('MC wording (c): an infinitesimal-2nd team (pTop2<0.5%) has no "2nd" in any per-result clause', async () => {
+  const { groups, mcByCode } = await buildMcByCode();
+  const finalRound = groups.filter((g) => {
+    const u = g.matches.filter((m) => !m.played).length;
+    return u >= 1 && u <= 2;
+  });
+  let checked = 0;
+  for (const g of finalRound) {
+    const out = summarizeGroup(g, { mcByCode });
+    for (const t of out.teams) {
+      if (!t.detail) continue;
+      const mc = mcByCode[t.code];
+      if (!mc) continue;
+      const pTop2 = (mc.pGroup1 || 0) + (mc.pGroup2 || 0);
+      if (pTop2 >= 0.005) continue; // only the infinitesimal-2nd teams
+      if (t.status === 'qualified' || t.status === 'won-group') continue;
+      checked++;
+      // Strip the trailing caveat sentence (which legitimately mentions a
+      // 2nd-place finish as the <0.1% tail) before scanning the per-result clauses.
+      const perResult = t.detail.replace(/;\s*a 2nd-place finish[^]*$/, '');
+      const arrows = perResult.match(/→ [^;.]*/g) || [];
+      for (const seg of arrows) {
+        assert.ok(
+          !/2nd/.test(seg),
+          `${g.name} ${t.code} (pTop2≈0) per-result clause mentions 2nd: "${seg}" in ${t.detail}`
+        );
+      }
+    }
+  }
+  assert.ok(checked >= 1, 'expected at least one infinitesimal-2nd team (BIH/QAT)');
+});
+
+test('MC wording: Group E verbatim — Ecuador loss = "out", Curaçao draw/loss = "out"', async () => {
+  const { groups, mcByCode } = await buildMcByCode();
+  const out = summarizeGroup(groups.find((g) => g.name === 'Group E'), { mcByCode });
+  const ecu = out.teams.find((t) => t.code === 'ECU');
+  const cuw = out.teams.find((t) => t.code === 'CUW');
+
+  // Ecuador's loss clause collapses to a bare "out" (its 3rd-place advance % is
+  // near zero), and the win clause is "through" (advances either way).
+  const ecuLoss = (ecu.detail.match(/a loss → [^;.]*/) || [])[0] || '';
+  assert.equal(ecuLoss, 'a loss → out', `ECU loss clause must be "out": ${ecu.detail}`);
+  assert.match(ecu.detail, /^A win → through;/, `ECU must lead "A win → through": ${ecu.detail}`);
+  // The kept 3rd (draw) still shows its % because it rounds to >= 3%.
+  assert.match(ecu.detail, /a draw → 3rd \(\d+% to advance\) or 4th \(out\)/, ecu.detail);
+
+  // Curaçao: only show a 3rd when its advance% >= 3%; here both draw and loss
+  // collapse to "out".
+  assert.equal(cuw.detail, 'A win → through; a draw → out; a loss → out.', cuw.detail);
+});
+
+test('MC wording: Group B Bosnia verbatim — win = "3rd (99% to advance)", no "2nd or 3rd"', async () => {
+  const { groups, mcByCode } = await buildMcByCode();
+  const out = summarizeGroup(groups.find((g) => g.name === 'Group B'), { mcByCode });
+  const bih = out.teams.find((t) => t.code === 'BIH');
+  assert.ok(bih, 'BIH must be in Group B');
+  // Headline rules out the top 2; the detail must agree — no live 2nd in the
+  // per-result phrasing, the win is shown as the realistic 3rd.
+  assert.match(bih.headline, /Out of the top 2/, bih.headline);
+  assert.match(bih.detail, /^A win → 3rd \(\d+% to advance\);/, bih.detail);
+  assert.ok(!/2nd or 3rd/.test(bih.detail), `BIH must not say "2nd or 3rd": ${bih.detail}`);
+  assert.match(bih.detail, /a draw → out; a loss → out/, bih.detail);
+  // The vanishing 2nd survives only in the caveat sentence.
+  assert.match(bih.detail, /<0\.1%/, bih.detail);
+});
+
+test('MC wording: Switzerland loss = "through" (never "2nd or 3rd (0%)")', async () => {
+  const { groups, mcByCode } = await buildMcByCode();
+  const out = summarizeGroup(groups.find((g) => g.name === 'Group B'), { mcByCode });
+  const sui = out.teams.find((t) => t.code === 'SUI');
+  assert.ok(sui, 'SUI must be in Group B');
+  const suiLoss = (sui.detail.match(/a loss → [^;.]*/) || [])[0] || '';
+  assert.equal(suiLoss, 'a loss → through', `SUI loss must be "through": ${sui.detail}`);
+});

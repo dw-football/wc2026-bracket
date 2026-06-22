@@ -1142,28 +1142,85 @@ function mcQualifiedHeadline(mc, firstReachable) {
   return base;
 }
 
+/** A 3rd-place advance probability that ROUNDS to "essentially certain" — i.e.
+ *  pctWhole would print "99%". A {2nd,3rd} result whose 3rd branch is itself
+ *  this likely to advance means the team advances on that result either way, so
+ *  the whole result reads "through" (no misleading split). GENERAL rule. */
+function thirdIsThrough(p) {
+  return p != null && p >= 0.985; // pctWhole rounds >= 98.5% up to 99%
+}
+
+/** A 3rd-place advance probability that COLLAPSES to "out": it rounds to <=2%
+ *  (covers an exact 0, a "<1%" tail, 1%, and 2%). pctWhole prints "0%"/"<1%"/
+ *  "1%"/"2%" for these; we never show that noisy near-zero — we say "out".
+ *  GENERAL rule (Fix 1). */
+function thirdIsOut(p) {
+  return p == null || p < 0.025; // < 2.5% rounds to <= 2%
+}
+
+/** Monte-Carlo probability the team finishes in `pos` (1..4), or null. */
+function mcPosProb(mc, pos) {
+  if (!mc) return null;
+  return pos === 1 ? mc.pGroup1 ?? null
+    : pos === 2 ? mc.pGroup2 ?? null
+    : pos === 3 ? mc.pGroup3 ?? null
+    : pos === 4 ? mc.pGroup4 ?? null
+    : null;
+}
+
+/** A position whose Monte-Carlo probability for THIS team rounds to 0% (<0.5%)
+ *  is dropped from per-result phrasing — it is below the noise floor and would
+ *  contradict the headline (e.g. an "Out of the top 2" team must not show a 2nd
+ *  in any clause). GENERAL rule (Fix 3). When mc is absent, nothing is dropped. */
+function posBelowFloor(mc, pos) {
+  const p = mcPosProb(mc, pos);
+  return p != null && p < 0.005;
+}
+
 /**
  * Render the outcome token(s) for ONE remaining result `x` (a {res, slot, best,
- * worst, finalPts} record), honoring the CORE RULE:
+ * worst, finalPts} record), honoring the CORE RULE and the four wording fixes:
  *   - a % may appear ONLY on a 3rd-place token, and it is pQualIfThird (the
  *     probability of advancing GIVEN a 3rd-place finish on that points total);
- *   - 4th is always bare "(out)" — never a %;
- *   - a top-2 portion is "through" (no %).
+ *   - 4th is always bare "(out)" — never a %; a top-2 portion is "through";
+ *   - (Fix 1) a 3rd whose advance% rounds to <=2% renders as "out", never
+ *     "3rd (0% to advance)"; if the result was only that 3rd + 4th(out), the
+ *     whole result is "out";
+ *   - (Fix 2) a % is NEVER attached to a phrase containing "2nd": a {2nd,3rd}
+ *     result is "through" when the team advances on it regardless (3rd branch
+ *     itself ~certain to advance, or team virtually through), else
+ *     "2nd, or 3rd (X%)" with the % on the 3rd token only;
+ *   - (Fix 3) any position whose Monte-Carlo probability for this team rounds
+ *     to 0% (<0.5%) is dropped from the phrasing — keeps detail consistent with
+ *     an "Out of the top 2" headline.
  * Reachable positions come from the deterministic rank set (slot.ranks).
  * If mc is absent, falls back to position-only phrasing (no %).
  */
 function outcomeForResult(x, mc) {
   const ranks = x.slot.ranks;
-  const canTop2 = [...ranks].some((r) => r <= 2);
-  const can3rd = ranks.has(3);
-  const can4th = ranks.has(4);
+  // Fix 3: drop any position that is below the Monte-Carlo noise floor (<0.5%)
+  // for this team, so the per-result detail never contradicts the headline.
+  let canTop2 = [...ranks].some((r) => r <= 2);
+  let can3rd = ranks.has(3);
+  let can4th = ranks.has(4);
+  if (canTop2 && [...ranks].filter((r) => r <= 2).every((r) => posBelowFloor(mc, r))) {
+    canTop2 = false;
+  }
+  if (can3rd && posBelowFloor(mc, 3)) can3rd = false;
+  if (can4th && posBelowFloor(mc, 4)) can4th = false;
 
-  // 3rd-place token, with its conditional advance % (the ONLY % allowed here).
-  const q = can3rd ? qualIfThirdGivenPoints(mc, x.finalPts) : null;
+  // 3rd-place advance probability (the ONLY % allowed anywhere here).
+  const q = ranks.has(3) ? qualIfThirdGivenPoints(mc, x.finalPts) : null;
+  const pThird = q ? q.pQualIfThird : null;
+
+  // Fix 1: a near-zero 3rd collapses to "out" (it is, effectively, out).
+  if (can3rd && mc && thirdIsOut(pThird)) {
+    can3rd = false;
+    can4th = true; // fold the (negligibly-advancing) 3rd into the "out" branch
+  }
+
   const third = () =>
-    q && q.pQualIfThird != null
-      ? `3rd (${pctWhole(q.pQualIfThird)} to advance)`
-      : '3rd';
+    pThird != null ? `3rd (${pctWhole(pThird)} to advance)` : '3rd';
 
   // Top-2 portion: the highest reachable top-2 rank, stated as a bare position.
   const top2Word = () => {
@@ -1171,12 +1228,25 @@ function outcomeForResult(x, mc) {
     return ordinal(Math.min(best, 2));
   };
 
-  if (!can3rd && !can4th) return mc ? 'through' : top2Word(); // top-2 only
-  if (!can3rd && can4th) return 'out';                         // 4th only
+  // Result spans top-2 AND 3rd (deterministically). The % must never sit on a
+  // phrase containing "2nd" (Fix 2).
+  if (canTop2 && ranks.has(3)) {
+    const top2Through = mc && (mc.pAdvance ?? 0) >= 0.985;
+    if (!can3rd) {
+      // 3rd dropped to the floor: just the top-2 position (or "through").
+      return mc ? 'through' : top2Word();
+    }
+    // The team advances on this result either way -> a single honest "through".
+    if (top2Through || thirdIsThrough(pThird)) return mc ? 'through' : top2Word();
+    // Otherwise split, % ONLY on the 3rd token: "2nd, or 3rd (X%)".
+    return `${top2Word()}, or ${third()}`;
+  }
 
-  // 3rd is in play. Assemble: [top-2] [3rd(%)] [4th(out)].
+  if (!can3rd && !can4th) return mc ? 'through' : top2Word(); // top-2 only
+  if (!can3rd && can4th) return 'out';                         // 4th only (incl. collapsed 3rd)
+
+  // 3rd is in play, no top-2 portion. Assemble [3rd(%)] [4th(out)].
   const parts = [];
-  if (canTop2) parts.push(top2Word());
   parts.push(third());
   if (can4th) parts.push('4th (out)');
   return parts.join(' or ');
@@ -1265,8 +1335,9 @@ function mcFinalRoundDetail(code, group, unplayed, scenarios, mc) {
   }
 
   if (segs.length === 0) return null;
-  if (segs.length === 1) return segs[0] + '.';
-  return segs[0] + '; ' + segs.slice(1).join('; ') + '.';
+  // Fix 4: capitalize the first word of the whole detail string ("A win → …").
+  const out = segs.length === 1 ? segs[0] + '.' : segs[0] + '; ' + segs.slice(1).join('; ') + '.';
+  return cap(out);
 }
 
 /** Team name lookup within a group. */
