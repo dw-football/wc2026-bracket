@@ -9,13 +9,11 @@ authorization to build + push (score refreshes are pre-approved). Everything els
 (new UI, logic, layout, copy) stops at localhost until David approves the push.
 
 ## RESUME
-Next action: **UPDATE THE TEST SUITE** — `scenario-summary.test.js` and
-`group-situation.test.js` are STALE/FAILING after this session's big scenario-text
-rewrite (verbatim assertions still expect the old wording). Rewrite their assertions
-for the new result-led renderer (see "SCENARIO TEXT (rewritten 2026-06-22)" below),
-`node --test` to green, then commit + push. The live app is already deployed and
-correct; only the tests lag.
-Then read: SCENARIO TEXT (rewritten 2026-06-22), then HOW TO UPDATE RESULTS.
+Next action: **nothing pending** — tests are green (47/47) and the live app is
+current. Routine work resumes via **"Find new scores and GO"** when matches finish
+(see HOW TO UPDATE RESULTS). For any NEW feature/edit, follow the WORKFLOW RULE above
+(localhost first, push only on David's command).
+Then read: HOW TO UPDATE RESULTS, then WORKFLOW RULE.
 
 **"Find new scores and GO"** (or "GO" + a score) = update the live bracket. Run the
 **HOW TO UPDATE RESULTS** routine below: `node build-html.mjs --refresh` (auto-pulls
@@ -64,7 +62,7 @@ Verde (H).
 ## COMMANDS
 - `node build-html.mjs`            — rebuild dist from cached feed + manual results (+200k bake)
 - `node build-html.mjs --refresh`  — also re-pull the openfootball feed
-- `node --test`                    — full suite (44 tests)
+- `node --test`                    — full suite (47 tests, all green)
 - `node verify-model.mjs`          — print title odds / group odds / modal R32
 - `node verify-standings.mjs`      — current standings all 12 groups
 - `node export-image.mjs`          — hi-res PNG + PDF of the bracket (uses installed Edge/Chrome)
@@ -76,6 +74,10 @@ Pure client-side JS baked into one HTML file. Same engine .js runs in Node
 - `model.js`          — Elo→Poisson supremacy model + Monte-Carlo (per-team, per-slot, advanceByPoints, qualifyIfThirdByPoints)
 - `allocation.js` + `allocation.json` — Annex C 495-combination 3rd-place allocation
 - `bracket.json`      — knockout structure (R32→Final)
+- `knockout-schedule.json` — matchNo(73-104) → venue/date/time for the bracket headers.
+  From openfootball; carries BOTH `venue` (metro, e.g. "Boston") and `ground`
+  (stadium suburb, e.g. "Boston (Foxborough)") so the label is a one-line swap.
+  `koLabel()` in build-html.mjs renders "venue · date · time EDT" beside each M-number.
 - `scenario-summary.js` — final-round (1-2 unplayed) per-team result-based prose + qualify odds
 - `group-situation.js`  — pre-final (3+ unplayed) status + magic numbers + next-round triggers
 - `adapter.js`        — openfootball feed → engine schema; merges manual-results.json
@@ -126,7 +128,8 @@ Per-group "what each result means" prose. TWO renderers by # unplayed in the gro
   + needLine). Honest "out of the top two" (a best-third berth is cross-group, never
   asserted as "eliminated"); non-monotone magic-number bug fixed (a higher points total
   can be LESS safe, so the guarantee requires the whole upper tail to be safe).
-- ⚠️ TESTS LAG: both `*.test.js` still assert the OLD wording → failing. See RESUME.
+- ✅ TESTS CURRENT (2026-06-22): `scenario-summary.test.js` rewritten to the result-led
+  wording (~16 assertions); `group-situation.test.js` needed no change. 47/47 green.
 
 ## SHARING — LIVE
 - **Live URL (share with friends): https://dw-football.github.io/wc2026-bracket/**
@@ -140,7 +143,8 @@ Per-group "what each result means" prose. TWO renderers by # unplayed in the gro
 - (The claude.ai Artifact path was abandoned — kept failing for David.)
 
 ## OPEN / PARKED
-- [ ] **NEXT SESSION: update the test suite** to the rewritten scenario text (see RESUME).
+- [x] Update the test suite to the rewritten scenario text — DONE 2026-06-22 (47/47 green).
+- [x] Knockout match venue/date/time on bracket headers (EDT) — DONE/deployed 2026-06-22.
 - [ ] (Parked, revisit ~late June once more games played) Third-place points-distribution
       analysis — definitive bounds ("≥N groups WILL have a 3rd on ≥X pts", cutoff range)
       + Elo-MC probabilistic statements (cutoff = 3 pts ~85%, P(advance | 3rd on N pts),
@@ -184,3 +188,13 @@ State as of 2026-06-22. 40/104 matches played (last: New Zealand 1-3 Egypt); gro
   parked 3rd-place points-distribution analysis (definitive bounds + Elo MC) — David wants
   to revisit it in a few days once more games are played; NOT productionized. ⚠️ Test
   suite left STALE/failing — top priority next session (see RESUME).
+- 2026-06-22 (pm) — Fixed the stale test suite (background agent): `scenario-summary.test.js`
+  ~16 assertions rewritten to the result-led wording; `group-situation.test.js` was already
+  green. Now 47/47. Then added knockout match **venue/date/time (EDT)** to every bracket
+  match header (R32→Final + 3rd place) via new `knockout-schedule.json` + `koLabel()`:
+  "M74 · Boston · Jun 29 · 4:30p EDT". Used metro labels (Boston, NY/NJ…), not stadium
+  suburbs — both stored in the JSON for a one-line swap. First pass put a single "knockout
+  times EDT" note on the freshness stamp; it collided with the centered round headers (same
+  row) → moved EDT onto each match line and restored the short stamp. Established + recorded
+  the **localhost-first / push-only-on-command** WORKFLOW RULE (top of file). Deployed
+  (commits 4771071, c04de73).
