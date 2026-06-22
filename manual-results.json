@@ -12,5 +12,12 @@
     "team2": "Cape Verde",
     "ft": [2, 2],
     "note": "Full time 2-2, entered manually 2026-06-21 ahead of the openfootball feed."
+  },
+  {
+    "group": "Group J",
+    "team1": "Argentina",
+    "team2": "Austria",
+    "ft": [2, 0],
+    "note": "Full time 2-0, entered manually 2026-06-22 ahead of the openfootball feed."
   }
 ]

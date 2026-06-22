@@ -12,8 +12,15 @@
 // contender needs, and what the very next round of games can make official.
 //
 // HONESTY CONTRACT (matches the rest of the project):
-//   - WITHIN-GROUP facts only. Reason on POINTS. Top 2 advance; 3rd MAY advance
-//     as a best-third — that is CROSS-GROUP and is NEVER asserted here.
+//   - WITHIN-GROUP facts only. Reason on POINTS. Top 2 advance; a 3rd-place berth
+//     is CROSS-GROUP and is asserted ONLY when it is a DETERMINISTIC certainty —
+//     i.e. the team's worst possible 3rd-place points total is high enough that,
+//     even if every other group simultaneously maximises its own 3rd-place team,
+//     at most 7 of them can match-or-beat it, so it is mathematically locked into
+//     the top-8 thirds. This is never a probability — it's a guarantee, computed
+//     by brute-forcing each group's third-place points ceiling (see thirdCeilings
+//     / advanceClinchInfo). Requires opts.allGroups; without it we stay silent on
+//     best-thirds exactly as before.
 //   - No drawing of lots (abolished for 2026). Where the top-2/3rd boundary in a
 //     scenario is a POINTS TIE involving the team, we treat it as NOT-yet-settled
 //     and surface it as a "could come down to goal difference" caveat rather than
@@ -292,6 +299,107 @@ function magicAndThreshold(basePts, unplayed, code) {
 }
 
 // ----------------------------------------------------------------------------
+// Result-based safety (handles NON-MONOTONE safe-sets — the rock-paper-scissors
+// trap). A points threshold ("≥N guarantees top-2") is WRONG when a higher total
+// reached via a win-AND-a-loss drops the team into a 3-way tie that can finish
+// 3rd, while a lower total from two draws is safe. (Real case, Group I: Norway on
+// 3 pts — two draws → 5 is safe, but a win+loss → 6 can be 3rd in a NOR/FRA/SEN
+// cycle, yet a win+draw → 7 is safe again.) When the guaranteed-safe own-result
+// set is not a clean points-suffix, we describe it BY RESULT instead.
+// ----------------------------------------------------------------------------
+
+/** The subject team's own result ('win'/'draw'/'loss') for a coarse outcome. */
+function ownResultOf(match, coarse, code) {
+  if (coarse === 'draw') return 'draw';
+  if (coarse === 'home') return match.home === code ? 'win' : 'loss';
+  return match.away === code ? 'win' : 'loss'; // 'away'
+}
+
+/** A 3rd place on P points is a GUARANTEED top-8 third iff at most 7 OTHER groups
+ *  can field a third with >= P points (worst case: every other group maxes out). */
+function thirdOnPointsClinches(P, ownLetter, ceilings) {
+  let canMatch = 0;
+  for (const [L, ceil] of ceilings) {
+    if (L === ownLetter) continue;
+    if (ceil >= P) canMatch++;
+  }
+  return canMatch <= 7;
+}
+
+/**
+ * The team's path to a GUARANTEED place in the Round of 32 — the SOLE source of
+ * the safe clause. "advances" in a completion = worst-case top-2 (loses every
+ * tie), OR worst-case 3rd on a points total that is a guaranteed top-8 third
+ * (cross-group, via `ceilings`). Framing the requirement around ADVANCEMENT (not
+ * just top-2) folds in the best-third cushion: e.g. a team that can only reach a
+ * 3-way tie on 6 still ADVANCES (a 6-pt third always qualifies), so two wins do
+ * guarantee it — which a top-2-only test wrongly denied.
+ * Returns the bare CONDITION that guarantees the target, for the caller to compose:
+ *   { cond:'two draws (or better)' | 'a win' | 'avoiding defeat in both games' | … }
+ *   { cond:null }  -> nothing the team can do yet guarantees the target.
+ * `advanceMode` true tests ADVANCEMENT (top-2 OR a guaranteed-qualifying 3rd via
+ * `ceilings`); false tests TOP-2 only. Splitting the two lets the needLine say
+ * e.g. "two draws (or better) guarantees a Round-of-32 place; avoiding defeat in
+ * both games clinches a top-2 seed".
+ */
+function safeRequirement(basePts, unplayed, code, curPts, opts) {
+  const { target, ceilings, ownLetter } = opts; // target: 'r32' | 'top2' | 'first'
+  const own = unplayed.filter((m) => m.home === code || m.away === code);
+  const others = unplayed.filter((m) => m.home !== code && m.away !== code);
+  const k = own.length;
+  if (k === 0) return { cond: null };
+
+  // Does the team reach the target in this final-points map (worst-case tiebreak)?
+  const reaches = (fp) => {
+    if (target === 'first') return isSoleTopOnPoints(fp, code); // sole top -> wins the group
+    const mine = fp.get(code);
+    let above = 0, equal = 0;
+    for (const [c, p] of fp) { if (c === code) continue; if (p > mine) above++; else if (p === mine) equal++; }
+    const worstRank = 1 + above + equal;
+    if (worstRank <= 2) return true;            // top-2 even losing every tie
+    if (target === 'top2') return false;        // top-2 needs worstRank <= 2
+    if (worstRank >= 4) return false;           // R32: could be 4th
+    return ceilings ? thirdOnPointsClinches(mine, ownLetter, ceilings) : false; // worst-case 3rd
+  };
+
+  const rows = [];
+  for (let n = 0; n < 3 ** k; n++) {
+    let x = n;
+    const ownPts = new Map(basePts);
+    const results = [];
+    for (let i = 0; i < k; i++) {
+      const oc = COARSE[x % 3]; x = Math.floor(x / 3);
+      applyOutcome(ownPts, own[i], oc);
+      results.push(ownResultOf(own[i], oc, code));
+    }
+    let safe = true;
+    for (const fp of enumeratePoints(ownPts, others)) {
+      if (!reaches(fp)) { safe = false; break; }
+    }
+    rows.push({ results, total: ownPts.get(code), safe });
+  }
+
+  const safeRows = rows.filter((r) => r.safe);
+  if (safeRows.length === 0) return { cond: null };
+
+  const minSafe = Math.min(...safeRows.map((r) => r.total));
+  if (rows.every((r) => r.safe === (r.total >= minSafe))) {
+    const rp = resultsForDelta(minSafe - curPts, k);
+    return { cond: rp || `${minSafe}+ points` };
+  }
+
+  // Non-monotone (arises for TOP-2 in the rock-paper-scissors trap): by result.
+  if (k === 2) {
+    const losses = (r) => r.results.filter((x) => x === 'loss').length;
+    const wins = (r) => r.results.filter((x) => x === 'win').length;
+    if (rows.every((r) => (losses(r) === 0) === r.safe)) return { cond: 'avoiding defeat in both games' };
+    if (rows.every((r) => (wins(r) >= 1) === r.safe)) return { cond: 'a win in either game' };
+    if (rows.every((r) => (wins(r) === 2) === r.safe)) return { cond: 'winning both games' };
+  }
+  return { cond: null };
+}
+
+// ----------------------------------------------------------------------------
 // Next-round identification + triggers
 // ----------------------------------------------------------------------------
 
@@ -386,7 +494,7 @@ function buildTriggers(group, basePts, unplayed, teamMeta) {
     const code = t.code;
     const meta = teamMeta.get(code);
     // Already settled before the round? Then nothing NEW triggers for it.
-    if (meta.status === 'won-group' || meta.status === 'qualified' || meta.status === 'eliminated') {
+    if (meta.status === 'won-group' || meta.status === 'qualified' || meta.status === 'advanced' || meta.status === 'eliminated') {
       continue;
     }
 
@@ -541,6 +649,14 @@ function addTrigger(out, code, predicate, combos, round, ownResult, playsThisRou
 function buildStatusLine(status, mc) {
   switch (status) {
     case 'won-group': return mc ? 'Won the group' : 'Clinched 1st';
+    case 'advanced': {
+      // DETERMINISTICALLY through to the R32 (via a locked top-8 third place),
+      // but the group seed (1st/2nd/3rd) is not yet settled. Lead with the clinch.
+      if (mc && (mc.pWinGroup ?? 0) > 0.005) {
+        return `Clinched a Round-of-32 place — ${pctMC(mc.pWinGroup)} to win the group`;
+      }
+      return 'Clinched a Round-of-32 place';
+    }
     case 'qualified': {
       if (!mc) return 'Through to the R32';
       // Through on points; note any live chance to win the group.
@@ -638,52 +754,148 @@ function eliminationResultPhrase(deltaToFloor, remaining) {
   return null;
 }
 
-function buildNeedLine(status, mt, remaining, curPts, mc) {
+function buildNeedLine(status, remaining, curPts, mc, reqR32, reqTop2, reqFirst) {
   if (status === 'won-group') return 'Already won the group.';
   if (status === 'qualified') return 'Already through to the knockout round.';
   if (status === 'eliminated') return 'Cannot finish in the top two (a best-third place would be its only route through).';
 
   const overall = mc && mc.pAdvance != null ? ` — ${pctMC(mc.pAdvance)} to advance overall` : '';
 
-  // --- safe (magic) clause, result-based ---------------------------------
+  // A reward LADDER: what guarantees ADVANCEMENT (R32, with the best-third
+  // cushion) → what clinches a TOP-2 seed → what clinches TOP SPOT (best seed).
+  // Each rung carries its minimal own-result condition; adjacent rungs sharing a
+  // condition collapse to the higher reward (same cost, better prize).
+  const rungs = [];
+  if (reqR32 && reqR32.cond) rungs.push({ cond: reqR32.cond, label: 'a Round-of-32 place' });
+  if (reqTop2 && reqTop2.cond) rungs.push({ cond: reqTop2.cond, label: 'a top-2 place' });
+  if (reqFirst && reqFirst.cond) rungs.push({ cond: reqFirst.cond, label: 'top spot' });
+
+  const kept = [];
+  for (const r of rungs) {
+    if (kept.length && kept[kept.length - 1].cond === r.cond) kept[kept.length - 1] = r; // same cost → keep better prize
+    else kept.push(r);
+  }
+
   let safeClause;
-  if (mt.magicNumber != null) {
-    const delta = mt.magicNumber - curPts;
-    const resultPhrase = resultsForDelta(delta, remaining);
-    const tieFlag = mt.tieAtMagic ? ' (could come down to goal difference)' : '';
-    if (resultPhrase) {
-      // "Two draws (or better) guarantees advancing" / "Needs two wins to be safe".
-      if (/\bor better\b/.test(resultPhrase)) {
-        safeClause = `${cap(resultPhrase)} guarantees a top-2 place${tieFlag}`;
-      } else {
-        safeClause = `Needs ${resultPhrase} to be safe${tieFlag}`;
-      }
-    } else {
-      // Fallback: absolute finishing total, never "from its last games".
-      safeClause = `Needs to finish on ${mt.magicNumber}+ points to be safe${tieFlag}`;
-    }
+  if (kept.length === 0) {
+    safeClause = 'Can reach the Round of 32, but no result yet guarantees it';
   } else {
-    safeClause = 'Can reach a top-2 place but no points total guarantees it (could come down to goal difference)';
+    safeClause = kept
+      .map((r, i) => (i === 0 ? `${cap(r.cond)} guarantees ${r.label}` : `${cap(r.cond)} clinches ${r.label}`))
+      .join('; ');
   }
 
-  // --- elimination floor clause ------------------------------------------
-  // Only meaningful if the team can still finish BELOW the floor; if curPts is
-  // already >= the threshold the floor cannot bite, so we omit it (the bug fix).
-  let floorClause = '';
-  if (mt.eliminationThreshold != null && curPts < mt.eliminationThreshold) {
-    const deltaToFloor = mt.eliminationThreshold - curPts;
-    const elimPhrase = eliminationResultPhrase(deltaToFloor, remaining);
-    floorClause = elimPhrase
-      ? `; ${elimPhrase}`
-      : `; out of the top two below ${mt.eliminationThreshold} points`;
-  }
-
-  return `${safeClause}${floorClause}${overall}.`;
+  return `${safeClause}${overall}.`;
 }
 
 /** Capitalize first letter. */
 function cap(s) {
   return s ? s.charAt(0).toUpperCase() + s.slice(1) : s;
+}
+
+// ----------------------------------------------------------------------------
+// Cross-group best-third clinch (DETERMINISTIC only — see HONESTY CONTRACT)
+// ----------------------------------------------------------------------------
+
+const groupLetter = (g) => {
+  const m = /Group\s+([A-L])/i.exec(g.name || '');
+  return m ? m[1].toUpperCase() : null;
+};
+
+/**
+ * Max points a THIRD-place team in this group can still finish on, over every
+ * completion of its unplayed matches. (4-team group → sorted[2] is 3rd.) This is
+ * the per-group ceiling used to bound how many other groups could field a third
+ * that matches-or-beats a given team's worst-case third-place total.
+ */
+function maxThirdPoints(group) {
+  const { pts } = currentPoints(group);
+  const unplayed = group.matches.filter((m) => !m.played);
+  let mx = -1;
+  for (const finalPts of enumeratePoints(pts, unplayed)) {
+    const sorted = [...finalPts.values()].sort((a, b) => b - a);
+    if (sorted[2] > mx) mx = sorted[2];
+  }
+  return mx;
+}
+
+/** Map group-letter -> maxThirdPoints, across all groups. */
+function thirdCeilings(allGroups) {
+  const m = new Map();
+  for (const g of allGroups) {
+    const L = groupLetter(g);
+    if (L) m.set(L, maxThirdPoints(g));
+  }
+  return m;
+}
+
+/**
+ * Is `code` DETERMINISTICALLY guaranteed to reach the R32 — even if it cannot
+ * lock a top-2 seed? Over every completion of its own group:
+ *   - worstRank = it loses all ties (strictlyAbove + equal + 1).
+ *   - If it can ever finish 4th -> NOT guaranteed (4th never advances).
+ *   - If it can finish 3rd, take its LOWEST 3rd-place points total (the hardest
+ *     case). It is a locked top-8 third iff at most 7 OTHER groups have a
+ *     third-place ceiling >= that total (groups are independent, so all of them
+ *     hitting their ceiling at once is achievable — the tight worst case).
+ * Returns { clinched, viaThird, worstThirdPts } (clinched=false if no ceilings).
+ */
+function advanceClinchInfo(basePts, unplayed, code, ceilings, ownLetter) {
+  if (!ceilings) return { clinched: false };
+  let everFourth = false, everThird = false, worstThirdPts = Infinity;
+  for (const finalPts of enumeratePoints(basePts, unplayed)) {
+    const mine = finalPts.get(code);
+    let strictlyAbove = 0, equal = 0;
+    for (const [c, p] of finalPts) {
+      if (c === code) continue;
+      if (p > mine) strictlyAbove++;
+      else if (p === mine) equal++;
+    }
+    const worstRank = strictlyAbove + equal + 1;
+    if (worstRank >= 4) everFourth = true;
+    else if (worstRank === 3) { everThird = true; if (mine < worstThirdPts) worstThirdPts = mine; }
+  }
+  if (everFourth) return { clinched: false };       // a 4th-place finish is possible
+  if (!everThird) return { clinched: false };        // never below 2nd -> top-2 clinch path
+  let canMatchOrBeat = 0;
+  for (const [letter, ceil] of ceilings) {
+    if (letter === ownLetter) continue;
+    if (ceil >= worstThirdPts) canMatchOrBeat++;
+  }
+  return { clinched: canMatchOrBeat <= 7, viaThird: true, worstThirdPts, canMatchOrBeat };
+}
+
+/**
+ * Minimal OWN result that guarantees finishing SOLE top on points (winning the
+ * group), or null if no own result can guarantee it yet. Same own/others split
+ * as magicAndThreshold, tested against isSoleTopOnPoints, phrased via
+ * resultsForDelta ("a draw (or better)", "a win", "two wins", …).
+ */
+function clinchFirstResult(basePts, unplayed, code, curPts) {
+  const own = unplayed.filter((m) => m.home === code || m.away === code);
+  const others = unplayed.filter((m) => m.home !== code && m.away !== code);
+  const byTotal = new Map(); // own-final-total -> { everNotFirst }
+  for (const ownPts of enumeratePoints(basePts, own)) {
+    const myTotal = ownPts.get(code);
+    let everNotFirst = false;
+    for (const finalPts of enumeratePoints(ownPts, others)) {
+      if (!isSoleTopOnPoints(finalPts, code)) { everNotFirst = true; break; }
+    }
+    const agg = byTotal.get(myTotal) || { everNotFirst: false };
+    agg.everNotFirst = agg.everNotFirst || everNotFirst;
+    byTotal.set(myTotal, agg);
+  }
+  const totals = [...byTotal.keys()].sort((a, b) => a - b);
+  let magicFirst = null;
+  for (let i = 0; i < totals.length; i++) {
+    let tailOK = true;
+    for (let j = i; j < totals.length; j++) {
+      if (byTotal.get(totals[j]).everNotFirst) { tailOK = false; break; }
+    }
+    if (tailOK) { magicFirst = totals[i]; break; }
+  }
+  if (magicFirst == null) return null;
+  return resultsForDelta(magicFirst - curPts, own.length);
 }
 
 // ----------------------------------------------------------------------------
@@ -699,6 +911,11 @@ export function groupSituation(group, opts = {}) {
   const { pts, played } = currentPoints(group);
   const unplayed = group.matches.filter((m) => !m.played);
 
+  // Cross-group third-place ceilings (DETERMINISTIC best-third clinch). Only when
+  // the caller supplies all 12 groups; otherwise we stay silent on best-thirds.
+  const ceilings = opts.allGroups ? thirdCeilings(opts.allGroups) : null;
+  const ownLetter = groupLetter(group);
+
   const teamMeta = new Map();
 
   // First pass: status + magic numbers for each team.
@@ -713,9 +930,41 @@ export function groupSituation(group, opts = {}) {
     else if (ev.clinchedTop2) status = 'qualified';
     else status = 'contention';
 
+    // DETERMINISTIC R32 clinch via a locked top-8 third place (cross-group). This
+    // can upgrade BOTH a 'contention' team (e.g. could be 3rd-on-6 in a 3-way tie
+    // but that 6 is guaranteed top-8) AND an 'eliminated'-from-top-2 team that is
+    // nonetheless locked into a qualifying third. Never overrides a top-2 clinch.
+    let advancedNeedLine = null;
+    if (status !== 'won-group' && status !== 'qualified') {
+      const ac = advanceClinchInfo(pts, unplayed, code, ceilings, ownLetter);
+      if (ac.clinched) {
+        const canTop2 = !ev.eliminated;
+        const firstPhrase = canTop2 ? clinchFirstResult(pts, unplayed, code, pts.get(code)) : null;
+        advancedNeedLine = 'Through to the Round of 32.';
+        if (firstPhrase) advancedNeedLine += ` ${cap(firstPhrase)} clinches top spot in the group.`;
+        else if (canTop2) advancedNeedLine += ' Group seeding still to be decided.';
+        else advancedNeedLine += ' Locked into a best-third place.';
+        status = 'advanced';
+      }
+    }
+
     const mt = status === 'contention'
       ? magicAndThreshold(pts, unplayed, code)
       : { magicNumber: null, tieAtMagic: false, eliminationThreshold: null, maxFinal: null };
+
+    // Two requirements (contention only): what guarantees ADVANCEMENT (R32, with
+    // the best-third cushion) vs what clinches TOP-2. Advancement uses the
+    // cross-group ceilings; top-2 is within-group only.
+    const cur = pts.get(code);
+    const reqR32 = status === 'contention'
+      ? safeRequirement(pts, unplayed, code, cur, { target: 'r32', ceilings, ownLetter })
+      : null;
+    const reqTop2 = status === 'contention'
+      ? safeRequirement(pts, unplayed, code, cur, { target: 'top2', ceilings: null, ownLetter })
+      : null;
+    const reqFirst = status === 'contention'
+      ? safeRequirement(pts, unplayed, code, cur, { target: 'first', ceilings: null, ownLetter })
+      : null;
 
     teamMeta.set(code, {
       code,
@@ -725,6 +974,10 @@ export function groupSituation(group, opts = {}) {
       remaining,
       status,
       mt,
+      reqR32,
+      reqTop2,
+      reqFirst,
+      advancedNeedLine,
     });
   }
 
@@ -749,13 +1002,17 @@ export function groupSituation(group, opts = {}) {
       statusLine: buildStatusLine(m.status, mcByCode ? mcByCode[m.code] || null : null),
       magicNumber: m.mt.magicNumber,
       eliminationThreshold: m.mt.eliminationThreshold,
-      needLine: buildNeedLine(
-        m.status,
-        m.mt,
-        m.remaining,
-        m.points,
-        mcByCode ? mcByCode[m.code] || null : null
-      ),
+      needLine: m.status === 'advanced'
+        ? m.advancedNeedLine
+        : buildNeedLine(
+            m.status,
+            m.remaining,
+            m.points,
+            mcByCode ? mcByCode[m.code] || null : null,
+            m.reqR32,
+            m.reqTop2,
+            m.reqFirst
+          ),
     };
   });
 

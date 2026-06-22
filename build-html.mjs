@@ -359,12 +359,13 @@ ${APP_JS}
 // ---- inline CSS ------------------------------------------------------------
 const CSS = String.raw`
 :root{
-  --bg:#0f1115; --panel:#171a21; --panel2:#1d212b; --line:#2a2f3a;
-  --txt:#e7eaf0; --dim:#9aa3b2; --dim2:#6b7280;
-  --accent:#4ea1ff; --good:#34d27b; --warn:#f0b429; --bad:#ef5e5e;
-  --qual:#13351f; --qualline:#1f6b3a;
-  --chip:#222733;
-  --r32:#3a6ea5; --r16:#5a7d3a; --qf:#8a5a2a; --sf:#7a3a6a; --fin:#a04040;
+  --bg:#eef0f3; --panel:#ffffff; --panel2:#e7ebf1; --line:#d3d8e0;
+  --txt:#171a20; --dim:#56606e; --dim2:#878f9c;
+  --accent:#1565d8; --good:#127a42; --warn:#a66a00; --bad:#cc3a3a;
+  --qual:#e3f3ea; --qualline:#1f9d54;
+  --qual3:#fbf0d4; --qual3line:#cf9a1f;
+  --chip:#e7ebf1;
+  --r32:#2f6ea5; --r16:#4a7d2a; --qf:#8a5a2a; --sf:#7a3a6a; --fin:#a04040;
 }
 *{box-sizing:border-box}
 html,body{margin:0;padding:0;background:var(--bg);color:var(--txt);
@@ -391,7 +392,7 @@ h2{font-size:16px;margin:18px 0 8px;font-weight:650}
 .seg{display:inline-flex;border:1px solid var(--line);border-radius:8px;overflow:hidden}
 .seg button{background:var(--panel);color:var(--dim);border:0;padding:7px 14px;
   cursor:pointer;font-size:13px}
-.seg button.on{background:var(--accent);color:#06203f;font-weight:650}
+.seg button.on{background:var(--accent);color:#ffffff;font-weight:650}
 .btn{background:var(--panel2);border:1px solid var(--line);color:var(--txt);
   padding:6px 12px;border-radius:8px;cursor:pointer;font-size:13px}
 .btn:hover{border-color:var(--accent)}
@@ -406,7 +407,7 @@ h2{font-size:16px;margin:18px 0 8px;font-weight:650}
 .bracket-wrap svg.bracket-svg{display:block}
 /* SVG slot interactivity (geometry/colors are inline attrs so it serializes standalone) */
 .bracket-svg .slot-hit{cursor:pointer}
-.bracket-svg .slot-hit:hover .slot-bg{fill:#232836}
+.bracket-svg .slot-hit:hover .slot-bg{fill:#eef2f7}
 
 /* export controls */
 .export-bar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:8px 0 4px}
@@ -419,7 +420,7 @@ h2{font-size:16px;margin:18px 0 8px;font-weight:650}
   box-shadow:0 10px 40px rgba(0,0,0,.6)}
 .pop h4{margin:0 0 6px;font-size:12px;color:var(--dim)}
 .pop .cand{display:flex;gap:8px;align-items:center;padding:5px 6px;border-radius:6px;cursor:pointer}
-.pop .cand:hover{background:#2a3242}
+.pop .cand:hover{background:#eef2f7}
 .pop .cand .code{font-weight:700;min-width:38px}
 .pop .cand .nm{flex:1;color:var(--dim);font-size:12px}
 .pop .cand .p{color:var(--accent);font-variant-numeric:tabular-nums}
@@ -433,15 +434,22 @@ table{width:100%;border-collapse:collapse;font-size:12.5px}
 th,td{padding:4px 5px;text-align:right}
 th:nth-child(2),td:nth-child(2){text-align:left}
 th{color:var(--dim);font-weight:600;border-bottom:1px solid var(--line)}
-td{border-bottom:1px solid #20242e}
+td{border-bottom:1px solid var(--line)}
 tr.q1 td,tr.q2 td{background:var(--qual)}
 tr.q1 td:first-child,tr.q2 td:first-child{box-shadow:inset 3px 0 0 var(--qualline)}
+tr.q3 td{background:var(--qual3)}
+tr.q3 td:first-child{box-shadow:inset 3px 0 0 var(--qual3line)}
+.glegend{display:flex;flex-wrap:wrap;gap:16px;margin:0 0 10px;font-size:12px;color:var(--dim)}
+.glegend .lg{display:inline-flex;align-items:center;gap:6px}
+.glegend .sw{display:inline-block;width:13px;height:13px;border-radius:3px;border:1px solid var(--line)}
+.glegend .sw.q1{background:var(--qual);box-shadow:inset 3px 0 0 var(--qualline)}
+.glegend .sw.q3{background:var(--qual3);box-shadow:inset 3px 0 0 var(--qual3line)}
 .lots{color:var(--warn);cursor:help}
 .thirds{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:8px 12px;margin-top:8px}
 .thirds .cut{border-top:2px dashed var(--warn);margin:4px 0;position:relative}
 .thirds .cut span{position:absolute;right:0;top:-9px;background:var(--panel);
   color:var(--warn);font-size:10px;padding:0 4px}
-.thirds .trow{display:flex;gap:8px;padding:3px 4px;font-size:12.5px;border-bottom:1px solid #20242e}
+.thirds .trow{display:flex;gap:8px;padding:3px 4px;font-size:12.5px;border-bottom:1px solid var(--line)}
 .thirds .trow.qual{color:var(--good)}
 .thirds .trow .g{min-width:62px;color:var(--dim)}
 .thirds .trow .cd{font-weight:700;min-width:40px}
@@ -453,7 +461,7 @@ tr.q1 td:first-child,tr.q2 td:first-child{box-shadow:inset 3px 0 0 var(--quallin
 .editor .vs{color:var(--dim)}
 .editor .stepper{display:inline-flex;align-items:center;border:1px solid var(--line);border-radius:6px}
 .editor .stepper button{background:var(--panel);border:0;color:var(--txt);width:22px;height:24px;cursor:pointer;font-size:14px}
-.editor .stepper input{width:26px;height:24px;background:#0c0e12;border:0;color:var(--txt);text-align:center;font-size:13px}
+.editor .stepper input{width:26px;height:24px;background:#ffffff;border:0;color:var(--txt);text-align:center;font-size:13px}
 .editor .lbl{min-width:34px;font-weight:700}
 .editor.played{opacity:.85}
 .editor .tag{font-size:10px;color:var(--dim2)}
@@ -462,10 +470,10 @@ tr.q1 td:first-child,tr.q2 td:first-child{box-shadow:inset 3px 0 0 var(--quallin
 
 /* scenario */
 .scn-controls{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:10px}
-select,input[type=number],input[type=text]{background:#0c0e12;color:var(--txt);
+select,input[type=number],input[type=text]{background:#ffffff;color:var(--txt);
   border:1px solid var(--line);border-radius:6px;padding:6px 8px;font-size:13px}
 .scn-card{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:10px 12px}
-.scn-team{padding:8px 6px;border-bottom:1px solid #20242e}
+.scn-team{padding:8px 6px;border-bottom:1px solid var(--line)}
 .scn-team:last-child{border-bottom:0}
 .scn-team .h{display:flex;gap:8px;align-items:baseline}
 .scn-team .h .cd{font-weight:700}
@@ -475,6 +483,8 @@ select,input[type=number],input[type=text]{background:#0c0e12;color:var(--txt);
 .scn-note{color:var(--warn);font-size:12px;margin:8px 0}
 .scn-stage{font-size:14px;margin:2px 0 8px;color:var(--txt)}
 .scn-stage b{color:var(--txt)}
+.scn-print-btn{float:right;margin:-2px 0 0 8px}
+.scn-print-stamp{display:none;font-size:12px;color:var(--dim);margin:0 0 8px;padding-bottom:6px;border-bottom:1px solid var(--line)}
 .scn-chips{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0 12px}
 .gchip{background:var(--panel);border:1px solid var(--line);color:var(--dim);
   width:34px;height:34px;border-radius:8px;cursor:pointer;font-size:14px;font-weight:700}
@@ -483,7 +493,7 @@ select,input[type=number],input[type=text]{background:#0c0e12;color:var(--txt);
 .scn-pts{color:var(--dim);font-size:11.5px;margin-left:6px;white-space:nowrap}
 .scn-elo{margin-top:5px;font-size:11px;color:var(--dim)}
 .scn-elo .lbl{display:inline-block;color:var(--dim2);text-transform:uppercase;letter-spacing:.5px;font-size:10px;margin-right:6px}
-.scn-bar{display:inline-flex;width:160px;max-width:60%;height:8px;border-radius:4px;overflow:hidden;vertical-align:middle;background:#0c0e12;border:1px solid var(--line)}
+.scn-bar{display:inline-flex;width:160px;max-width:60%;height:8px;border-radius:4px;overflow:hidden;vertical-align:middle;background:var(--panel2);border:1px solid var(--line)}
 .scn-bar .seg{display:block;height:100%}
 .scn-legend{margin-top:3px;color:var(--dim);font-size:10.5px}
 .scn-legend .lg{white-space:nowrap}
@@ -504,10 +514,10 @@ select,input[type=number],input[type=text]{background:#0c0e12;color:var(--txt);
 .scn-fixtures .fx-h{color:var(--dim2);text-transform:uppercase;letter-spacing:.5px;font-size:10px;margin-bottom:5px}
 .scn-fixtures .fx{font-size:13px;color:var(--txt);padding:2px 0}
 .scn-fixtures .fx .when{color:var(--dim)}
-.scn-next{margin-top:10px;border-top:1px solid #20242e;padding-top:8px}
+.scn-next{margin-top:10px;border-top:1px solid var(--line);padding-top:8px}
 .scn-triggers{margin:4px 0 0;padding-left:18px;font-size:13px;color:var(--txt)}
 .scn-triggers li{margin:3px 0}
-.callout{background:#11151c;border-left:3px solid var(--accent);padding:8px 10px;border-radius:0 8px 8px 0;font-size:13px;color:var(--dim);margin:6px 0}
+.callout{background:#eaf1fc;border-left:3px solid var(--accent);padding:8px 10px;border-radius:0 8px 8px 0;font-size:13px;color:var(--dim);margin:6px 0}
 
 details.about{margin-top:18px;background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:8px 12px}
 details.about summary{cursor:pointer;color:var(--dim);font-size:13px}
@@ -524,18 +534,32 @@ details.about p{font-size:12.5px;color:var(--dim);margin:8px 0}
   h1{font-size:18px}
 }
 
-/* ---- print / Save-as-PDF: lay the full bracket out un-scrolled, landscape ---- */
+/* ---- print / Save-as-PDF: print the ACTIVE tab (bracket OR a group's scenario) ----
+   Only one .section is in the DOM at a time (render() swaps it), so printing the
+   active section prints whatever tab you're on. Orientation is routed per tab via
+   named pages: the wide bracket tree prints landscape; a tall group scenario card
+   prints portrait. body.tab-<name> is set in render(). */
+@page{ margin:8mm; }
+@page landscapePage{ size:landscape; margin:8mm; }
+@page portraitPage{ size:portrait; margin:10mm; }
 @media print{
-  @page{ size:landscape; margin:8mm; }
-  html,body{ background:#0f1115 !important; -webkit-print-color-adjust:exact; print-color-adjust:exact; }
+  html,body{ background:#ffffff !important; color:#171a20 !important; -webkit-print-color-adjust:exact; print-color-adjust:exact; }
   #app{ max-width:none; padding:0; }
-  /* hide everything that isn't the bracket export region (SVG carries its own title) */
-  .export-bar, .tabbar, .seg, .row, details.about, .callout, .simstate, .app-header{ display:none !important; }
-  /* show only the bracket section; let the SVG scale to the page width */
+  /* hide chrome on every tab */
+  .export-bar, .tabbar, .seg, .row, details.about, .callout, .simstate, .app-header,
+  .scn-chips, .scn-print-btn, .hint{ display:none !important; }
+  /* show only the active tab's section */
   .section{ display:none !important; }
-  .section.print-bracket{ display:block !important; }
+  .section.active{ display:block !important; }
+  /* bracket: let the SVG scale to the page width */
+  body.tab-bracket{ page:landscapePage; }
   .bracket-wrap{ overflow:visible !important; border:0 !important; padding:0 !important; }
   .bracket-svg{ width:100% !important; height:auto !important; }
+  /* scenario: portrait, surface the print-only stamp, don't split a team mid-page */
+  body.tab-scenario{ page:portraitPage; }
+  .scn-print-stamp{ display:block !important; }
+  .scn-card{ border:0 !important; padding:0 !important; }
+  .scn-team{ break-inside:avoid; }
 }
 
 /* ---- poster mode (?poster=1): full natural width, no scroll clip, for hi-res capture ---- */
@@ -578,9 +602,9 @@ const APP_JS = String.raw`
 
   // deterministic-ish color accent per team code (subtle, no flags)
   function accentFor(code){
-    if(!code) return '#6b7280';
+    if(!code) return '#878f9c';
     var h=0; for(var i=0;i<code.length;i++) h=(h*31+code.charCodeAt(i))>>>0;
-    var hue=h%360; return 'hsl('+hue+',45%,52%)';
+    var hue=h%360; return 'hsl('+hue+',58%,40%)';
   }
 
   // ---- working state ----
@@ -773,6 +797,10 @@ const APP_JS = String.raw`
     if(state.tab==='bracket') s=renderBracket();
     else if(state.tab==='groups') s=renderGroups();
     else s=renderScenario();
+    // tag the body with the active tab so the print stylesheet can route page
+    // orientation (bracket→landscape, scenario→portrait) and direct Ctrl+P works.
+    document.body.classList.remove('tab-bracket','tab-groups','tab-scenario');
+    document.body.classList.add('tab-'+state.tab);
     root.appendChild(s);
     root.appendChild(about());
 
@@ -913,7 +941,7 @@ const APP_JS = String.raw`
   var SVG_NS=['http','://www.w3.org/2000/svg'].join('');
   var _PS = POSTER ? 2.45 : 1;   // poster scale
   var SLOT_H=Math.round(22*_PS), MATCH_GAP=Math.round(10*_PS), MATCH_H=2*SLOT_H, HDR_H=Math.round(13*_PS);
-  var COL_W=Math.round(176*_PS), COL_GAP=Math.round(34*_PS), PAD_X=Math.round(14*_PS), PAD_Y=Math.round(14*_PS), TITLE_H=Math.round(46*_PS);
+  var COL_W=Math.round(176*_PS), COL_GAP=Math.round(34*_PS), PAD_X=Math.round(14*_PS), PAD_Y=Math.round(14*_PS), TITLE_H=Math.round(62*_PS);
   var FS=function(px){ return Math.round(px*_PS); }; // scaled font size helper
   var FONT='-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Helvetica,Arial,sans-serif';
   var ROUNDS=[['R32','Round of 32'],['R16','Round of 16'],['QF','Quarter-finals'],['SF','Semi-finals'],['Final','Final']];
@@ -1011,19 +1039,19 @@ const APP_JS = String.raw`
       xmlns:SVG_NS, 'font-family':FONT });
 
     // solid background (so PNG/SVG render standalone, no transparency surprise)
-    svg.appendChild(svgEl('rect',{ x:0,y:0,width:width,height:height,fill:'#0f1115' }));
+    svg.appendChild(svgEl('rect',{ x:0,y:0,width:width,height:height,fill:'#eef0f3' }));
 
     // title + freshness stamp (baked into the exported image)
     var t1=svgText(PAD_X, Math.round(22*_PS), '2026 World Cup — '+(state.mode==='picks'?'My-Picks bracket':'projected bracket'),
-      { fill:'#e7eaf0','font-size':String(FS(17)),'font-weight':'700' });
+      { fill:'#171a20','font-size':String(FS(17)),'font-weight':'700' });
     svg.appendChild(t1);
     var stamp='data through '+FRESH.dataThrough+' · '+FRESH.playedCount+'/'+FRESH.totalCount+' played · built '+localBuilt(FRESH.builtAtISO);
-    svg.appendChild(svgText(PAD_X, Math.round(39*_PS), stamp, { fill:'#9aa3b2','font-size':String(FS(11)) }));
+    svg.appendChild(svgText(PAD_X, Math.round(39*_PS), stamp, { fill:'#56606e','font-size':String(FS(11)) }));
 
     // round headers
     ROUNDS.forEach(function(rd,ci){
       svg.appendChild(svgText(colX(ci)+COL_W/2, TITLE_H-Math.round(4*_PS), rd[1].toUpperCase(),
-        { fill:'#9aa3b2','font-size':String(FS(10)),'letter-spacing':'1','text-anchor':'middle' }));
+        { fill:'#56606e','font-size':String(FS(10)),'letter-spacing':'1','text-anchor':'middle' }));
     });
 
     // connectors first (under boxes): from each feeder's right edge to child's left edge
@@ -1037,7 +1065,7 @@ const APP_JS = String.raw`
           var x1=colX(ci-1)+COL_W, x2=colX(ci), xm=(x1+x2)/2;
           var y1=TITLE_H+fy, y2=TITLE_H+ty;
           var p=svgEl('path',{ d:'M'+x1+','+y1+' H'+xm+' V'+y2+' H'+x2,
-            fill:'none', stroke:'#2a2f3a', 'stroke-width':'1.5' });
+            fill:'none', stroke:'#d3d8e0', 'stroke-width':'1.5' });
           svg.appendChild(p);
         });
       });
@@ -1060,7 +1088,7 @@ const APP_JS = String.raw`
       var tx=colX(finalCi);
       var ty=TITLE_H + lay.totalH - PAD_Y - MATCH_H; // just above the bottom pad
       svg.appendChild(svgText(tx+Math.round(4*_PS), ty-Math.round(15*_PS), '3rd place',
-        { fill:'#9aa3b2','font-size':String(FS(10)),'font-weight':'700' }));
+        { fill:'#56606e','font-size':String(FS(10)),'font-weight':'700' }));
       svg.appendChild(thirdPlaceGroup(tp, tx, ty, slotInfo[tp.match]||{}));
     }
 
@@ -1075,9 +1103,9 @@ const APP_JS = String.raw`
   }
   // Append the schedule line to the right of the "M##" header.
   function matchHeader(g, matchNo, x, top){
-    g.appendChild(svgText(x+Math.round(4*_PS), top-Math.round(3*_PS), 'M'+matchNo, { fill:'#6b7280','font-size':String(FS(9)) }));
+    g.appendChild(svgText(x+Math.round(4*_PS), top-Math.round(3*_PS), 'M'+matchNo, { fill:'#878f9c','font-size':String(FS(9)) }));
     var lbl=koLabel(matchNo);
-    if(lbl) g.appendChild(svgText(x+Math.round(28*_PS), top-Math.round(3*_PS), lbl, { fill:'#828b9a','font-size':String(FS(8.5)) }));
+    if(lbl) g.appendChild(svgText(x+Math.round(28*_PS), top-Math.round(3*_PS), lbl, { fill:'#6b7480','font-size':String(FS(8.5)) }));
   }
 
   function matchGroup(round, m, x, top, info){
@@ -1086,10 +1114,10 @@ const APP_JS = String.raw`
     matchHeader(g, m.match, x, top);
     // outer box
     g.appendChild(svgEl('rect',{ x:x, y:top, width:COL_W, height:MATCH_H, rx:Math.round(6*_PS),
-      fill:'#1d212b', stroke:'#2a2f3a','stroke-width':String(_PS) }));
+      fill:'#ffffff', stroke:'#d3d8e0','stroke-width':String(_PS) }));
     // divider between the two slots
     g.appendChild(svgEl('line',{ x1:x, y1:top+SLOT_H, x2:x+COL_W, y2:top+SLOT_H,
-      stroke:'#2a2f3a','stroke-width':'1' }));
+      stroke:'#d3d8e0','stroke-width':'1' }));
     g.appendChild(slotGroup(round, m, 'home', info.home||{code:null,p:0}, x, top));
     g.appendChild(slotGroup(round, m, 'away', info.away||{code:null,p:0}, x, top+SLOT_H));
     return g;
@@ -1101,9 +1129,9 @@ const APP_JS = String.raw`
     var g=svgEl('g',{});
     matchHeader(g, m.match, x, top);
     g.appendChild(svgEl('rect',{ x:x, y:top, width:COL_W, height:MATCH_H, rx:Math.round(6*_PS),
-      fill:'#15181f', stroke:'#2a2f3a','stroke-width':String(_PS),'stroke-dasharray':Math.round(4*_PS)+' '+Math.round(3*_PS) }));
+      fill:'#f7f8fa', stroke:'#d3d8e0','stroke-width':String(_PS),'stroke-dasharray':Math.round(4*_PS)+' '+Math.round(3*_PS) }));
     g.appendChild(svgEl('line',{ x1:x, y1:top+SLOT_H, x2:x+COL_W, y2:top+SLOT_H,
-      stroke:'#2a2f3a','stroke-width':'1' }));
+      stroke:'#d3d8e0','stroke-width':'1' }));
     g.appendChild(slotGroup('ThirdPlace', m, 'home', info.home||{code:null,p:0}, x, top));
     g.appendChild(slotGroup('ThirdPlace', m, 'away', info.away||{code:null,p:0}, x, top+SLOT_H));
     return g;
@@ -1142,29 +1170,29 @@ const APP_JS = String.raw`
 
     // ---- seed / group prefix ----
     if(isThird){
-      span(groupTag(modal.code)+' ', { fill:'#6b7280','font-size':String(FS(9.5)),'font-weight':'700' });
+      span(groupTag(modal.code)+' ', { fill:'#878f9c','font-size':String(FS(9.5)),'font-weight':'700' });
     } else if(seed){
-      span(seed+' ', { fill:'#6b7280','font-size':String(FS(9.5)),'font-weight':'700' });
+      span(seed+' ', { fill:'#878f9c','font-size':String(FS(9.5)),'font-weight':'700' });
     }
 
     // ---- modal code ----
     if(clinched){
       // popped team, no %
-      span(modal.code||'—', { fill:'#7fc0ff','font-size':String(FS(12.5)),'font-weight':'800' });
-      span('  '+(modal.code?truncName(nameByCode[modal.code]||'', COL_W-Math.round(70*_PS)):''), { fill:'#cfe6ff','font-size':String(FS(10)),'font-weight':'600' });
+      span(modal.code||'—', { fill:'#0b4fb0','font-size':String(FS(12.5)),'font-weight':'800' });
+      span('  '+(modal.code?truncName(nameByCode[modal.code]||'', COL_W-Math.round(70*_PS)):''), { fill:'#2b6fc9','font-size':String(FS(10)),'font-weight':'600' });
     } else if(state.mode==='projected' && modal.code){
-      span(modal.code, { fill:'#e7eaf0','font-size':String(FS(12)),'font-weight':'700' });
-      span(' '+pct(modal.p), { fill:'#4ea1ff','font-size':String(FS(11)) });
+      span(modal.code, { fill:'#171a20','font-size':String(FS(12)),'font-weight':'700' });
+      span(' '+pct(modal.p), { fill:'#1565d8','font-size':String(FS(11)) });
       if(showTwo){
-        span(' · ', { fill:'#3a3f4a','font-size':String(FS(10)) });
-        if(isThird){ span(groupTag(second.code)+' ', { fill:'#6b7280','font-size':String(FS(9)),'font-weight':'700' }); }
-        span(second.code, { fill:'#c2c9d6','font-size':String(FS(11)),'font-weight':'700' });
-        span(' '+pct(second.p), { fill:'#7da7c8','font-size':String(FS(10)) });
+        span(' · ', { fill:'#aab0ba','font-size':String(FS(10)) });
+        if(isThird){ span(groupTag(second.code)+' ', { fill:'#878f9c','font-size':String(FS(9)),'font-weight':'700' }); }
+        span(second.code, { fill:'#3a4350','font-size':String(FS(11)),'font-weight':'700' });
+        span(' '+pct(second.p), { fill:'#5b7da0','font-size':String(FS(10)) });
       }
     } else {
       // picks/empty
-      span(modal.code||'—', { fill: modal.code?'#e7eaf0':'#6b7280', 'font-size':String(FS(12)),'font-weight':'700' });
-      if(modal.code){ span('  '+truncName(nameByCode[modal.code]||'', COL_W-Math.round(70*_PS)), { fill:'#9aa3b2','font-size':String(FS(10)) }); }
+      span(modal.code||'—', { fill: modal.code?'#171a20':'#878f9c', 'font-size':String(FS(12)),'font-weight':'700' });
+      if(modal.code){ span('  '+truncName(nameByCode[modal.code]||'', COL_W-Math.round(70*_PS)), { fill:'#56606e','font-size':String(FS(10)) }); }
     }
     g.appendChild(t);
   }
@@ -1180,11 +1208,11 @@ const APP_JS = String.raw`
     // pick highlight (My Picks: this side is the chosen winner)
     if(state.mode==='picks' && si.picked){
       g.appendChild(svgEl('rect',{ x:x+1, y:sy+1, width:COL_W-2, height:SLOT_H-2, rx:Math.round(4*_PS),
-        fill:'none', stroke:'#1f6b3a','stroke-width':String(1.5*_PS) }));
+        fill:'none', stroke:'#1f9d54','stroke-width':String(1.5*_PS) }));
     }
     // accent bar
     g.appendChild(svgEl('rect',{ x:x+Math.round(3*_PS), y:sy+Math.round(4*_PS), width:Math.round(3*_PS), height:SLOT_H-Math.round(8*_PS), rx:1.5*_PS,
-      fill: code? accentFor(code) : '#6b7280' }));
+      fill: code? accentFor(code) : '#878f9c' }));
 
     // CLINCHED (projected, p≈100%): pop the team (bold + accent + glow) and DROP %.
     var clinched = state.mode==='projected' && code && si.p>=0.9995;
@@ -1197,24 +1225,24 @@ const APP_JS = String.raw`
       // code
       if(clinched){
         var glow=svgText(codeX, midY, code,
-          { fill:'#4ea1ff','font-size':String(FS(12.5)),'font-weight':'800',
-            stroke:'#4ea1ff','stroke-width':String(0.6*_PS),'opacity':'0.35' });
+          { fill:'#1565d8','font-size':String(FS(12.5)),'font-weight':'800',
+            stroke:'#1565d8','stroke-width':String(0.6*_PS),'opacity':'0.35' });
         g.appendChild(glow);
         g.appendChild(svgText(codeX, midY, code,
-          { fill:'#7fc0ff','font-size':String(FS(12.5)),'font-weight':'800' }));
+          { fill:'#0b4fb0','font-size':String(FS(12.5)),'font-weight':'800' }));
       } else {
         g.appendChild(svgText(codeX, midY, code||'—',
-          { fill: code? '#e7eaf0':'#6b7280', 'font-size':String(FS(12)),'font-weight':'700' }));
+          { fill: code? '#171a20':'#878f9c', 'font-size':String(FS(12)),'font-weight':'700' }));
       }
       // name (clipped via truncation)
       var nm=code?(nameByCode[code]||''):'TBD';
       var nameMaxW=COL_W-(nameX-x)-(clinched?Math.round(10*_PS):Math.round(40*_PS));
       g.appendChild(svgText(nameX, midY, truncName(nm, nameMaxW),
-        { fill: clinched?'#cfe6ff':'#9aa3b2','font-size':String(FS(10)),'font-weight': clinched?'600':'400' }));
+        { fill: clinched?'#2b6fc9':'#56606e','font-size':String(FS(10)),'font-weight': clinched?'600':'400' }));
       // probability (projected) at right — clinched slots show no %.
       if(state.mode==='projected' && code && !clinched){
         g.appendChild(svgText(x+COL_W-pad, midY, pct(si.p),
-          { fill:'#4ea1ff','font-size':String(FS(11)),'text-anchor':'end' }));
+          { fill:'#1565d8','font-size':String(FS(11)),'text-anchor':'end' }));
       }
     }
 
@@ -1293,7 +1321,7 @@ const APP_JS = String.raw`
       var canvas=document.createElement('canvas');
       canvas.width=Math.round(w*scale); canvas.height=Math.round(h*scale);
       var ctx=canvas.getContext('2d');
-      ctx.fillStyle='#0f1115'; ctx.fillRect(0,0,canvas.width,canvas.height); // solid bg
+      ctx.fillStyle='#eef0f3'; ctx.fillRect(0,0,canvas.width,canvas.height); // solid bg
       ctx.setTransform(scale,0,0,scale,0,0);
       ctx.drawImage(img,0,0,w,h);
       URL.revokeObjectURL(url);
@@ -1348,11 +1376,11 @@ const APP_JS = String.raw`
         '<span class="nm">Locked &mdash; '+esc(nameByCode[lc]||lc||'')+'</span></div>';
     } else {
       var sum=0; list.forEach(function(c){ sum+=(c.p||0); });
-      var head='<h4>M'+matchNo+' &middot; '+esc(side)+' slot &mdash; full distribution <span style="color:#6b7280">('+Math.round(sum*100)+'%)</span></h4>';
+      var head='<h4>M'+matchNo+' &middot; '+esc(side)+' slot &mdash; full distribution <span style="color:#878f9c">('+Math.round(sum*100)+'%)</span></h4>';
       pop.innerHTML='<span class="x">&times;</span>'+head;
       list.forEach(function(c){
         var row=document.createElement('div'); row.className='cand';
-        var tag = isThird ? '<span class="code" style="color:#6b7280;min-width:22px">'+groupTag(c.code)+'</span>' : '';
+        var tag = isThird ? '<span class="code" style="color:#878f9c;min-width:22px">'+groupTag(c.code)+'</span>' : '';
         row.innerHTML=tag+
           '<span class="code" style="color:'+accentFor(c.code)+'">'+esc(c.code)+'</span>'+
           '<span class="nm">'+esc(nameByCode[c.code]||'')+'</span>'+
@@ -1407,13 +1435,22 @@ const APP_JS = String.raw`
     }
     var grid=document.createElement('div'); grid.className='groups-grid';
     var gs=groupsForCompute();
-    gs.forEach(function(g){ grid.appendChild(groupCard(g)); });
+    // The 8 best third-place teams that currently qualify (provisional) — same
+    // ranking the thirds panel uses. Tag them in their group box (gold) so the
+    // best-thirds picture is visible without scrolling to the panel.
+    var qual3=new Set();
+    try{ rankThirdPlaceTeams(gs).forEach(function(t){ if(t.qualifies) qual3.add(t.code); }); }catch(e){}
+    var legend=document.createElement('div'); legend.className='glegend';
+    legend.innerHTML='<span class="lg"><i class="sw q1"></i> Top two — through</span>'+
+      '<span class="lg"><i class="sw q3"></i> Best-8 third place — provisional</span>';
+    sec.appendChild(legend);
+    gs.forEach(function(g){ grid.appendChild(groupCard(g, qual3)); });
     sec.appendChild(grid);
     sec.appendChild(thirdsPanel(gs));
     return sec;
   }
 
-  function groupCard(g){
+  function groupCard(g, qual3){
     var card=document.createElement('div'); card.className='gcard';
     var st=computeGroupStanding(g);
     var h=document.createElement('h3'); h.textContent=g.name; card.appendChild(h);
@@ -1421,7 +1458,9 @@ const APP_JS = String.raw`
     t.innerHTML='<thead><tr><th>#</th><th>Team</th><th>P</th><th>W</th><th>D</th><th>L</th><th>GF</th><th>GA</th><th>GD</th><th>Pts</th></tr></thead>';
     var tb=document.createElement('tbody');
     st.forEach(function(s){
-      var tr=document.createElement('tr'); if(s.rank<=2) tr.className='q'+s.rank;
+      var tr=document.createElement('tr');
+      if(s.rank<=2) tr.className='q'+s.rank;
+      else if(s.rank===3 && qual3 && qual3.has(s.code)) tr.className='q3';
       var lots=s.tiedByLots?' <span class="lots" title="Level on all criteria incl. fair-play — separated only by drawing of lots (a real coin-flip)">⚖</span>':'';
       tr.innerHTML='<td>'+s.rank+'</td>'+
         '<td><span style="color:'+accentFor(s.code)+';font-weight:700">'+s.code+'</span> <span class="muted tiny">'+esc(s.name)+'</span>'+lots+'</td>'+
@@ -1657,11 +1696,21 @@ const APP_JS = String.raw`
     var unplayed=g.matches.filter(function(m){return !m.played;});
     var card=document.createElement('div'); card.className='scn-card';
 
+    // print-only header: identifies the group + data freshness on the printout
+    // (the on-screen app-header is hidden in print).
+    var pstamp=document.createElement('div'); pstamp.className='scn-print-stamp';
+    pstamp.textContent='2026 World Cup — '+g.name+' scenarios · data through '+FRESH.dataThrough+
+      ' ('+FRESH.playedCount+'/'+FRESH.totalCount+' played)';
+    card.appendChild(pstamp);
+
     var head=document.createElement('div'); head.className='scn-stage';
     var nUn=unplayed.length;
     head.innerHTML='<b>'+esc(g.name)+'</b> · '+
       (nUn===0?'group complete':nUn+' match'+(nUn===1?'':'es')+' to play'+
         (nUn<=2?' — final round':''));
+    var pbtn=document.createElement('button'); pbtn.className='btn scn-print-btn';
+    pbtn.textContent='Print this group'; pbtn.onclick=function(){ window.print(); };
+    head.appendChild(pbtn);
     card.appendChild(head);
 
     // Remaining fixtures (date + time in ET) replace the old placeholder text.
@@ -1699,7 +1748,7 @@ const APP_JS = String.raw`
       // Pass the Monte-Carlo per-team map (code -> perTeam entry) so headlines and
       // result-based detail are probability-aware; null until the sim returns
       // (analyzers fall back to deterministic-only output in that window).
-      try{ sum=summarizeGroup(g, { mcByCode: dist }); }
+      try{ sum=summarizeGroup(g, { mcByCode: dist, allGroups: gs }); }
       catch(e){ var er=document.createElement('div'); er.className='muted tiny'; er.textContent='Final-round summary unavailable: '+esc(e.message); card.appendChild(er); sec.appendChild(card); return sec; }
       var byCode={}; sum.teams.forEach(function(t){ byCode[t.code]=t; });
       orderedTeams.forEach(function(team){
@@ -1725,7 +1774,7 @@ const APP_JS = String.raw`
     } else {
       // ---- STAGE: pre-final (3+ unplayed) -> groupSituation ----
       var sit;
-      try{ sit=groupSituation(g, { mcByCode: dist }); }
+      try{ sit=groupSituation(g, { mcByCode: dist, allGroups: gs }); }
       catch(e){ var er2=document.createElement('div'); er2.className='muted tiny'; er2.textContent='Group situation unavailable: '+esc(e.message); card.appendChild(er2); sec.appendChild(card); return sec; }
       var byC={}; sit.teams.forEach(function(t){ byC[t.code]=t; });
       orderedTeams.forEach(function(team){

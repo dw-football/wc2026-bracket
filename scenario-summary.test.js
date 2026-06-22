@@ -896,3 +896,67 @@ test('MC wording: a bare "→ through" never rides on a result where 3rd is reac
     }
   }
 });
+
+// ---------------------------------------------------------------------------
+// DETERMINISTIC best-third clinch (opts.allGroups) — must NOT regress to "99%".
+// Mirrors the group-situation clinch: when a 1-2-unplayed group switches to THIS
+// renderer, a team mathematically locked into the top-8 thirds must still read
+// "Clinched a Round-of-32 place", never "99% to qualify".
+// ---------------------------------------------------------------------------
+
+// Fully-played filler: third place ends on 3 pts -> third ceiling 3 (< 6).
+function decided3rdGroup(letter) {
+  const t = [letter + '1', letter + '2', letter + '3', letter + '4'];
+  return {
+    name: 'Group ' + letter,
+    teams: t.map(T),
+    matches: [
+      M(t[0], t[1], 1, 0), M(t[0], t[2], 1, 0), M(t[0], t[3], 1, 0),
+      M(t[1], t[2], 1, 0), M(t[1], t[3], 1, 0), M(t[2], t[3], 1, 0),
+    ],
+  };
+}
+// All-unplayed filler: a 6-6-6-0 finish is reachable -> third ceiling 6.
+function open3rdGroup(letter) {
+  const t = [letter + '1', letter + '2', letter + '3', letter + '4'];
+  return {
+    name: 'Group ' + letter,
+    teams: t.map(T),
+    matches: [
+      M(t[0], t[1], null, null, false), M(t[0], t[2], null, null, false), M(t[0], t[3], null, null, false),
+      M(t[1], t[2], null, null, false), M(t[1], t[3], null, null, false), M(t[2], t[3], null, null, false),
+    ],
+  };
+}
+// Focal Group J at 2 unplayed with the 3-way cycle still ALIVE: ARG beat ALG &
+// AUT; AUT beat JOR & ALG (=6). Remaining JOR-ARG, ALG-JOR. ARG can lose to JOR
+// while JOR beats ALG -> ARG/AUT/JOR all on 6, ARG possibly 3rd-on-6.
+function focalJ2() {
+  return {
+    name: 'Group J',
+    teams: ['ARG', 'AUT', 'JOR', 'ALG'].map(T),
+    matches: [
+      M('ARG', 'ALG', 2, 0), M('AUT', 'JOR', 1, 0), M('ARG', 'AUT', 2, 0), M('AUT', 'ALG', 1, 0),
+      M('JOR', 'ARG', null, null, false), M('ALG', 'JOR', null, null, false),
+    ],
+  };
+}
+
+test('clinch (final-round renderer): ARG reads "Clinched", never "99% to qualify"', () => {
+  const J = focalJ2();
+  const allGroups = [J, ...['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'K', 'L'].map(decided3rdGroup)];
+  const arg = summarizeGroup(J, { allGroups }).teams.find((t) => t.code === 'ARG');
+  assert.equal(arg.status, 'advanced', 'ARG deterministically clinched');
+  assert.match(arg.headline, /Clinched a Round-of-32 place/);
+  assert.doesNotMatch(arg.headline, /to qualify/); // the buffoon guard
+});
+
+test('clinch (final-round renderer): counting boundary 7 vs 8', () => {
+  const J = focalJ2();
+  const with8 = [J, ...['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'].map(open3rdGroup), ...['I', 'K', 'L'].map(decided3rdGroup)];
+  const with7 = [J, ...['A', 'B', 'C', 'D', 'E', 'F', 'G'].map(open3rdGroup), ...['H', 'I', 'K', 'L'].map(decided3rdGroup)];
+  assert.equal(summarizeGroup(J, { allGroups: with8 }).teams.find((t) => t.code === 'ARG').status,
+    'conditional', '8 other 6-pt-third groups -> not clinched');
+  assert.equal(summarizeGroup(J, { allGroups: with7 }).teams.find((t) => t.code === 'ARG').status,
+    'advanced', '7 other 6-pt-third groups -> clinched');
+});

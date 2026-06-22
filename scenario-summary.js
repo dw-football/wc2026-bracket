@@ -103,6 +103,87 @@ function qualIfThirdGivenPoints(mc, finalPts) {
   return b || null;
 }
 
+// ---------------------------------------------------------------------------
+// DETERMINISTIC cross-group best-third clinch (mirrors group-situation.js).
+// A 3rd-place team is mathematically locked into the top-8 thirds when its
+// WORST possible 3rd-place points total can be matched-or-beaten by at most 7
+// OTHER groups' third-place ceilings (groups are independent, so all hitting
+// their ceiling at once is the achievable worst case). This is a guarantee, not
+// a probability — used to upgrade a "99% to qualify" headline to "Clinched".
+// Requires opts.allGroups; absent it, we leave the MC wording untouched.
+// ---------------------------------------------------------------------------
+const ssGroupLetter = (g) => {
+  const m = /Group\s+([A-L])/i.exec(g.name || '');
+  return m ? m[1].toUpperCase() : null;
+};
+
+function ssBasePoints(group) {
+  const pts = new Map();
+  for (const t of group.teams) pts.set(t.code, 0);
+  for (const m of group.matches) {
+    if (!m.played) continue;
+    if (m.homeGoals > m.awayGoals) pts.set(m.home, pts.get(m.home) + 3);
+    else if (m.homeGoals < m.awayGoals) pts.set(m.away, pts.get(m.away) + 3);
+    else { pts.set(m.home, pts.get(m.home) + 1); pts.set(m.away, pts.get(m.away) + 1); }
+  }
+  return pts;
+}
+
+// Enumerate coarse W/D/L of a group's unplayed matches, yielding final-points Maps.
+function* ssEnumerate(basePts, unplayed) {
+  const k = unplayed.length;
+  for (let n = 0; n < 3 ** k; n++) {
+    const f = new Map(basePts);
+    let x = n;
+    for (let i = 0; i < k; i++) {
+      const m = unplayed[i], o = x % 3; x = Math.floor(x / 3);
+      if (o === 0) f.set(m.home, f.get(m.home) + 3);
+      else if (o === 1) f.set(m.away, f.get(m.away) + 3);
+      else { f.set(m.home, f.get(m.home) + 1); f.set(m.away, f.get(m.away) + 1); }
+    }
+    yield f;
+  }
+}
+
+/** Max points a third-place team in this group can still finish on. */
+function ssMaxThirdPoints(group) {
+  const unplayed = group.matches.filter((m) => !m.played);
+  let mx = -1;
+  for (const f of ssEnumerate(ssBasePoints(group), unplayed)) {
+    const s = [...f.values()].sort((a, b) => b - a);
+    if (s[2] > mx) mx = s[2];
+  }
+  return mx;
+}
+
+/**
+ * Is `code` deterministically locked into the R32 via a guaranteed top-8 third?
+ * Returns { clinched:true, worstThirdPts } or null. Conservative (worst-case
+ * rank loses all ties; "ceiling >= worst" counts as could-beat).
+ */
+function ssThirdClinch(group, code, allGroups) {
+  if (!allGroups) return null;
+  const unplayed = group.matches.filter((m) => !m.played);
+  let everFourth = false, everThird = false, worst = Infinity;
+  for (const f of ssEnumerate(ssBasePoints(group), unplayed)) {
+    const mine = f.get(code);
+    let above = 0, equal = 0;
+    for (const [c, p] of f) { if (c === code) continue; if (p > mine) above++; else if (p === mine) equal++; }
+    const worstRank = above + equal + 1;
+    if (worstRank >= 4) everFourth = true;
+    else if (worstRank === 3) { everThird = true; if (mine < worst) worst = mine; }
+  }
+  if (everFourth || !everThird) return null; // can be 4th, or never 3rd (top-2 path)
+  const own = ssGroupLetter(group);
+  let canBeat = 0;
+  for (const g of allGroups) {
+    const L = ssGroupLetter(g);
+    if (!L || L === own) continue;
+    if (ssMaxThirdPoints(g) >= worst) canBeat++;
+  }
+  return canBeat <= 7 ? { clinched: true, worstThirdPts: worst } : null;
+}
+
 /** Whole-number percent for an advance probability attached to a 3rd-place
  *  token. Never prints a bare 100% (a Monte-Carlo advance is never a certainty);
  *  caps at 99%. Tiny non-zero prints "<1%"; an exact 0 prints "0%". */
@@ -1928,7 +2009,32 @@ export function summarizeGroup(group, opts = {}) {
     return mk(code, team.name, 'conditional', headline, detail, maxRank, minRank);
   });
 
-  return { teams, deadRubbers: deadRubbers(group, unplayed, scenarios) };
+  // DETERMINISTIC best-third clinch (cross-group): upgrade any team that can
+  // still finish 3rd but is mathematically locked into the top-8 thirds. Without
+  // this, dropping a group to 1-2 unplayed would flip a "Clinched" team (shown by
+  // groupSituation) back to "99% to qualify" here — reading as an un-clinch.
+  const allGroups = opts.allGroups || null;
+  const finalTeams = allGroups
+    ? teams.map((t) => {
+        // Only upgrade the "can still be 3rd" cases; a guaranteed top-2 / won /
+        // eliminated headline already says the right thing.
+        if (t.status === 'won-group' || t.status === 'qualified' || t.status === 'eliminated') return t;
+        const v = ssThirdClinch(group, t.code, allGroups);
+        if (!v) return t;
+        const mc = mcOf(t.code);
+        const headline = mc && (mc.pGroup1 ?? 0) > 0.005
+          ? `Clinched a Round-of-32 place — ${pctMC(mc.pGroup1)} to win the group`
+          : 'Clinched a Round-of-32 place';
+        // Every reachable 3rd for a clinched team is a guaranteed qualify, so the
+        // per-branch "3rd (NN% to advance/qualify)" tokens become "3rd (clinched)".
+        const detail = t.detail
+          ? t.detail.replace(/3rd \([^)]*\bto (?:advance|qualify)\)/g, '3rd (clinched)')
+          : t.detail;
+        return { ...t, status: 'advanced', headline, detail };
+      })
+    : teams;
+
+  return { teams: finalTeams, deadRubbers: deadRubbers(group, unplayed, scenarios) };
 }
 
 function mk(code, name, status, headline, detail, maxRank, minRank) {

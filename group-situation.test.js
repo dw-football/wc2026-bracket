@@ -17,7 +17,7 @@ import { readFile } from 'node:fs/promises';
 import { fetchRaw, toGroups } from './adapter.js';
 import { groupSituation } from './group-situation.js';
 
-const VALID_STATUS = new Set(['won-group', 'qualified', 'contention', 'eliminated']);
+const VALID_STATUS = new Set(['won-group', 'qualified', 'advanced', 'contention', 'eliminated']);
 
 // ----------------------------------------------------------------------------
 // Real data: Group L
@@ -310,7 +310,15 @@ test('(c) synthetic: contention team with hand-computed magic number', () => {
   //   A (D=3) and can beat C (D=6); B drew A (4) and can beat C (7). Branch B=7,
   //   D=6: two teams strictly above A=4 -> A is 3rd. NOT safe.
   //
-  //   Therefore A's MAGIC NUMBER = 5.
+  //   ⚠️ THE TRAP (this is the bug that "didn't take" before): A=6 via a WIN AND
+  //   A LOSS is NOT safe either. A beats B, loses to D -> A=6; B beats C -> B=6;
+  //   D beats C -> D=6 (B beat D in round 1, D beat A, A beat B: a perfect H2H
+  //   cycle). Three teams on 6, A can be 3rd on goal difference. So the safe-set
+  //   is NON-MONOTONE: 5 (two draws) safe, 6 (win+loss) NOT safe, 7 (win+draw)
+  //   safe. A points threshold ("5 or better") is therefore FALSE — the honest
+  //   guarantee is RESULT-based: AVOID DEFEAT in both matches.
+  //   (The structured magicNumber still carries 5; the PROSE must not say
+  //   "two draws or better".)
   const teams = [team('A'), team('B'), team('C'), team('D')];
   const matches = [
     mk('A', 'C', 1, 0, '2026-06-10', '12:00 UTC+0'), // A3 C0
@@ -336,10 +344,11 @@ test('(c) synthetic: contention team with hand-computed magic number', () => {
   assert.ok(typeof A.eliminationThreshold === 'number');
   assert.ok(A.eliminationThreshold <= A.magicNumber);
 
-  // needLine is now RESULT-BASED (magic=5 from 3 pts over 2 games = two draws).
-  // The structured magicNumber still carries 5; the prose never says
-  // "needs N pts FROM its last games".
-  assert.match(A.needLine, /[Tt]wo draws \(or better\)/);
+  // needLine must express the NON-MONOTONE guarantee by RESULT — "avoiding defeat
+  // in both games" — and must NEVER claim "two draws (or better)" (a win+loss
+  // reaches 6 pts but can finish 3rd in the H2H cycle).
+  assert.match(A.needLine, /Avoiding defeat in both games guarantees a top-2 place/);
+  assert.doesNotMatch(A.needLine, /or better/);
   assert.doesNotMatch(A.needLine, /from its last/);
 });
 
@@ -368,24 +377,21 @@ test('(d) magic number respects non-monotone safety; never asserts bare eliminat
 
   // Egypt on 1 pt with 2 to play. Points-safety is NON-MONOTONE: two draws (3 pts)
   // is tie-safe, but win+loss (4 pts) can finish 3rd behind IRN(5) and BEL(5).
-  // So the guarantee is NOT "two draws" — the magic number is 5 (a win and a draw).
+  // So the guarantee is NOT "two draws" — it is a win and a draw (magic 5).
   assert.equal(EGY.magicNumber, 5, 'Egypt magic number is 5, not 3 (4 pts is unsafe)');
-  assert.match(EGY.needLine, /win and a draw/);
+  assert.match(EGY.needLine, /A win and a draw guarantees a top-2 place/);
   // The old false claim must be gone.
   assert.doesNotMatch(EGY.needLine, /[Tt]wo draws \(or better\) guarantees/);
 
-  // IRN/BEL on 2 with 1 to play: a loss costs them TOP 2 — but they could still
-  // finish 3rd and qualify cross-group, so the wording must be "out of the top
-  // two", never a bare "out"/"eliminated".
+  // IRN/BEL on 2 with 1 to play: a win guarantees a top-2 place; never a bare
+  // "eliminated" (a best-third berth could still be live).
   for (const code of ['IRN', 'BEL']) {
     const t = sit.teams.find((x) => x.code === code);
-    assert.match(t.needLine, /out of the top two with a loss/, `${code} honest wording`);
+    assert.match(t.needLine, /A win guarantees a top-2 place/, `${code} honest wording`);
     assert.doesNotMatch(t.needLine, /\beliminated\b/, `${code} never says eliminated`);
   }
 
-  // Sweep: no needLine in this group may assert a top-2 guarantee that a higher
-  // reachable points total would violate (the bug class), and none may use bare
-  // tournament-elimination language.
+  // Sweep: no bare tournament-elimination language anywhere in this group.
   for (const t of sit.teams) {
     assert.doesNotMatch(t.needLine, /\beliminated\b/);
   }
@@ -405,4 +411,103 @@ test('needLine never says "from its last" (the confusing-accumulation phrasing)'
       );
     }
   }
+});
+
+// ----------------------------------------------------------------------------
+// DETERMINISTIC best-third clinch (opts.allGroups) — the ARG/Group-J case.
+// ----------------------------------------------------------------------------
+//
+// Focal group J mirrors the real situation after Argentina 2-0 Austria:
+//   ARG beat ALG, AUT beat JOR, ARG beat AUT.  ARG=6 (1 game left, vs JOR).
+// ARG's only path to 3rd is the 3-way cycle (lose to JOR; AUT & JOR both win
+// their last games) -> three teams on 6, ARG possibly 3rd ON 6. Because 6 is the
+// MAX a third can ever score, and few other groups can even reach a 6-pt third,
+// ARG is mathematically locked into the top-8 thirds => CLINCHED for the R32.
+
+function decidedGroup(letter) {
+  // Fully played; third place ends on 3 pts -> third-place ceiling = 3 (< 6).
+  const T = [letter + '1', letter + '2', letter + '3', letter + '4'];
+  return {
+    name: 'Group ' + letter,
+    teams: T.map((c) => team(c)),
+    matches: [
+      mk(T[0], T[1], 1, 0, '2026-06-10', '12:00'), mk(T[0], T[2], 1, 0, '2026-06-10', '12:00'),
+      mk(T[0], T[3], 1, 0, '2026-06-10', '12:00'), mk(T[1], T[2], 1, 0, '2026-06-10', '12:00'),
+      mk(T[1], T[3], 1, 0, '2026-06-10', '12:00'), mk(T[2], T[3], 1, 0, '2026-06-10', '12:00'),
+    ],
+  };
+}
+
+function openGroup(letter) {
+  // No games played -> a 6-6-6-0 finish is still reachable -> third ceiling = 6.
+  const T = [letter + '1', letter + '2', letter + '3', letter + '4'];
+  return {
+    name: 'Group ' + letter,
+    teams: T.map((c) => team(c)),
+    matches: [
+      mk(T[0], T[1], null, null, '2026-06-30', '12:00'), mk(T[0], T[2], null, null, '2026-06-30', '12:00'),
+      mk(T[0], T[3], null, null, '2026-06-30', '12:00'), mk(T[1], T[2], null, null, '2026-06-30', '12:00'),
+      mk(T[1], T[3], null, null, '2026-06-30', '12:00'), mk(T[2], T[3], null, null, '2026-06-30', '12:00'),
+    ],
+  };
+}
+
+function focalGroupJ() {
+  return {
+    name: 'Group J',
+    teams: ['ARG', 'AUT', 'JOR', 'ALG'].map((c) => team(c)),
+    matches: [
+      mk('ARG', 'ALG', 2, 0, '2026-06-16', '12:00'),
+      mk('AUT', 'JOR', 1, 0, '2026-06-16', '12:00'),
+      mk('ARG', 'AUT', 2, 0, '2026-06-22', '12:00'),
+      mk('ALG', 'AUT', null, null, '2026-06-27', '12:00'),
+      mk('JOR', 'ARG', null, null, '2026-06-27', '12:00'),
+      mk('ALG', 'JOR', null, null, '2026-06-27', '12:00'),
+    ],
+  };
+}
+
+test('clinch: ARG is "advanced" (locked top-8 third) when other groups cannot field a 6-pt third', () => {
+  const J = focalGroupJ();
+  const fillers = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'K', 'L'].map(decidedGroup);
+  const allGroups = [J, ...fillers];
+
+  const sit = groupSituation(J, { allGroups });
+  const arg = sit.teams.find((t) => t.code === 'ARG');
+
+  assert.equal(arg.status, 'advanced', 'ARG deterministically clinched the R32');
+  assert.match(arg.statusLine, /Clinched a Round-of-32 place/, 'headline asserts the clinch');
+  assert.match(arg.needLine, /Through to the Round of 32/, 'needLine leads with the clinch');
+  assert.match(arg.needLine, /clinches top spot/, 'needLine talks about clinching 1st, not "being safe"');
+  // The buffoon guard: never the old "needs 6+ to be safe" phrasing once clinched.
+  assert.doesNotMatch(arg.needLine, /to be safe/);
+  assert.doesNotMatch(arg.needLine, /6\+ points/);
+});
+
+test('clinch: backward-compatible — without allGroups, ARG stays "contention"', () => {
+  const sit = groupSituation(focalGroupJ()); // no allGroups
+  const arg = sit.teams.find((t) => t.code === 'ARG');
+  assert.equal(arg.status, 'contention', 'no cross-group context -> no best-third assertion');
+});
+
+test('clinch: counting boundary — 8 possible 6-pt thirds blocks the clinch, 7 allows it', () => {
+  const J = focalGroupJ();
+
+  // 8 OTHER groups that CAN field a 6-pt third (open) -> ARG could be 9th -> not clinched.
+  const eightOpen = [
+    ...['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'].map(openGroup),
+    ...['I', 'K', 'L'].map(decidedGroup),
+  ];
+  const sit8 = groupSituation(J, { allGroups: [J, ...eightOpen] });
+  assert.equal(sit8.teams.find((t) => t.code === 'ARG').status, 'contention',
+    '8 other groups can match the 6 -> ARG only 9th-best third -> not clinched');
+
+  // 7 OTHER groups that CAN -> ARG at worst 8th -> still top-8 -> clinched.
+  const sevenOpen = [
+    ...['A', 'B', 'C', 'D', 'E', 'F', 'G'].map(openGroup),
+    ...['H', 'I', 'K', 'L'].map(decidedGroup),
+  ];
+  const sit7 = groupSituation(J, { allGroups: [J, ...sevenOpen] });
+  assert.equal(sit7.teams.find((t) => t.code === 'ARG').status, 'advanced',
+    '7 other groups can match the 6 -> ARG at worst 8th -> clinched');
 });
