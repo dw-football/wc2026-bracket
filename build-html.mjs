@@ -418,6 +418,7 @@ select,input[type=number],input[type=text]{background:#0c0e12;color:var(--txt);
   width:34px;height:34px;border-radius:8px;cursor:pointer;font-size:14px;font-weight:700}
 .gchip.on{background:var(--panel2);color:var(--txt);border-color:var(--accent)}
 .scn-headline{font-weight:650;font-size:13px;color:var(--txt);margin-top:3px}
+.scn-pts{color:var(--dim);font-size:11.5px;margin-left:6px;white-space:nowrap}
 .scn-elo{margin-top:5px;font-size:11px;color:var(--dim)}
 .scn-elo .lbl{display:inline-block;color:var(--dim2);text-transform:uppercase;letter-spacing:.5px;font-size:10px;margin-right:6px}
 .scn-bar{display:inline-flex;width:160px;max-width:60%;height:8px;border-radius:4px;overflow:hidden;vertical-align:middle;background:#0c0e12;border:1px solid var(--line)}
@@ -1378,9 +1379,10 @@ const APP_JS = String.raw`
 
   // Team header. For UNCERTAIN teams (dist present + not position-determined),
   // appends the compact inline finish distribution to the right of the name.
-  function teamHeader(code, name, e){
+  function teamHeader(code, name, e, st){
     var h=document.createElement('div'); h.className='h';
-    h.innerHTML='<span class="cd" style="color:'+accentFor(code)+'">'+code+'</span> <span class="nm">'+esc(name)+'</span>';
+    var pts = st ? ' <span class="scn-pts">'+st.points+' pts · '+st.won+'-'+st.drawn+'-'+st.lost+' · '+(st.gd>0?'+':'')+st.gd+'</span>' : '';
+    h.innerHTML='<span class="cd" style="color:'+accentFor(code)+'">'+code+'</span> <span class="nm">'+esc(name)+'</span>'+pts;
     if(e && !determinedPos(e)) h.appendChild(inlineDist(e));
     return h;
   }
@@ -1428,7 +1430,7 @@ const APP_JS = String.raw`
     var dist=eloDistByCode();
     // Standing order for the whole group (deterministic, drives team ordering).
     var standing=computeGroupStanding(g);
-    var orderIdx={}; standing.forEach(function(s,i){ orderIdx[s.code]=i; });
+    var orderIdx={}, stByCode={}; standing.forEach(function(s,i){ orderIdx[s.code]=i; stByCode[s.code]=s; });
     var orderedTeams=g.teams.slice().sort(function(a,b){
       return (orderIdx[a.code]==null?99:orderIdx[a.code])-(orderIdx[b.code]==null?99:orderIdx[b.code]);
     });
@@ -1467,7 +1469,7 @@ const APP_JS = String.raw`
       orderedTeams.forEach(function(team){
         var e=dist?dist[team.code]:null;
         var row=document.createElement('div'); row.className='scn-team';
-        row.appendChild(teamHeader(team.code, team.name, e));
+        row.appendChild(teamHeader(team.code, team.name, e, stByCode[team.code]));
         appendDist(row, team.code, dist);
         card.appendChild(row);
       });
@@ -1485,7 +1487,7 @@ const APP_JS = String.raw`
         var s=byCode[team.code]; if(!s) return;
         var e=dist?dist[team.code]:null;
         var row=document.createElement('div'); row.className='scn-team';
-        row.appendChild(teamHeader(team.code, team.name, e));
+        row.appendChild(teamHeader(team.code, team.name, e, stByCode[team.code]));
         var hl=document.createElement('div'); hl.className='scn-headline'; hl.textContent=s.headline; row.appendChild(hl);
         if(s.detail){ var dt=document.createElement('div'); dt.className='desc'; dt.textContent=s.detail; row.appendChild(dt); }
         appendDist(row, team.code, dist);
@@ -1509,9 +1511,9 @@ const APP_JS = String.raw`
         var s=byC[team.code]; if(!s) return;
         var e=dist?dist[team.code]:null;
         var row=document.createElement('div'); row.className='scn-team';
-        row.appendChild(teamHeader(team.code, team.name, e));
+        row.appendChild(teamHeader(team.code, team.name, e, stByCode[team.code]));
         var hl=document.createElement('div'); hl.className='scn-headline';
-        hl.textContent=s.statusLine+' · '+s.points+' pts ('+s.played+' played)';
+        hl.textContent=s.statusLine;
         row.appendChild(hl);
         var nl=document.createElement('div'); nl.className='desc'; nl.textContent=s.needLine; row.appendChild(nl);
         appendDist(row, team.code, dist);
