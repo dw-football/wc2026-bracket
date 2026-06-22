@@ -140,17 +140,17 @@ test('GOLDEN Group A — South Korea reduces to the minimal coupled-group form',
   const rsa = byCode(out, 'RSA');
   assert.equal(
     rsa.detail,
-    '2nd with a win over South Korea, provided Mexico avoid defeat against Czech Republic; ' +
+    '2nd with a win over South Korea, provided Mexico win or draw vs Czech Republic; ' +
       '3rd with a draw against South Korea if Mexico beat Czech Republic; ' +
-      '4th with a draw or loss against South Korea if Czech Republic avoid defeat against Mexico.'
+      '4th with a draw or loss against South Korea if Czech Republic win or draw vs Mexico.'
   );
-  // The OLD bug rendered "2nd with Mexico avoid defeat and a win over South Korea"
+  // The OLD bug rendered "2nd with Mexico win or draw and a win over South Korea"
   // (dependency before the subject's own result). Assert the subject's own result
   // ("a win over South Korea") appears BEFORE the other-match condition ("Mexico
-  // avoid defeat") in the leading 2nd-place clause.
+  // win or draw") in the leading 2nd-place clause.
   const rsaSecond = rsa.detail.split(';')[0];
   assert.ok(
-    rsaSecond.indexOf('a win over South Korea') < rsaSecond.indexOf('Mexico avoid defeat'),
+    rsaSecond.indexOf('a win over South Korea') < rsaSecond.indexOf('Mexico win or draw'),
     `RSA 2nd clause must lead with its own result, not the dependency: ${rsaSecond}`
   );
   // Every rank clause must START with the ordinal + "with"/"only by" + an own
@@ -169,7 +169,7 @@ test('GOLDEN Group A — South Korea reduces to the minimal coupled-group form',
   const cze = byCode(out, 'CZE');
   assert.equal(
     cze.detail,
-    '3rd with a win or draw against Mexico, provided South Korea avoid defeat against South Africa; ' +
+    '3rd with a win or draw against Mexico, provided South Korea win or draw vs South Africa; ' +
       '2nd only by beating Mexico while South Africa beat South Korea (and even then on goal difference); ' +
       'otherwise 4th.'
   );
@@ -509,16 +509,17 @@ test('MC: Group D final-round headlines + result-based detail (verbatim sign-off
 
   // AUS: top-2-safe with a win or draw; a loss drops to 3rd WITH advance odds.
   // The % is now the CONDITIONAL advance-if-3rd (pQualIfThird), labelled
-  // "to advance", and attaches to the 3rd token only.
+  // "to qualify", and attaches to the 3rd token only. RESULT-LED renderer:
+  // "Win or draw → 2nd; Loss → 3rd (N% to qualify)".
   const aus = get('AUS');
   assert.match(aus.headline, /to qualify$/);
-  assert.match(aus.detail, /^2nd with a win or draw vs Paraguay; a loss → 3rd \(\d+% to advance\)\.$/);
+  assert.match(aus.detail, /^Win or draw → 2nd; Loss → 3rd \(\d+% to qualify\)\.$/);
 
-  // PAR: 2nd with a win; a draw/loss → 3rd, EACH with a 3rd-only advance %.
+  // PAR: a win → 2nd; a draw/loss → 3rd, EACH with a 3rd-only advance %.
   const par = get('PAR');
   assert.match(
     par.detail,
-    /^2nd with a win over Australia; a draw → 3rd \(\d+% to advance\); a loss → 3rd \(\d+% to advance\)\.$/
+    /^Win → 2nd; Draw → 3rd \(\d+% to qualify\); Loss → 3rd \(\d+% to qualify\)\.$/
   );
 });
 
@@ -528,28 +529,28 @@ test('MC: Group A KOR/CZE detail names the OTHER-match condition that splits 3rd
   const kor = out.teams.find((t) => t.code === 'KOR');
   const cze = out.teams.find((t) => t.code === 'CZE');
 
-  // KOR: 2nd with a win or draw; a LOSS names BOTH sides of the split — 3rd if
-  // Mexico avoid defeat, 4th (out) if Czech beat Mexico.
-  assert.match(kor.detail, /^2nd with a win or draw vs South Africa;/, kor.detail);
+  // KOR: a win or draw → 2nd; a LOSS names BOTH sides of the split — 3rd if
+  // Mexico win or draw, 4th (out) if Czech beat Mexico.
+  assert.match(kor.detail, /^Win or draw → 2nd;/, kor.detail);
   assert.match(
     kor.detail,
-    /a loss → 3rd \(\d+% to advance\) if Mexico avoid defeat, 4th \(out\) if Czech Republic beat Mexico\.$/,
+    /Loss → 3rd \(\d+% to qualify\) if Mexico win or draw, 4th \(out\) if Czech Republic beat Mexico\.$/,
     kor.detail
   );
 
   // CZE: a WIN (4 pts) is NOT a guaranteed top-2 and must not say "through". The
-  // 2nd is goal-difference-contingent, so it surfaces honestly as a "2nd, or 3rd"
-  // tie, not a clean "2nd". A DRAW is 3rd if Korea avoid defeat, 4th if South
-  // Africa win.
+  // 2nd is goal-difference-contingent, so it surfaces honestly: 2nd if South
+  // Africa beat South Korea (unless the GD edge is overturned), else 3rd. A DRAW
+  // is 3rd if Korea win or draw, 4th if South Africa win.
   assert.doesNotMatch(cze.detail, /through/, `CZE win must not claim "through": ${cze.detail}`);
   assert.match(
     cze.detail,
-    /^A win → 2nd, or 3rd \(\d+% to advance\) if South Africa beat South Korea, 3rd \(\d+% to advance\) if South Korea avoid defeat;/,
+    /^Win → 2nd if South Africa beat South Korea \(unless South Africa overturn Czech Republic's \d+-goal goal-difference edge\), 3rd \(\d+% to qualify\) if South Korea win or draw;/,
     cze.detail
   );
   assert.match(
     cze.detail,
-    /a draw → 3rd \(\d+% to advance\) if South Korea avoid defeat, 4th \(out\) if South Africa beat South Korea/,
+    /Draw → 3rd \(\d+% to qualify\) if South Korea win or draw, 4th \(out\) if South Africa beat South Korea/,
     cze.detail
   );
 
@@ -558,7 +559,7 @@ test('MC: Group A KOR/CZE detail names the OTHER-match condition that splits 3rd
   const rsa = out.teams.find((t) => t.code === 'RSA');
   assert.match(
     rsa.detail,
-    /a draw → 3rd \((?:\d+|<1)% to advance\) if Mexico beat Czech Republic, 4th \(out\) if Czech Republic avoid defeat/,
+    /Draw → 3rd \((?:\d+|<1)% to qualify\) if Mexico beat Czech Republic, 4th \(out\) if Czech Republic win or draw/,
     rsa.detail
   );
 });
@@ -621,15 +622,15 @@ test('MC: every 3rd-place outcome carries a % and no 4th/out ever does (CORE RUL
       );
 
       // Every "→ ..." result that can leave the team 3rd must carry a 3rd-only
-      // advance %. Results that are top-2 only ("through") or 4th only ("out")
-      // carry no %.
+      // advance % ("3rd (N% to qualify)") — or, when that advance % is
+      // negligible, collapse to the bare "3rd (out)" form. Results that are
+      // top-2 only ("through"/"v through") or 4th only ("out") carry no %.
       const arrows = t.detail.match(/→ [^;.]*/g) || [];
       for (const seg of arrows) {
         if (/\b3rd\b/.test(seg)) {
-          assert.match(
-            seg,
-            /3rd \((?:[~<]?\d+%|<1%) to advance\)/,
-            `${g.name} ${t.code} 3rd result lacks a "(N% to advance)" tail: "${seg}"`
+          assert.ok(
+            /3rd \((?:[~<]?\d+%|<1%) to qualify\)/.test(seg) || /3rd \(out\)/.test(seg),
+            `${g.name} ${t.code} 3rd result lacks a "(N% to qualify)" / "(out)" tail: "${seg}"`
           );
         }
       }
@@ -667,17 +668,17 @@ test('MC (b): Group E Ivory Coast loss clause conditions the 4th on the other ma
   assert.ok(civ, 'CIV must be in Group E');
   // The loss clause carries a % on the 3rd token, a BARE "(out)" on 4th, and the
   // CONDITION that drops CIV to 4th (Ecuador beating Germany — the other match).
-  const lossSeg = (civ.detail.match(/a loss → [^;.]*/) || [])[0] || '';
+  const lossSeg = (civ.detail.match(/Loss → [^;.]*/) || [])[0] || '';
   assert.match(
     lossSeg,
-    /3rd \(\d+% to advance\) if Germany avoid defeat, 4th \(out\) if Ecuador beat Germany/,
+    /3rd \(\d+% to qualify\) if Germany win or draw, 4th \(out\) if Ecuador beat Germany/,
     `CIV loss clause must name both sides of the split: ${civ.detail}`
   );
   // 4th carries NO percent.
   assert.ok(!/4th\s*\([^)]*%/.test(civ.detail), `CIV 4th must be bare: ${civ.detail}`);
 });
 
-test('MC (c): a Group B team with pTop2<0.5% has no 2nd-place headline + carries the <0.1% caveat', async () => {
+test('MC (c): a Group B team with pTop2<0.5% has no 2nd-place headline; surfaces the vanishing 2nd inline', async () => {
   const { groups, mcByCode } = await buildMcByCode();
   const out = summarizeGroup(groups.find((g) => g.name === 'Group B'), { mcByCode });
   let checked = 0;
@@ -696,13 +697,16 @@ test('MC (c): a Group B team with pTop2<0.5% has no 2nd-place headline + carries
       `${t.code} (pTop2≈0) headline implies a top-2 shot: ${t.headline}`
     );
     assert.match(t.headline, /Out of the top 2|Can finish only 3rd or 4th/, `${t.code}: ${t.headline}`);
-    // When 2nd is deterministically reachable (minRank<=2), the detail must
-    // explain the vanishing tail.
+    // When 2nd is deterministically reachable (minRank<=2), the result-led
+    // renderer now surfaces that vanishing 2nd INLINE as the rare
+    // goal-difference flip ("..., but 2nd if X overturn the N-goal edge"),
+    // rather than appending the standalone "<0.1%" tail caveat (which is only
+    // added when the detail hasn't already mentioned a 2nd). Either form is
+    // honest; assert the detail acknowledges the live-but-tiny 2nd.
     if (t.minRank <= 2) {
-      assert.match(
-        t.detail,
-        /<0\.1%/,
-        `${t.code} detail must carry the <0.1% caveat: ${t.detail}`
+      assert.ok(
+        /<0\.1%/.test(t.detail) || /but 2nd if .*goal-difference edge/.test(t.detail),
+        `${t.code} detail must acknowledge the vanishing 2nd: ${t.detail}`
       );
     }
   }
@@ -752,7 +756,7 @@ test('MC wording: no detail attaches "(0%", none emits "2nd or 3rd (", capitaliz
   }
 });
 
-test('MC wording (c): an infinitesimal-2nd team (pTop2<0.5%) has no "2nd" in any per-result clause', async () => {
+test('MC wording (c): an infinitesimal-2nd team (pTop2<0.5%) names 2nd ONLY as the conditioned goal-difference flip', async () => {
   const { groups, mcByCode } = await buildMcByCode();
   const finalRound = groups.filter((g) => {
     const u = g.matches.filter((m) => !m.played).length;
@@ -774,10 +778,18 @@ test('MC wording (c): an infinitesimal-2nd team (pTop2<0.5%) has no "2nd" in any
       const perResult = t.detail.replace(/;\s*a 2nd-place finish[^]*$/, '');
       const arrows = perResult.match(/→ [^;.]*/g) || [];
       for (const seg of arrows) {
-        assert.ok(
-          !/2nd/.test(seg),
-          `${g.name} ${t.code} (pTop2≈0) per-result clause mentions 2nd: "${seg}" in ${t.detail}`
-        );
+        // The result-led renderer now surfaces the vanishing 2nd INLINE — but
+        // only ever as the explicit, conditioned goal-difference flip
+        // ("..., but 2nd if X ... goal-difference edge"). It must NEVER read as a
+        // clean/default 2nd. So: any "2nd" in a per-result clause must ride on a
+        // "but 2nd if ... goal-difference edge" exception.
+        if (/2nd/.test(seg)) {
+          assert.match(
+            seg,
+            /but 2nd if .*goal-difference edge/,
+            `${g.name} ${t.code} (pTop2≈0) names 2nd outside the GD-flip exception: "${seg}" in ${t.detail}`
+          );
+        }
       }
     }
   }
@@ -791,51 +803,68 @@ test('MC wording: Group E verbatim — conditioned splits; bare "out" only when 
   const cuw = out.teams.find((t) => t.code === 'CUW');
 
   // Ecuador's loss collapses to a bare "out" (4th). A WIN is not a guaranteed
-  // top-2 (4 pts can still be 3rd), so it reads as a conditioned "2nd, or 3rd
-  // (N%)" / "3rd (N%)" split — never an overstated "through". The draw names
-  // both sides (3rd if Ivory Coast avoid defeat, 4th if Curaçao win).
-  const ecuLoss = (ecu.detail.match(/a loss → [^;.]*/) || [])[0] || '';
-  assert.equal(ecuLoss, 'a loss → out', `ECU loss clause must be "out": ${ecu.detail}`);
+  // top-2 (4 pts can still be 3rd), so it reads as a conditioned split — 2nd if
+  // Curaçao beat Ivory Coast (unless the GD edge is overturned), else 3rd —
+  // never an overstated "through". The draw names both sides (3rd if Ivory Coast
+  // win or draw, 4th if Curaçao win).
+  const ecuLoss = (ecu.detail.match(/Loss → [^;.]*/) || [])[0] || '';
+  assert.equal(ecuLoss, 'Loss → out', `ECU loss clause must be "out": ${ecu.detail}`);
   assert.doesNotMatch(ecu.detail, /through/, `ECU win must not claim "through": ${ecu.detail}`);
-  assert.match(ecu.detail, /^A win → 2nd, or 3rd \(\d+% to advance\) if /, `ECU win: ${ecu.detail}`);
   assert.match(
     ecu.detail,
-    /a draw → 3rd \(\d+% to advance\) if Ivory Coast avoid defeat, 4th \(out\) if Curaçao beat Ivory Coast/,
+    /^Win → 2nd if Curaçao beat Ivory Coast \(unless Curaçao overturn Ecuador's \d+-goal goal-difference edge\), 3rd \(\d+% to qualify\) if Ivory Coast win or draw;/,
+    `ECU win: ${ecu.detail}`
+  );
+  assert.match(
+    ecu.detail,
+    /Draw → 3rd \(\d+% to qualify\) if Ivory Coast win or draw, 4th \(out\) if Curaçao beat Ivory Coast/,
     ecu.detail
   );
 
   // Curaçao: a win is likewise a conditioned 2nd/3rd split (never "through"),
-  // and both a draw and a loss collapse to "out".
+  // and a draw or loss collapses to "out".
   assert.doesNotMatch(cuw.detail, /through/, `CUW win must not claim "through": ${cuw.detail}`);
-  assert.match(cuw.detail, /^A win → .*3rd \(\d+% to advance\)/, cuw.detail);
-  assert.match(cuw.detail, /; a draw → out; a loss → out\.$/, cuw.detail);
+  assert.match(cuw.detail, /^Win → .*3rd \(\d+% to qualify\)/, cuw.detail);
+  assert.match(cuw.detail, /; Draw or loss → out\.$/, cuw.detail);
 });
 
-test('MC wording: Group B Bosnia verbatim — win = "3rd (99% to advance)", no "2nd or 3rd"', async () => {
+test('MC wording: Group B Bosnia verbatim — win = "3rd (99% to qualify)", 2nd only as the GD flip', async () => {
   const { groups, mcByCode } = await buildMcByCode();
   const out = summarizeGroup(groups.find((g) => g.name === 'Group B'), { mcByCode });
   const bih = out.teams.find((t) => t.code === 'BIH');
   assert.ok(bih, 'BIH must be in Group B');
-  // Headline rules out the top 2; the detail must agree — no live 2nd in the
-  // per-result phrasing, the win is shown as the realistic 3rd.
+  // Headline rules out the top 2; the detail agrees — the win is shown as the
+  // realistic 3rd, and the vanishing 2nd is surfaced only as the explicit,
+  // conditioned goal-difference flip (never the misleading "2nd or 3rd" form).
   assert.match(bih.headline, /Out of the top 2/, bih.headline);
-  assert.match(bih.detail, /^A win → 3rd \(\d+% to advance\);/, bih.detail);
+  assert.match(bih.detail, /^Win → 3rd \(\d+% to qualify\),/, bih.detail);
   assert.ok(!/2nd or 3rd/.test(bih.detail), `BIH must not say "2nd or 3rd": ${bih.detail}`);
-  assert.match(bih.detail, /a draw → out; a loss → out/, bih.detail);
-  // The vanishing 2nd survives only in the caveat sentence.
-  assert.match(bih.detail, /<0\.1%/, bih.detail);
+  // The win's only 2nd path is the GD flip; draw is a near-dead 3rd; loss is out.
+  assert.match(
+    bih.detail,
+    /but 2nd if Switzerland beat Canada and Bosnia & Herzegovina overturn Canada's \d+-goal goal-difference edge/,
+    bih.detail
+  );
+  assert.match(bih.detail, /Draw → 3rd \(\d+% to qualify\); Loss → out/, bih.detail);
 });
 
-test('MC wording: Switzerland loss = "v through" (virtually, never a bare "through")', async () => {
+test('MC wording: Switzerland loss = 2nd with the rare GD-flip 3rd (out), never a bare "through"', async () => {
   const { groups, mcByCode } = await buildMcByCode();
   const out = summarizeGroup(groups.find((g) => g.name === 'Group B'), { mcByCode });
   const sui = out.teams.find((t) => t.code === 'SUI');
   assert.ok(sui, 'SUI must be in Group B');
-  const suiLoss = (sui.detail.match(/a loss → [^;.]*/) || [])[0] || '';
-  // A loss can still leave SUI 3rd — a 3rd-place berth is cross-group-dependent
-  // and not a proven qualification, so it reads "v through" (virtually), never a
-  // bare "through" (which is reserved for a mathematically locked top-2).
-  assert.equal(suiLoss, 'a loss → v through', `SUI loss must be "v through": ${sui.detail}`);
+  // Win → 1st, Draw → 2nd. A loss leaves SUI 2nd in the dominant case, but it can
+  // still slip to 3rd on the rare goal-difference flip (Qatar beat Bosnia AND
+  // overturn the 9-goal edge); finishing 3rd there is, for SUI, "(out)". A bare
+  // "through" must never appear (3rd is mathematically reachable).
+  assert.match(sui.detail, /^Win → 1st; Draw → 2nd; Loss → /, sui.detail);
+  assert.doesNotMatch(sui.detail, /\bthrough\b/, `SUI must not claim "through": ${sui.detail}`);
+  const suiLoss = (sui.detail.match(/Loss → [^;.]*/) || [])[0] || '';
+  assert.match(
+    suiLoss,
+    /^Loss → 2nd, but 3rd \(out\) if Qatar beat Bosnia & Herzegovina and also overturn Switzerland's \d+-goal goal-difference edge$/,
+    `SUI loss clause: ${sui.detail}`
+  );
 });
 
 // "through" (bare) must NEVER attach to a result where 3rd is reachable — that
