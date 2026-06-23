@@ -16,30 +16,12 @@ result vs. swap in Mark2), ASSUME ROUTINE and confirm before the huge thing.
 halted it. Mark2 stays parked on its `model-mark2` branch until explicit go-ahead.)
 
 ## RESUME
-Next action: **get David's call on the Mark2 model decisions** (he's resuming on the **520**
-machine — NYWDWARREN2 — later today during ENG-GHA). Live site is UNCHANGED: **Mark1**, ALG
-2-1 JOR deployed, 44/104, tests 55/55. A Mark2 prototype is pushed to branch
-**`model-mark2-ko`** (Mark2 outcome-first model + KO-variance knob `koLambda` + an
-underdog-win-floor bug fix David caught via ENG-GHA). The FULL conversation + a plain-English
-"soft shrink" explanation + bootstrap + deploy steps live in the synced pickup
-**`~/My Drive/Computing/Claude/session-notes/2026-06-23-09.md`** — **READ THAT FIRST.**
+Next action: routine score updates via **"Find new scores and GO"**. Live site: **Mark2 deployed**, 46/104 (latest: POR 5-0 UZB, ENG 0-0 GHA). Mark2 = outcome-first Elo model, KO-variance λ=0.6, UNDERDOG_WIN_FLOOR=0.45. main and model-mark2-ko are in sync. Tests: 55/55 green.
 
-OPEN DECISIONS: (1) **λ for knockouts** (recommend ≈0.6 — real KO variance, correct on its
-own); (2) **market blend** — APPROACH CONFIRMED by David = force the Elo INPUT ("Elo\*", soft
-shrink k≈0.35, fixed-point calibration), GATED on fetching + DE-VIGGING the full 48-team
-tournament-winner board. Or ship Mark2+λ0.6 on pure Elo with a "market says France higher"
-caveat. (Mark2 title overshoots market: ARG 22→30 vs mkt 14; λ can't invert the France>ARG
-ordering — that's Elo staleness, hence the Elo\* blend.)
+Remaining open: **market blend** (Elo\* soft shrink k≈0.35, force Elo input to match markets) — approach confirmed by David but GATED on fetching + de-vigging full 48-team tournament-winner board. Currently live on pure Elo with a "market says France higher" caveat in the header. Not urgent.
 
-⚠️ **CROSS-MACHINE / TOKEN-FREE DEPLOY:** repo is local+GitHub only (not synced). On 520:
-`git clone https://github.com/dw-football/wc2026-bracket.git` (PUBLIC — no auth) → `gh auth
-login` (GitHub.com/HTTPS/"Authenticate Git: Yes", log in as **dw-football**; creds go to
-Windows Credential Manager — NO token in any file) → deploy a score via the GO flow but with
-**plain `git push origin main`** (NOT the `.env` tokenized line — there is no `.env` on 520).
-Prototype: `git fetch origin && git checkout model-mark2-ko`. Prereq: the dw-football GitHub
-login available in a browser. **Token has been scrubbed from all synced notes** per David.
+⚠️ **CROSS-MACHINE / TOKEN-FREE DEPLOY:** repo is local+GitHub only (not synced). On any machine: `git clone https://github.com/dw-football/wc2026-bracket.git` → `gh auth login` (GitHub.com/HTTPS/"Authenticate Git: Yes", log in as **dw-football**) → use plain **`git push origin main`** for deploys. No `.env` token on 520.
 NEW feature/edit → WORKFLOW RULE (localhost first). Routine scores → "Find new scores and GO".
-Then read: 2026-06-23-09 pickup note, MARKET-VS-ELO, HOW TO UPDATE RESULTS, WORKFLOW RULE.
 
 ## MARKET-VS-ELO (done directionally — 2026-06-22)
 Our Elo P(advance to R32), 200k sims (regenerate via verify-model.mjs →
@@ -224,7 +206,7 @@ https://raw.githubusercontent.com/openfootball/worldcup.json/master/2026/worldcu
 API-Football key in .env (gitignored) is UNUSABLE on the free tier for 2026
 (capped to seasons 2022-24). football-data.org is a possible fallback (free token).
 
-State as of 2026-06-23. 44/104 (feed + manual ARG 2-0 AUT, FRA 3-0 IRQ, NOR 3-2 SEN, ALG 2-1 JOR); group stage in progress. Live model = Mark1 (Mark2 parked, see WORKFLOW RULE).
+State as of 2026-06-23. 46/104 (feed + manual: ARG 2-0 AUT, FRA 3-0 IRQ, NOR 3-2 SEN, ALG 2-1 JOR, POR 5-0 UZB, ENG 0-0 GHA); group stage in progress. Live model = **Mark2** (λ=0.6, deployed 2026-06-23).
 
 ## Session Notes
 - 2026-06-21 — Built the full projector end-to-end: engine + FIFA-2026 tiebreakers
