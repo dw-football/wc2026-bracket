@@ -142,6 +142,13 @@ function computeFreshness(raw) {
 const BAKE_N = 200000;
 const BAKE_SEED = 12345;
 const BAKE_HOSTS = ['USA', 'MEX', 'CAN'];
+// MARK 2 LIVE MODEL: knockout single-game variance knob. λ=0.6 shrinks the Elo
+// edge in KNOCKOUTS only (group stage stays pure Elo-faithful) toward realistic
+// single-game upset variance — lands ARG/ESP near the market title cluster while
+// keeping honest KO randomness. MUST mirror APP_JS `KO_LAMBDA` (browser sims) and
+// verify-model.mjs. (The remaining France>ARG market gap is Elo staleness, to be
+// addressed later by an Elo*/market blend — not by λ.)
+const KO_LAMBDA = 0.6;
 const BAKE_TOP = 32;          // full candidate breadth (matches browser topCandidates)
 const PERSLOT_KEEP = 16;      // trim per-slot candidate lists to top-16/side to bound size
 
@@ -164,6 +171,7 @@ function bakeMonteCarlo(groups, bracket) {
     seed: BAKE_SEED,
     hostCodes: new Set(BAKE_HOSTS),
     topCandidates: BAKE_TOP,
+    koLambda: KO_LAMBDA,
     resolveThirdPlaceSlots,
   });
   return {
@@ -333,6 +341,7 @@ self.onmessage = function (e) {
     n: d.n, seed: d.seed,
     hostCodes: hostCodes,
     topCandidates: d.topCandidates || 32,
+    koLambda: d.koLambda,
     resolveThirdPlaceSlots: function (letters, bracket) {
       return resolveThirdPlaceSlots(letters, bracket);
     }
@@ -586,6 +595,7 @@ const APP_JS = String.raw`
   var HOSTS = ['USA','MEX','CAN'];
   var SIM_N = 10000;                      // live-worker sim count (My-Picks overrides only)
   var SIM_SEED = 12345;
+  var KO_LAMBDA = 0.6;                    // KO variance knob — MUST mirror build-html KO_LAMBDA
 
   // team lookups
   var nameByCode = {}, eloByCode = {};
@@ -692,7 +702,7 @@ const APP_JS = String.raw`
     state.simming=true; render();
     var groups=groupsForCompute();
     var payload={ groups:groups, bracket:BRACKET, n:SIM_N, seed:SIM_SEED,
-      hostCodes:HOSTS, topCandidates:32 };
+      hostCodes:HOSTS, topCandidates:32, koLambda:KO_LAMBDA };
     var w=buildWorker();
     if(w){
       w.onmessage=function(ev){
@@ -710,7 +720,7 @@ const APP_JS = String.raw`
   }
   function syncMonte(groups){
     return monteCarlo(groups, BRACKET, { n:SIM_N, seed:SIM_SEED,
-      hostCodes:new Set(HOSTS), topCandidates:32, resolveThirdPlaceSlots:resolveThirdPlaceSlots });
+      hostCodes:new Set(HOSTS), topCandidates:32, koLambda:KO_LAMBDA, resolveThirdPlaceSlots:resolveThirdPlaceSlots });
   }
 
   // ====================================================================
@@ -824,7 +834,8 @@ const APP_JS = String.raw`
     var note = 'Very-recently-finished or in-progress games may not yet be in the feed — switch to My Picks to enter a just-final result by hand.';
     d.innerHTML =
       '<h1>2026 World Cup &mdash; Bracket Projector</h1>'+
-      '<div class="muted tiny">Elo&ndash;Poisson supremacy model &middot; '+simCount().toLocaleString()+' Monte-Carlo sims &middot; data via openfootball</div>'+
+      '<div class="muted tiny">Elo&ndash;Poisson supremacy model &middot; knockout-variance &lambda;=0.6 &middot; '+simCount().toLocaleString()+' Monte-Carlo sims &middot; data via openfootball</div>'+
+      '<div class="muted tiny">Title odds are Elo-driven: our model has Argentina &amp; Spain narrowly on top, while betting markets currently favor France &mdash; a known Elo-vs-market gap.</div>'+
       '<div class="fresh"><div><b>Data through:</b> '+esc(FRESH.dataThrough)+
         ' &middot; '+FRESH.playedCount+'/'+FRESH.totalCount+' matches played &middot; built '+esc(localBuilt(FRESH.builtAtISO))+'</div>'+
         '<div class="note">'+note+'</div></div>';
