@@ -31,6 +31,7 @@ async function main() {
     n: N,
     seed: 12345,
     hostCodes: new Set(['USA', 'MEX', 'CAN']),
+    koLambda: 0.6, // mirror build-html KO_LAMBDA (live Mark2 model)
     resolveThirdPlaceSlots,
   });
   const elapsedMs = Date.now() - t0;

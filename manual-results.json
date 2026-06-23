@@ -40,5 +40,19 @@
     "team2": "Algeria",
     "ft": [1, 2],
     "note": "Full time 1-2 (Algeria win), entered manually 2026-06-22 (ESPN fifa.world FT-confirmed) ahead of the openfootball feed."
+  },
+  {
+    "group": "Group K",
+    "team1": "Portugal",
+    "team2": "Uzbekistan",
+    "ft": [5, 0],
+    "note": "Full time 5-0, entered manually 2026-06-23 (ESPN fifa.world FT-confirmed)."
+  },
+  {
+    "group": "Group L",
+    "team1": "England",
+    "team2": "Ghana",
+    "ft": [0, 0],
+    "note": "Full time 0-0, entered manually 2026-06-23 (ESPN fifa.world FT-confirmed)."
   }
 ]

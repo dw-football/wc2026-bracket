@@ -22,17 +22,6 @@ import { computeGroupStanding, rankThirdPlaceTeams } from './engine.js';
 
 // Elo points -> goal-supremacy slope. 0.0036 goals per Elo point ≈ 1.44 goals
 // of expected-margin per 400 Elo (a 400-Elo gap is the classic "10x odds" gap).
-//
-// MODEL MARK 2 NOTE: this slope now governs ONLY the *scoreline detail* (the
-// goal MARGIN sampled once a winner is decided), NOT the win probability. The
-// win/draw/loss probabilities are now set DIRECTLY from Elo (see outcomeProbs).
-// So this value no longer needs to be inflated to hit win-probs — it just has to
-// produce realistic goal margins. 0.0036 keeps the historical margin sizes.
-//   (Mark 1 used this slope to drive an independent-Poisson scoreline whose
-//    win-prob came out ~6–11pp short of the Elo curve; see GIT history / the
-//    ELO_SUPREMACY_COEF=0.0055 single-knob re-tune that fixed win-probs but
-//    could not also fix the draw-rate tail or the 3rd-place points shape. Mark 2
-//    fixes win-probs by construction and frees the scoreline to be realistic.)
 export const ELO_SUPREMACY_COEF = 0.0036;
 
 // League-average total goals per match (both teams). World Cup group/KO games
@@ -41,29 +30,6 @@ export const BASE_TOTAL_GOALS = 2.6;
 
 // Floor on either side's Poisson mean so even a huge underdog can score.
 export const MIN_LAMBDA = 0.15;
-
-// ---- MARK 2 outcome-model constants (the win/draw/loss layer) --------------
-// Draw probability as a function of |ΔElo|: P(draw) = DRAW_BASE * exp(-|Δ|/DRAW_SCALE).
-// Evenly-matched sides draw ~ DRAW_BASE of the time; the draw rate decays as the
-// gap widens (a strong favorite rarely draws). Calibrated so the field-wide draw
-// rate lands in the historical 22–26% band and the per-match curve is sane.
-//   At |Δ|=0   ~30% ; |Δ|=200 ~22% ; |Δ|=400 ~16% ; |Δ|=500 ~13%.
-// DRAW_BASE=0.30 lands the field-wide draw rate at ~22% (historical = 21.9%).
-export const DRAW_BASE = 0.30;
-export const DRAW_SCALE = 620;
-
-// Underdog outright-win floor (fraction of the underdog's Elo expected-score
-// mass q=min(E,1-E) reserved as a WIN, not spent on draws). Without this, the
-// draw cap zeroes the underdog's win for extreme mismatches (a 95% favorite left
-// the dog at 0.00%). 0.45 → the dog keeps ≥45% of its q as an outright win
-// (e.g. Δ≈500 favorite: dog ~2.4% win / ~6% draw instead of 0% / ~11%). Only
-// binds for lopsided games; even/moderate games are untouched. E is preserved.
-export const UNDERDOG_WIN_FLOOR = 0.45;
-
-// Maximum number of conditional-scoreline rejection draws before we fall back to
-// a directly-constructed minimal scoreline consistent with the decided result.
-// Rejection almost always succeeds in 1–3 tries; this only bounds the tail.
-const MAX_SCORELINE_TRIES = 24;
 
 // Default host-nation Elo bonus (points). Applied to USA/MEX/CAN in every match
 // via opts.hostCodes. Home-field in soccer is worth roughly +0.3–0.4 goals;
@@ -153,128 +119,32 @@ export function expectedGoals(eloA, eloB, opts = {}) {
 }
 
 // ----------------------------------------------------------------------------
-// 3b. MARK 2 — Elo-faithful outcome layer (win / draw / loss probabilities)
+// 4 & 5. Scoreline samplers
 // ----------------------------------------------------------------------------
 
 /**
- * The Elo expected score for side A: E = 1 / (1 + 10^(-Δ/400)).
- * This is the quantity the SIMULATED outcomes must reproduce, where
- * E = P(A win) + 0.5·P(draw).
- */
-export function eloExpectedScore(effA, effB) {
-  return 1 / (1 + Math.pow(10, -(effA - effB) / 400));
-}
-
-/**
- * Map an effective-Elo pair to a faithful {pWin, pDraw, pLoss} for side A.
- *
- * Construction (this is the whole point of Mark 2):
- *   E       = eloExpectedScore(effA, effB)              // Elo win-expectation
- *   pDraw   = DRAW_BASE · exp(-|Δ|/DRAW_SCALE)          // calibrated draw model
- *   pWin    = E - pDraw/2
- *   pLoss   = (1 - E) - pDraw/2
- * so that, BY CONSTRUCTION,  pWin + 0.5·pDraw = E  exactly (the model's outcome
- * expectation equals the Elo expectation at every Δ). pDraw is clamped so the
- * smaller of pWin/pLoss never goes negative at extreme gaps (the underdog side's
- * win prob is the binding constraint), preserving pWin+0.5·pDraw=E.
- *
- * @returns {{pWin:number, pDraw:number, pLoss:number, E:number}}
- */
-export function outcomeProbs(effA, effB, opts = {}) {
-  let E = eloExpectedScore(effA, effB);
-  // KO single-game variance knob (Mark2+λ): shrink the Elo edge toward a coin
-  // flip by factor opts.eShrink ∈ [0,1].  E' = 0.5 + λ·(E−0.5).  λ=1 → pure Elo
-  // (no change); λ<1 → more single-game upset variance (knockout realism); λ=0 →
-  // coin flip.  Set ONLY by sampleKnockout (from opts.koLambda); group calls
-  // never pass eShrink, so the group stage stays exactly Elo-faithful.
-  if (opts.eShrink != null) E = 0.5 + opts.eShrink * (E - 0.5);
-  const drawBase = opts.drawBase ?? DRAW_BASE;
-  const drawScale = opts.drawScale ?? DRAW_SCALE;
-  const floorFrac = opts.underdogWinFloor ?? UNDERDOG_WIN_FLOOR;
-  let pDraw = drawBase * Math.exp(-Math.abs(effA - effB) / drawScale);
-  // A draw "spends" pDraw/2 from each side's mass, so pDraw <= 2q (q = the
-  // underdog's Elo mass) just to keep the underdog win >= 0. But that raw cap
-  // spends the WHOLE underdog mass on draws -> underdog win = 0 for big mismatches.
-  // Instead cap at 2q(1-floorFrac), reserving floorFrac·q as an outright underdog
-  // win. Trimming the draw lifts BOTH win probs equally, so pWin+0.5pDraw=E exactly.
-  const q = Math.min(E, 1 - E);
-  const cap = 2 * q * (1 - floorFrac);
-  if (pDraw > cap) pDraw = cap;
-  const pWin = E - pDraw / 2;
-  const pLoss = 1 - E - pDraw / 2;
-  return { pWin, pDraw, pLoss, E };
-}
-
-// ----------------------------------------------------------------------------
-// 4 & 5. Scoreline samplers (MARK 2: outcome-first, then a conditional scoreline)
-// ----------------------------------------------------------------------------
-
-/**
- * Sample a scoreline CONSISTENT with a pre-decided result.
- *   result: 'A' (A wins), 'B' (B wins), or 'D' (draw).
- * Strategy: draw two independent Poisson goal counts from the supremacy means
- * (so totals/margins keep their historical shape), and accept the pair only if
- * its sign matches `result`. Rejection succeeds in a couple of tries on average;
- * a bounded fallback constructs a minimal consistent scoreline so we never loop.
- * This preserves realistic goals-for / goal-difference for the tiebreakers while
- * the WHO-wins decision stays exactly Elo-faithful (decided upstream).
- * @returns {{ga:number, gb:number}}
- */
-function sampleScorelineGivenResult(result, lambdaA, lambdaB, rng) {
-  for (let t = 0; t < MAX_SCORELINE_TRIES; t++) {
-    const ga = samplePoisson(lambdaA, rng);
-    const gb = samplePoisson(lambdaB, rng);
-    if (result === 'D') { if (ga === gb) return { ga, gb }; }
-    else if (result === 'A') { if (ga > gb) return { ga, gb }; }
-    else { if (gb > ga) return { ga, gb }; } // 'B'
-  }
-  // Fallback: take an unconstrained draw and minimally bend it to the result.
-  let ga = samplePoisson(lambdaA, rng);
-  let gb = samplePoisson(lambdaB, rng);
-  if (result === 'D') { gb = ga; }
-  else if (result === 'A') { if (ga <= gb) ga = gb + 1; }
-  else { if (gb <= ga) gb = ga + 1; }
-  return { ga, gb };
-}
-
-/**
- * Sample a group-stage scoreline. MARK 2: the WIN/DRAW/LOSS outcome is drawn
- * first, directly from Elo (outcomeProbs), then a scoreline consistent with that
- * outcome is sampled. This makes E=(Pwin+0.5·Pdraw) track the Elo curve exactly
- * while keeping realistic goals/margins.
+ * Sample a group-stage scoreline (independent Poisson draws).
  * @returns {{ga:number, gb:number}}
  */
 export function sampleMatch(eloA, eloB, rng, opts = {}) {
-  const effA = eloA + (opts.hostBonusA ?? 0);
-  const effB = eloB + (opts.hostBonusB ?? 0);
-  const { pWin, pDraw } = outcomeProbs(effA, effB, opts);
   const { lambdaA, lambdaB } = expectedGoals(eloA, eloB, opts);
-  const u = rng();
-  const result = u < pWin ? 'A' : u < pWin + pDraw ? 'D' : 'B';
-  return sampleScorelineGivenResult(result, lambdaA, lambdaB, rng);
+  return { ga: samplePoisson(lambdaA, rng), gb: samplePoisson(lambdaB, rng) };
 }
 
 /**
  * Sample a knockout scoreline; if drawn, resolve by an Elo-weighted shootout.
- * MARK 2: a regulation winner is itself decided Elo-faithfully (via the same
- * outcome layer), so the regulation result already reflects the Elo edge. On a
- * regulation draw the tie is broken by an Elo-weighted shootout coin. The drawn
- * scoreline is preserved in {ga,gb}; only `winner` reflects the shootout.
+ * The drawn scoreline is preserved in {ga,gb}; only `winner` reflects the
+ * shootout. Penalties use effective Elo (host bonus included).
  * @returns {{ga:number, gb:number, winner:'A'|'B'}}
  */
 export function sampleKnockout(eloA, eloB, rng, opts = {}) {
-  // KO-only: translate koLambda → eShrink so the outcome layer widens single-game
-  // variance for knockouts but NOT for the (untouched) group stage.
-  const koOpts = opts.koLambda != null ? { ...opts, eShrink: opts.koLambda } : opts;
-  const { ga, gb } = sampleMatch(eloA, eloB, rng, koOpts);
+  const { ga, gb } = sampleMatch(eloA, eloB, rng, opts);
   if (ga > gb) return { ga, gb, winner: 'A' };
   if (gb > ga) return { ga, gb, winner: 'B' };
-  // Regulation draw -> shootout. Shrink the shootout edge by the same λ so the
-  // whole knockout (regulation + penalties) carries one consistent variance.
+  // Tied -> shootout modeled as an Elo-weighted coin.
   const effA = eloA + (opts.hostBonusA ?? 0);
   const effB = eloB + (opts.hostBonusB ?? 0);
-  let pA = eloExpectedScore(effA, effB);
-  if (opts.koLambda != null) pA = 0.5 + opts.koLambda * (pA - 0.5);
+  const pA = 1 / (1 + Math.pow(10, -(effA - effB) / 400));
   return { ga, gb, winner: rng() < pA ? 'A' : 'B' };
 }
 
