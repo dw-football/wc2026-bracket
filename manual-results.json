@@ -33,5 +33,12 @@
     "team2": "Senegal",
     "ft": [3, 2],
     "note": "Full time 3-2, entered manually 2026-06-22 (ESPN-confirmed FT) ahead of the openfootball feed."
+  },
+  {
+    "group": "Group J",
+    "team1": "Jordan",
+    "team2": "Algeria",
+    "ft": [1, 2],
+    "note": "Full time 1-2 (Algeria win), entered manually 2026-06-22 (ESPN fifa.world FT-confirmed) ahead of the openfootball feed."
   }
 ]

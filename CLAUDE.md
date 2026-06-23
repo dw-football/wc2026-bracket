@@ -7,11 +7,18 @@ pushing to GitHub Pages, which is live to friends — that's David's call, per c
 The ONE exception is the **"GO" score-update flow** below, where "GO" itself IS the
 authorization to build + push (score refreshes are pre-approved). Everything else
 (new UI, logic, layout, copy) stops at localhost until David approves the push.
+**ALWAYS ASK before anything HUGE — even inside an authorized flow.** "GO"/"push the
+new model" authorizes the routine score update on the CURRENT model; it does NOT
+authorize swapping models, big refactors, or anything structural. When a command is
+ambiguous between "routine" and "huge" (e.g. "push the new model" = deploy today's
+result vs. swap in Mark2), ASSUME ROUTINE and confirm before the huge thing.
+(2026-06-23: misread "push out the new model with ALG's win" as deploy-Mark2; David
+halted it. Mark2 stays parked on its `model-mark2` branch until explicit go-ahead.)
 
 ## RESUME
-Next action: **nothing forced** — live app is current (FRA 3-0 IRQ deployed) and tests
-are green (55/55). Routine work resumes via **"Find new scores and GO"** when matches
-finish. The model-vs-market comparison David asked for is DONE at a directional level
+Next action: **nothing forced** — live app is current (ALG 2-1 JOR deployed, 44/104,
+Mark1) and tests are green (55/55). Routine work resumes via **"Find new scores and
+GO"** when matches finish. The model-vs-market comparison David asked for is DONE at a directional level
 (see MARKET-VS-ELO below + local `_market-vs-elo.html`); the ONLY parked refinement is
 an optional **group-constrained de-vig** (offered, David hasn't requested it) — the
 market numbers we have are one-way "to advance" prices, NOT de-vigged.
@@ -92,7 +99,7 @@ step 3 is automatic.)
 
 Already entered manually this tournament: Belgium 0-0 Iran (G), Uruguay 2-2 Cape
 Verde (H), Argentina 2-0 Austria (J), France 3-0 Iraq (I), Norway 3-2 Senegal (I,
-ESPN-confirmed). Group I now decided: FRA & NOR both through (play off for 1st/2nd
+ESPN-confirmed), Algeria 2-1 Jordan (J, ESPN fifa.world-confirmed). Group I now decided: FRA & NOR both through (play off for 1st/2nd
 on Jun 26); SEN & IRQ reduced to a 3rd-place-only longshot via their head-to-head.
 
 ## COMMANDS
@@ -210,7 +217,7 @@ https://raw.githubusercontent.com/openfootball/worldcup.json/master/2026/worldcu
 API-Football key in .env (gitignored) is UNUSABLE on the free tier for 2026
 (capped to seasons 2022-24). football-data.org is a possible fallback (free token).
 
-State as of 2026-06-22. 43/104 (feed 40 + manual ARG 2-0 AUT, FRA 3-0 IRQ, NOR 3-2 SEN); group stage in progress.
+State as of 2026-06-23. 44/104 (feed + manual ARG 2-0 AUT, FRA 3-0 IRQ, NOR 3-2 SEN, ALG 2-1 JOR); group stage in progress. Live model = Mark1 (Mark2 parked, see WORKFLOW RULE).
 
 ## Session Notes
 - 2026-06-21 — Built the full projector end-to-end: engine + FIFA-2026 tiebreakers
