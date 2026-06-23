@@ -16,23 +16,30 @@ result vs. swap in Mark2), ASSUME ROUTINE and confirm before the huge thing.
 halted it. Mark2 stays parked on its `model-mark2` branch until explicit go-ahead.)
 
 ## RESUME
-Next action: **nothing forced** — live app is current (ALG 2-1 JOR deployed, 44/104,
-Mark1) and tests are green (55/55). Routine work resumes via **"Find new scores and
-GO"** when matches finish. The model-vs-market comparison David asked for is DONE at a directional level
-(see MARKET-VS-ELO below + local `_market-vs-elo.html`); the ONLY parked refinement is
-an optional **group-constrained de-vig** (offered, David hasn't requested it) — the
-market numbers we have are one-way "to advance" prices, NOT de-vigged.
-⚠️ **CROSS-MACHINE (David moved off the laptop NYLDWARREN3):** this repo is local+git
-ONLY (not synced). On the new machine: `git clone
-https://github.com/dw-football/wc2026-bracket.git` then **`gh auth login`** (as
-dw-football, authenticate Git: Yes) — preferred, stores creds in Credential Manager,
-no token in any file, makes plain `git push origin main` work. PAT-in-`.env` is a
-fallback only. Steps + Elo snapshot in the synced pickup note
-`~/My Drive/Computing/Claude/session-notes/2026-06-22-17.md`. (`_market-vs-elo.html`
-is LOCAL to the laptop only — not in git, not synced; regenerate via the agent if
-wanted on another machine.)
-NEW feature/edit → WORKFLOW RULE (localhost first).
-Then read: MARKET-VS-ELO (below), HOW TO UPDATE RESULTS, WORKFLOW RULE.
+Next action: **get David's call on the Mark2 model decisions** (he's resuming on the **520**
+machine — NYWDWARREN2 — later today during ENG-GHA). Live site is UNCHANGED: **Mark1**, ALG
+2-1 JOR deployed, 44/104, tests 55/55. A Mark2 prototype is pushed to branch
+**`model-mark2-ko`** (Mark2 outcome-first model + KO-variance knob `koLambda` + an
+underdog-win-floor bug fix David caught via ENG-GHA). The FULL conversation + a plain-English
+"soft shrink" explanation + bootstrap + deploy steps live in the synced pickup
+**`~/My Drive/Computing/Claude/session-notes/2026-06-23-09.md`** — **READ THAT FIRST.**
+
+OPEN DECISIONS: (1) **λ for knockouts** (recommend ≈0.6 — real KO variance, correct on its
+own); (2) **market blend** — APPROACH CONFIRMED by David = force the Elo INPUT ("Elo\*", soft
+shrink k≈0.35, fixed-point calibration), GATED on fetching + DE-VIGGING the full 48-team
+tournament-winner board. Or ship Mark2+λ0.6 on pure Elo with a "market says France higher"
+caveat. (Mark2 title overshoots market: ARG 22→30 vs mkt 14; λ can't invert the France>ARG
+ordering — that's Elo staleness, hence the Elo\* blend.)
+
+⚠️ **CROSS-MACHINE / TOKEN-FREE DEPLOY:** repo is local+GitHub only (not synced). On 520:
+`git clone https://github.com/dw-football/wc2026-bracket.git` (PUBLIC — no auth) → `gh auth
+login` (GitHub.com/HTTPS/"Authenticate Git: Yes", log in as **dw-football**; creds go to
+Windows Credential Manager — NO token in any file) → deploy a score via the GO flow but with
+**plain `git push origin main`** (NOT the `.env` tokenized line — there is no `.env` on 520).
+Prototype: `git fetch origin && git checkout model-mark2-ko`. Prereq: the dw-football GitHub
+login available in a browser. **Token has been scrubbed from all synced notes** per David.
+NEW feature/edit → WORKFLOW RULE (localhost first). Routine scores → "Find new scores and GO".
+Then read: 2026-06-23-09 pickup note, MARKET-VS-ELO, HOW TO UPDATE RESULTS, WORKFLOW RULE.
 
 ## MARKET-VS-ELO (done directionally — 2026-06-22)
 Our Elo P(advance to R32), 200k sims (regenerate via verify-model.mjs →
@@ -278,3 +285,19 @@ State as of 2026-06-23. 44/104 (feed + manual ARG 2-0 AUT, FRA 3-0 IRQ, NOR 3-2 
   (market > Elo), SCO + longshots (Elo > market via best-third); ≥99% "Elo higher" rows are
   vig artifacts. Deployed **France 3-0 Iraq** (commit 14c8c9c) — France clinched live via the
   new best-third logic; Iraq to 0. All pushed (latest 84b1cb1).
+- 2026-06-23 — Deployed **Algeria 2-1 Jordan** (Group J, ESPN-confirmed; commit e4dc1bd,
+  Mark1, 44/104). Caught + recorded a workflow miss: misread "push out the new model with
+  ALG's win" as deploy-Mark2 → halted by David → baked the "ASK before anything HUGE; GO =
+  routine update on the CURRENT model, not a model swap" rule into the WORKFLOW RULE. Then a
+  big **model-calibration session** (prototype branch `model-mark2-ko`, pushed, NOT deployed):
+  (a) side-by-side Mark1 vs Mark2 on remaining group games + reach-round/title — Mark2 is
+  Elo-faithful per game (fixes SEN-IRQ 58→71%) but its title OVERSHOOTS market (ARG 22→30 vs
+  mkt 14); (b) added a KO-only variance knob **`koLambda`** (E'=0.5+λ(E−0.5), group stage
+  untouched) — sweep shows λ≈0.5 lands ARG/ESP on market but can't invert the France>ARG
+  ordering (that's Elo staleness); (c) David caught a real **underdog-win-floor bug** (draw cap
+  zeroed the dog's win for Δ≳470 — ENG-GHA, ARG-JOR at 0.00%) → fixed with
+  `UNDERDOG_WIN_FLOOR=0.45` (dog→~2.4%, E preserved, even games untouched). Market-blend
+  approach CONFIRMED by David = force the Elo INPUT ("Elo\*", soft shrink k≈0.35), gated on a
+  de-vigged 48-team winner board. David headed to work mid-convo → wrote full cross-machine
+  handoff for **520 (NYWDWARREN2)**: branch pushed, token SCRUBBED from synced notes, deploy
+  via `gh auth login` + plain `git push origin main`. Pickup: session-notes/2026-06-23-09.md.
