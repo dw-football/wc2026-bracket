@@ -9,33 +9,37 @@ authorization to build + push (score refreshes are pre-approved). Everything els
 (new UI, logic, layout, copy) stops at localhost until David approves the push.
 
 ## RESUME
-Next action: **finish the model-vs-market "odds of advancing" comparison** (David's
-ask, parked mid-flight). OUR side is done — Elo P(advance to R32) for all 48 from
-`mc.perTeam[].pAdvance` (200k); snapshot below in "MARKET-VS-ELO". STILL NEEDED: live
-market "to qualify from group" odds (de-vigged Yes/No) to sit beside ours, focused on
-the contested teams (the ~30 between 5–95%). Market odds require a WEB source
-(APISPORTS key in .env is useless for 2026; try oddschecker/oddsportal "to qualify"
-pages or a WebSearch for a consolidated table). Build the 48-row table, highlight
-where market and Elo disagree.
+Next action: **nothing forced** — live app is current (FRA 3-0 IRQ deployed) and tests
+are green (55/55). Routine work resumes via **"Find new scores and GO"** when matches
+finish. The model-vs-market comparison David asked for is DONE at a directional level
+(see MARKET-VS-ELO below + local `_market-vs-elo.html`); the ONLY parked refinement is
+an optional **group-constrained de-vig** (offered, David hasn't requested it) — the
+market numbers we have are one-way "to advance" prices, NOT de-vigged.
 ⚠️ **CROSS-MACHINE (David moved off the laptop NYLDWARREN3):** this repo is local+git
 ONLY (not synced). On the new machine: `git clone
 https://github.com/dw-football/wc2026-bracket.git` then **`gh auth login`** (as
 dw-football, authenticate Git: Yes) — preferred, stores creds in Credential Manager,
-no token in any file, and makes plain `git push origin main` work (retiring the
-tokenized-URL push). PAT-in-`.env` is now a fallback only. Steps + Elo snapshot in
-the synced pickup note `~/My Drive/Computing/Claude/session-notes/2026-06-22-17.md`.
-Tests green 55/55; live app current. NEW feature/edit → WORKFLOW RULE (localhost first).
+no token in any file, makes plain `git push origin main` work. PAT-in-`.env` is a
+fallback only. Steps + Elo snapshot in the synced pickup note
+`~/My Drive/Computing/Claude/session-notes/2026-06-22-17.md`. (`_market-vs-elo.html`
+is LOCAL to the laptop only — not in git, not synced; regenerate via the agent if
+wanted on another machine.)
+NEW feature/edit → WORKFLOW RULE (localhost first).
 Then read: MARKET-VS-ELO (below), HOW TO UPDATE RESULTS, WORKFLOW RULE.
 
-## MARKET-VS-ELO (parked — Elo side, snapshot 2026-06-22, 41/104 played)
-Our Elo P(advance to R32), 200k sims. Regenerate any time: run monteCarlo (see
-verify-model.mjs) and read `mc.perTeam[].pAdvance`. Through/near-locked (≥99%): MEX,
-CAN, SUI, BRA, USA, GER, NED, JPN, ESP, ARG, MAR, EGY (all 100%), ENG 99.6, FRA 99.4,
-COL 98.8, NOR 98.6. CONTESTED (the interesting ones): KOR 94, AUT 94, SWE 94, AUS 94,
-CIV 93, SCO 88, BEL 85, PAR 85, POR 81, CRO 78, GHA 72, IRN 70, CPV 65, SEN 63, BIH 51,
-COD 51, ALG 50, URU 46, UZB 38, KSA 36, ECU 31, QAT 24, PAN 21, JOR 21, RSA 19, CZE 18,
-CUW 16, NZL 15, IRQ 12. Out (~0%): HAI, TUR, TUN. (Throwaway extractor not kept;
-reconstruct from this note + verify-model.mjs.)
+## MARKET-VS-ELO (done directionally — 2026-06-22)
+Our Elo P(advance to R32), 200k sims (regenerate via verify-model.mjs →
+`mc.perTeam[].pAdvance`). Market side: one-way "to advance" American prices (FOX/
+DraftKings board, cross-checked ESPN), **NOT de-vigged** — two-way "to qualify"
+markets weren't findable (oddschecker 403'd); comparison is DIRECTIONAL. Got real
+market odds for ~32/48. Report: `_market-vs-elo.html` (local).
+Genuine disagreements (survive the vig): **POR** market ~98% vs Elo 81%, **BEL** ~96%
+vs 85% (market backs pedigree over current points); the other way **SCO** 88% vs ~75%
+and longshots (NZL/ECU/CUW) — our model leans harder on the 8-best-third lifeboat.
+Vig artifacts (NOT real gaps): the ≥99% teams showing "Elo higher" (JPN/EGY/NED/MAR/
+SWE/CIV) — a heavy favorite's one-way price caps ~87-93% on juice; de-vigged they agree.
+Optional next step: group-constrained de-vig (2 advance per group + est. best-third
+share) to back out the vig without the "No" price.
 
 **"Find new scores and GO"** (or "GO" + a score) = update the live bracket. Run the
 **HOW TO UPDATE RESULTS** routine below: `node build-html.mjs --refresh` (auto-pulls
@@ -65,9 +69,17 @@ My-Picks live worker runs cleanly.
 
 ## HOW TO UPDATE RESULTS  ("GO" flow) + DEPLOY
 When a game finishes and David gives a score, run the full routine:
+0. **DOUBLE-SOURCE the score against ESPN (fast, do it every time)** — catches a
+   mistyped/transposed score before it goes live. ESPN's `fifa.world` scoreboard is
+   near-real-time (the openfootball feed lags ~a day, so it can't confirm same-day):
+   `curl -s "https://site.api.espn.com/apis/site/v2/sports/soccer/fifa.world/scoreboard?dates=YYYYMMDD"`
+   → check the match is `status.type.completed` (FT) and the score+home/away match what
+   David said. If it's still "in" (in progress) or mismatches, STOP and flag it — don't
+   enter. (All 4 manual entries to date verified clean vs ESPN + feed.)
 1. Add it to `manual-results.json` (entry: group, team1, team2 [exact openfootball
    names], ft:[h,a]). The feed silently supersedes a manual entry once openfootball
-   publishes the same match (already-played matches are skipped).
+   publishes the same match (already-played matches are skipped) — so a manual typo also
+   self-corrects on the next `--refresh` once the feed catches up (next-day backstop).
 2. `node build-html.mjs --refresh`   (re-pull feed + apply manual + re-bake 200k; ~1.5 min)
 3. `cp dist/index.html docs/index.html`   (docs/ is what GitHub Pages serves)
 4. `git add -A && git commit -m "Result: <...>"`
@@ -79,7 +91,9 @@ the one rebuild. (TODO nicety: have build-html.mjs also emit docs/index.html so
 step 3 is automatic.)
 
 Already entered manually this tournament: Belgium 0-0 Iran (G), Uruguay 2-2 Cape
-Verde (H), Argentina 2-0 Austria (J).
+Verde (H), Argentina 2-0 Austria (J), France 3-0 Iraq (I), Norway 3-2 Senegal (I,
+ESPN-confirmed). Group I now decided: FRA & NOR both through (play off for 1st/2nd
+on Jun 26); SEN & IRQ reduced to a 3rd-place-only longshot via their head-to-head.
 
 ## COMMANDS
 - `node build-html.mjs`            — rebuild dist from cached feed + manual results (+200k bake)
@@ -196,7 +210,7 @@ https://raw.githubusercontent.com/openfootball/worldcup.json/master/2026/worldcu
 API-Football key in .env (gitignored) is UNUSABLE on the free tier for 2026
 (capped to seasons 2022-24). football-data.org is a possible fallback (free token).
 
-State as of 2026-06-22. 41/104 (feed 40 + manual ARG 2-0 AUT); group stage in progress.
+State as of 2026-06-22. 43/104 (feed 40 + manual ARG 2-0 AUT, FRA 3-0 IRQ, NOR 3-2 SEN); group stage in progress.
 
 ## Session Notes
 - 2026-06-21 — Built the full projector end-to-end: engine + FIFA-2026 tiebreakers
@@ -248,3 +262,12 @@ State as of 2026-06-22. 41/104 (feed 40 + manual ARG 2-0 AUT); group stage in pr
   clinches top spot", each clause capitalized, "to be safe"→advancement framing. Then David
   re-raised the **model-vs-market advance-odds** ask (Elo side computed — see MARKET-VS-ELO;
   market side still TODO) and switched machines off the laptop → see RESUME + synced pickup.
+- 2026-06-22 (night) — Decided cross-machine token handling: **`gh auth login`** (browser
+  OAuth, creds in Credential Manager, no token to copy; retires the tokenized-URL push) —
+  baked into the tomorrow task + pickup note + RESUME; PAT demoted to fallback. Ran the
+  **model-vs-market** research (background agent): directional comparison built (`_market-vs-
+  elo.html`, local only) — market side is one-way "to advance" prices (NOT de-vigged; clean
+  two-way "to qualify" markets unavailable, oddschecker 403'd). Real disagreements: POR/BEL
+  (market > Elo), SCO + longshots (Elo > market via best-third); ≥99% "Elo higher" rows are
+  vig artifacts. Deployed **France 3-0 Iraq** (commit 14c8c9c) — France clinched live via the
+  new best-third logic; Iraq to 0. All pushed (latest 84b1cb1).
