@@ -19,9 +19,11 @@ pages or a WebSearch for a consolidated table). Build the 48-row table, highligh
 where market and Elo disagree.
 ⚠️ **CROSS-MACHINE (David moved off the laptop NYLDWARREN3):** this repo is local+git
 ONLY (not synced). On the new machine: `git clone
-https://github.com/dw-football/wc2026-bracket.git` then recreate gitignored `.env`
-with `GITHUB_TOKEN=<PAT>` (needed only to PUSH; the token + exact steps are in the
-synced pickup note `~/My Drive/Computing/Claude/session-notes/2026-06-22-17.md`).
+https://github.com/dw-football/wc2026-bracket.git` then **`gh auth login`** (as
+dw-football, authenticate Git: Yes) — preferred, stores creds in Credential Manager,
+no token in any file, and makes plain `git push origin main` work (retiring the
+tokenized-URL push). PAT-in-`.env` is now a fallback only. Steps + Elo snapshot in
+the synced pickup note `~/My Drive/Computing/Claude/session-notes/2026-06-22-17.md`.
 Tests green 55/55; live app current. NEW feature/edit → WORKFLOW RULE (localhost first).
 Then read: MARKET-VS-ELO (below), HOW TO UPDATE RESULTS, WORKFLOW RULE.
 
