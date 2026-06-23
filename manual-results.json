@@ -19,5 +19,12 @@
     "team2": "Austria",
     "ft": [2, 0],
     "note": "Full time 2-0, entered manually 2026-06-22 ahead of the openfootball feed."
+  },
+  {
+    "group": "Group I",
+    "team1": "France",
+    "team2": "Iraq",
+    "ft": [3, 0],
+    "note": "Full time 3-0, entered manually 2026-06-22 ahead of the openfootball feed."
   }
 ]
