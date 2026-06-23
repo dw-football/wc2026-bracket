@@ -1204,10 +1204,12 @@ function mcContentionHeadline(mc, minRank = 1) {
     const p3 = pctMC(mc.pGroup3);
     const p4 = pctMC(mc.pGroup4);
     if (minRank >= 3) {
-      // 2nd is mathematically impossible — flat statement, no caveat.
-      return `Can finish only 3rd or 4th — playing for 3rd (${p3}) or 4th (${p4})`;
+      // 2nd is mathematically impossible — flat statement, no caveat. Lead with the
+      // overall advance odds (consistent with the pre-final groupSituation view),
+      // then the 3rd/4th finish breakdown.
+      return `Can finish only 3rd or 4th — ${pctMC(pAdv)} to qualify (3rd ${p3} / 4th ${p4})`;
     }
-    return `Out of the top 2 — playing for 3rd (${p3}) or 4th (${p4})`;
+    return `Out of the top 2 — ${pctMC(pAdv)} to qualify (3rd ${p3} / 4th ${p4})`;
   }
   if (pAdv >= 0.85) return `In good shape — ${pctMC(pAdv)} to qualify`;
   return `In contention — ${pctMC(pAdv)} to qualify`;
