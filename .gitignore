@@ -12,6 +12,7 @@ node_modules/
 # Build artifacts / cached API pulls
 data/raw/
 dist/exports/
+dist/baked-mc.json
 *.log
 
 # Throwaway analysis drills (3rd-place / Scotland qualifying scratch; not kept)

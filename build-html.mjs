@@ -265,6 +265,20 @@ async function main() {
   const outPath = join(__dirname, 'dist', 'index.html');
   await writeFile(outPath, html);
 
+  // SINGLE SOURCE OF TRUTH: persist the canonical bake so sync-calendar (and any
+  // other consumer) reads the SAME numbers the page shows — it never re-simulates.
+  // Written next to the data it describes; sync-calendar passes it straight into
+  // computeMatchLabels as engineState.mc. (Run build BEFORE sync in the GO flow.)
+  await writeFile(join(__dirname, 'dist', 'baked-mc.json'), JSON.stringify({
+    builtAtISO: freshness.builtAtISO,
+    dataThrough: freshness.dataThrough,
+    playedCount: freshness.playedCount,
+    n: bakedMc.n, seed: BAKE_SEED, koLambda: KO_LAMBDA, hosts: BAKE_HOSTS,
+    perSlot: bakedMc.perSlot,
+    perTeam: bakedMc.perTeam,
+  }) + '\n');
+  console.log('Wrote dist/baked-mc.json (canonical MC — calendar sync consumes this)');
+
   // -------- report --------
   const bytes = Buffer.byteLength(html, 'utf8');
   console.log(`Wrote dist/index.html  (${(bytes / 1024).toFixed(1)} KiB)`);

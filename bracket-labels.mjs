@@ -59,6 +59,19 @@ export const DEFAULT_MC_SEED = 12345;
 export const DEFAULT_KO_LAMBDA = 0.6; // mirrors the live Mark2 model
 export const DEFAULT_HOSTS = ['USA', 'MEX', 'CAN'];
 
+// David's "highlighted"/iconic teams — the ONLY teams named in a knockout-slot
+// preview (each shown "CODE (NN%)" favorite-first, then "/…"). Overridable.
+export const HIGHLIGHTED_TEAMS = ['USA', 'FRA', 'ESP', 'MEX', 'ARG', 'BRA', 'GER', 'POR'];
+// An R32 slot occupant below this per-slot probability is dropped from the slot's
+// "realistic" set. Collapses the ~impossible goal-difference-swing longshots, so a
+// slot that is genuinely a two-horse race reads as the two teams (e.g. SUI/CAN),
+// not a wide-open code — but a real 3rd outsider (CZE ~1%) keeps the slot a code.
+export const R32_REALISTIC_FLOOR = 0.005;
+// A knockout slot names a highlighted team only when it is at least this likely.
+export const KO_SHOW_FLOOR = 0.05;
+// A slot occupant at/above this probability is treated as locked (shown by name).
+export const LOCKED_THRESHOLD = 0.99;
+
 // Round -> label suffix.
 export const ROUND_SUFFIX = {
   R32: ' R32',
@@ -199,69 +212,77 @@ function lockedThirdSlots(groups, bracket, resolveThirdPlaceSlots, rankThirdPlac
 }
 
 // ----------------------------------------------------------------------------
-// PURE tier classifiers (unit-testable in isolation).
+// PURE side renderers (unit-testable in isolation). Both consume the per-slot
+// occupancy array [{code, p}] — the SAME numbers the bracket page shows — so the
+// calendar can never disagree with the site (single source of truth).
 // ----------------------------------------------------------------------------
 
-/**
- * Classify one R32 GROUP slot from its deterministic alive set + per-slot MC map.
- * @returns {{kind:'locked'|'two'|'dominant'|'multi', codes:string[], dominantCode?:string, slotCode:string}}
- */
-export function classifyR32Side(aliveCodes, mcP, slotCode, opts = {}) {
-  const threshold = opts.dominantThreshold ?? DOMINANT_THRESHOLD;
-  const ordered = orderByProb([...aliveCodes], mcP);
-  if (ordered.length <= 1) return { kind: 'locked', codes: ordered, slotCode };
-  if (ordered.length === 2) return { kind: 'two', codes: ordered, slotCode };
-  const fav = ordered[0];
-  const favP = mcP.get(fav) ?? 0;
-  if (favP >= threshold) return { kind: 'dominant', codes: ordered, dominantCode: fav, slotCode };
-  return { kind: 'multi', codes: ordered, slotCode };
-}
+const pct = (p) => `${Math.round(p * 100)}%`;
 
 /**
- * Classify one KNOCKOUT slot from its deterministic candidate set under the
- * candidate-cap rule.
- *   candidateCodes : deterministic possible occupants (any nonzero possibility)
- *   mcP            : Map<code,p> for ordering favorite-first
- *   watchedSet     : Set<code> of watched teams (breadcrumb when over cap)
- *   maxPreview     : cap
- *   structuralCode : the feeder placeholder ("W82","L102") for the over-cap,
- *                    no-watched-team case (so the OTHER side can still render a
- *                    breadcrumb without exposing a wall of names).
- * @returns {{kind:'locked'|'list'|'watched'|'structural', codes?, watched?, structuralCode?}}
+ * Render one R32 GROUP/THIRD slot from its per-slot occupancy. Tiers run on the
+ * REALISTIC set (occupants >= R32_REALISTIC_FLOOR), David's rule:
+ *   1 team  -> full name (locked)
+ *   2 teams -> "FAV (NN%)/OTHER"          (favorite-first; only the favorite shows %)
+ *   3+, top >= DOMINANT_THRESHOLD -> "slotCode (FAV NN%)"   e.g. "A2 (KOR 90%)"
+ *   3+, none dominant             -> bare slotCode           e.g. "K2", "3rd E/H/I/J/K"
+ * @param {Array<{code:string,p:number}>} occ per-slot occupancy for this side
+ * @returns {{label:string}}
  */
-export function classifyKoSide(candidateCodes, mcP, watchedSet, maxPreview = DEFAULT_MAX_PREVIEW, structuralCode = '?') {
-  const ordered = orderByProb([...candidateCodes], mcP);
-  if (ordered.length === 0) return { kind: 'structural', structuralCode };
-  if (ordered.length === 1) return { kind: 'locked', codes: ordered };
-  if (ordered.length <= maxPreview) return { kind: 'list', codes: ordered };
-  // Over cap: watched-team breadcrumb if any watched team is possible, else the
-  // bare structural feeder code (event stays effectively unchanged when BOTH
-  // sides land here — see computeMatchLabels).
-  const watched = ordered.filter((c) => watchedSet && watchedSet.has(c));
-  if (watched.length > 0) return { kind: 'watched', codes: ordered, watched, structuralCode };
-  return { kind: 'structural', structuralCode };
+export function renderR32Side(occ, slotCode, fullName, opts = {}) {
+  const floor = opts.floor ?? R32_REALISTIC_FLOOR;
+  const dom = opts.dominantThreshold ?? DOMINANT_THRESHOLD;
+  const a = (occ || []).filter((c) => c.p >= floor).sort((x, y) => y.p - x.p);
+  if (a.length <= 1) return { label: a.length ? fullName(a[0].code) : slotCode };
+  if (a.length === 2) return { label: `${a[0].code} (${pct(a[0].p)})/${a[1].code}` };
+  if (a[0].p >= dom) return { label: `${slotCode} (${a[0].code} ${pct(a[0].p)})` };
+  return { label: slotCode };
 }
 
-/** Render a side resolution to its label string. Never null here — the
- *  event-level "leave unchanged" decision is made by computeMatchLabels. */
-export function renderSideLabel(res, fullName) {
-  switch (res.kind) {
-    case 'locked': return fullName(res.codes[0]);
-    case 'two': return `${res.codes[0]}/${res.codes[1]}`;       // R32 exactly-two
-    case 'dominant': return `${res.dominantCode}/${res.slotCode}`;
-    case 'multi': return res.slotCode;                           // R32 placeholder
-    case 'list': return res.codes.join('/');                     // knockout 2..cap list
-    case 'watched': return res.watched.map((c) => `${c}?`).join('/') + '/…';
-    case 'structural': return res.structuralCode;                // knockout feeder placeholder
-    default: return null;
-  }
+/**
+ * Render one KNOCKOUT slot: name ONLY highlighted teams (>= KO_SHOW_FLOOR), each
+ * "CODE (NN%)" favorite-first, then "/…". A single occupant >= LOCKED_THRESHOLD is
+ * the locked team (full name). If no highlighted team clears the floor, the side is
+ * "structural" (its feeder code) and adds nothing new — a KO event with BOTH sides
+ * structural stays unchanged.
+ * @param {Array<{code:string,p:number}>} occ per-slot occupancy for this side
+ * @returns {{label:string, structural:boolean}}
+ */
+export function renderKoSide(occ, structuralCode, fullName, opts = {}) {
+  const highlighted = opts.highlighted || new Set(HIGHLIGHTED_TEAMS);
+  const showFloor = opts.showFloor ?? KO_SHOW_FLOOR;
+  const a = (occ || []).slice().sort((x, y) => y.p - x.p);
+  if (a[0] && a[0].p >= LOCKED_THRESHOLD) return { label: fullName(a[0].code), structural: false };
+  const hi = a.filter((c) => highlighted.has(c.code) && c.p >= showFloor);
+  if (!hi.length) return { label: structuralCode, structural: true };
+  return { label: hi.map((c) => `${c.code} (${pct(c.p)})`).join('/') + '/…', structural: false };
 }
 
-/** Structural feeder placeholder for a knockout side, e.g. "W82" / "L102". */
+/** Terse structural feeder code for a knockout side, e.g. "W82" / "L102". */
 export function koStructuralCode(side) {
   if (side.type === 'winnerOf') return 'W' + side.match;
   if (side.type === 'loserOf') return 'L' + side.match;
   return '?';
+}
+
+/** Short code for a SINGLE feeder side: group slot (group-first "G1"/"B2"),
+ *  a third ("?3"), or a deeper knockout feeder (terse "W82"/"L102"). */
+function feederShortCode(side) {
+  if (side.type === 'winner') return groupSlotCode(side.group, 1);
+  if (side.type === 'runnerup') return groupSlotCode(side.group, 2);
+  if (side.type === 'third') return '?3';
+  return koStructuralCode(side);
+}
+
+/** Readable structural label for a knockout side (David prefers "G1/?3" over the
+ *  terse "W82"): name the two things that can occupy it, taken from its feeder
+ *  match's own two sides. One level deep — enough for R16 (fed by R32 group
+ *  slots); deeper rounds almost always name a highlighted team instead, so they
+ *  rarely fall through to this. Falls back to "Wxx"/"Lxx" if the feeder is absent. */
+export function koStructuralLabel(side, matchByNo) {
+  const feeder = matchByNo && matchByNo[side.match];
+  if (!feeder) return koStructuralCode(side);
+  return `${feederShortCode(feeder.home)}/${feederShortCode(feeder.away)}`;
 }
 
 // ----------------------------------------------------------------------------
@@ -354,14 +375,12 @@ export function computeMatchLabels(engineState, opts = {}) {
     topCandidates: 48,
     resolveThirdPlaceSlots,
   });
-  const mcSlot = {}; // mNo -> { home:Map, away:Map }
-  for (const s of mc.perSlot) {
-    mcSlot[s.match] = {
-      home: new Map(s.home.map((c) => [c.code, c.p])),
-      away: new Map(s.away.map((c) => [c.code, c.p])),
-    };
-  }
-  const mcP = (mNo, sideName) => (mcSlot[mNo] && mcSlot[mNo][sideName]) || new Map();
+  const mcSlot = {}; // mNo -> { home:[{code,p}], away:[{code,p}] }
+  for (const s of mc.perSlot) mcSlot[s.match] = { home: s.home || [], away: s.away || [] };
+  const occOf = (mNo, sideName) => (mcSlot[mNo] && mcSlot[mNo][sideName]) || [];
+  const highlightedSet = new Set(opts.highlighted || HIGHLIGHTED_TEAMS);
+  const matchByNo = {};
+  for (const rd of Object.values(bracket.rounds)) for (const mm of rd) matchByNo[mm.match] = mm;
 
   // R32 alive sets per match/side (for the recursive knockout candidate build).
   const r32AliveByMatch = {};
@@ -390,23 +409,28 @@ export function computeMatchLabels(engineState, opts = {}) {
   const resolveMatch = (m, round) => {
     let homeRes, awayRes, isKo = false;
     if (r32Matches.has(m.match)) {
-      homeRes = classifyR32Side(r32AliveByMatch[m.match].home, mcP(m.match, 'home'), r32SlotCode(m.home), { dominantThreshold });
-      awayRes = classifyR32Side(r32AliveByMatch[m.match].away, mcP(m.match, 'away'), r32SlotCode(m.away), { dominantThreshold });
+      homeRes = renderR32Side(occOf(m.match, 'home'), r32SlotCode(m.home), fullName, { dominantThreshold });
+      awayRes = renderR32Side(occOf(m.match, 'away'), r32SlotCode(m.away), fullName, { dominantThreshold });
     } else {
       isKo = true;
-      const sets = koSideSets[m.match];
-      homeRes = classifyKoSide(sets.home, mcP(m.match, 'home'), watchedSet, maxPreview, koStructuralCode(m.home));
-      awayRes = classifyKoSide(sets.away, mcP(m.match, 'away'), watchedSet, maxPreview, koStructuralCode(m.away));
+      homeRes = renderKoSide(occOf(m.match, 'home'), koStructuralLabel(m.home, matchByNo), fullName, { highlighted: highlightedSet });
+      awayRes = renderKoSide(occOf(m.match, 'away'), koStructuralLabel(m.away, matchByNo), fullName, { highlighted: highlightedSet });
     }
-    const home = renderSideLabel(homeRes, fullName);
-    const away = renderSideLabel(awayRes, fullName);
+    const home = homeRes.label;
+    const away = awayRes.label;
     const suffix = ROUND_SUFFIX[round] ?? '';
-    // A KNOCKOUT event is "unchanged" only when NEITHER side has anything new to
-    // reveal — i.e. both sides are bare structural placeholders (no locked team,
-    // no <=cap list, no watched breadcrumb). If even one side narrows or carries a
-    // watched-team breadcrumb, we emit the full label (the other side shows its
-    // structural feeder code). R32 events always emit a label.
-    const bothStructural = isKo && homeRes.kind === 'structural' && awayRes.kind === 'structural';
+    // 3rd-place match: like the Final, NEVER previewed — fill only once BOTH
+    // semifinals are played (then it shows the two SF losers). David's rule.
+    if (round === 'ThirdPlace') {
+      const sfDone = [m.home.match, m.away.match].every((fm) => koResults[fm]);
+      out.set(m.match, { home, away, full: sfDone ? `${home} v ${away}${suffix}` : null, round });
+      return;
+    }
+    // A KNOCKOUT event stays "unchanged" only when NEITHER side names anything —
+    // both are bare structural feeder codes. If even one side names a highlighted
+    // team (or locks), emit the full label (the other side shows its feeder code).
+    // R32 events always emit a label.
+    const bothStructural = isKo && homeRes.structural && awayRes.structural;
     const full = bothStructural ? null : `${home} v ${away}${suffix}`;
     out.set(m.match, { home, away, full, round });
   };

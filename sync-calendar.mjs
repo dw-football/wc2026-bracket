@@ -66,6 +66,16 @@ async function loadCalendarMap() {
   throw new Error(`No calendar map found (${LOCAL_MAP} or ${EXAMPLE_MAP}).`);
 }
 
+/** Load the canonical baked Monte Carlo written by build-html.mjs, so the calendar
+ *  uses the EXACT numbers the bracket page shows (single source of truth) instead
+ *  of re-simulating. Returns null if no bake exists yet (caller falls back to a
+ *  fresh sim inside computeMatchLabels). */
+async function loadBakedMc() {
+  const p = join(__dirname, 'dist', 'baked-mc.json');
+  if (!existsSync(p)) return null;
+  try { return JSON.parse(await readFile(p, 'utf8')); } catch { return null; }
+}
+
 export async function buildPlan(opts = {}) {
   const teams = await loadJSON('teams.json');
   const bracket = await loadJSON('bracket.json');
@@ -73,12 +83,17 @@ export async function buildPlan(opts = {}) {
   const raw = await fetchRaw({ refresh: !!opts.refresh });
   const groups = toGroups(raw, teams);
   const koResults = knockoutResultsFromRaw(raw, teams);
+  const bakedMc = await loadBakedMc();
 
   const labels = computeMatchLabels(
     { groups, bracket, teams, koResults, resolveThirdPlaceSlots, rankThirdPlaceTeams,
-      mcN: opts.mcN },
+      mc: bakedMc || undefined, mcN: opts.mcN },
     { watchedTeams: map.watchedTeams || [], maxPreview: opts.maxPreview }
   );
+  if (!bakedMc) {
+    console.warn('WARNING: dist/baked-mc.json not found — re-simulating (numbers may ' +
+      'differ slightly from the page). Run `node build-html.mjs` first for an exact match.');
+  }
 
   const plan = [];
   for (const [matchStr, ev] of Object.entries(map.events)) {
