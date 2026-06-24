@@ -16,7 +16,8 @@ result vs. swap in Mark2), ASSUME ROUTINE and confirm before the huge thing.
 halted it. Mark2 stays parked on its `model-mark2` branch until explicit go-ahead.)
 
 ## RESUME
-Next action: routine score updates via **"Find new scores and GO"**. Live site: **Mark2 deployed**, 46/104 (latest: POR 5-0 UZB, ENG 0-0 GHA). Mark2 = outcome-first Elo model, KO-variance λ=0.6, UNDERDOG_WIN_FLOOR=0.45. main and model-mark2-ko are in sync. Tests: 55/55 green.
+Next action: **Tomorrow (2026-06-24) Groups A, B & C decide** — routine score updates via **"Find new scores and GO"** as those final-round games finish. Live site: **Mark2 deployed**, 47/104 (latest: PAN 0-1 CRO). Mark2 = outcome-first Elo model, KO-variance λ=0.6, UNDERDOG_WIN_FLOOR=0.45. main and model-mark2-ko in sync. Tests: 55/55 green.
+NEW since last wrap (DEPLOYED, commit a30e149): per-result **W/D/L probabilities** now lead each own-result line in the final-round scenario text ("Win (84%) → 1st; Draw (12%) → …"). Source: `outcomeProbs()` (Elo+host bonus) → `matchProbs` map in build-html.mjs `renderGroup` → `summarizeGroup(opts.matchProbs)` → `mcResultLedDetail`. Merged results sum ("Draw or loss (91%)"). The Group-I "Wins the group with a win or draw" prose path does NOT carry a % (different renderer) — David may want it added later.
 
 Remaining open: **market blend** (Elo\* soft shrink k≈0.35, force Elo input to match markets) — approach confirmed by David but GATED on fetching + de-vigging full 48-team tournament-winner board. Currently live on pure Elo with a "market says France higher" caveat in the header. Not urgent.
 
@@ -283,3 +284,19 @@ State as of 2026-06-23. 46/104 (feed + manual: ARG 2-0 AUT, FRA 3-0 IRQ, NOR 3-2
   de-vigged 48-team winner board. David headed to work mid-convo → wrote full cross-machine
   handoff for **520 (NYWDWARREN2)**: branch pushed, token SCRUBBED from synced notes, deploy
   via `gh auth login` + plain `git push origin main`. Pickup: session-notes/2026-06-23-09.md.
+- 2026-06-23 (eve, laptop) — Deployed **Panama 0-1 Croatia** (Group L, ESPN-confirmed; commit
+  449d288, 47/104). Then a NEW FEATURE (localhost-first → David approved → DEPLOYED commit
+  a30e149): per-result **W/D/L probabilities** lead each own-result line in the final-round
+  scenario text. Plumbed `outcomeProbs()` (Elo+host bonus) through a `matchProbs` map in
+  build-html.mjs `renderGroup` → `summarizeGroup(opts.matchProbs)` → `mcResultLedDetail`'s
+  `words()` formatter; merged results sum. Verified the baked group teams carry `.elo` so the
+  browser path matches Node. Also **de-brittled `group-situation.test.js`**: its "Group L (real
+  data)" test pinned exact scenario wording to one day's live standings, so it broke on every
+  new result — rewrote it to assert ONLY data-independent structural + policy invariants
+  (correctness wording stays locked on the frozen synthetic fixtures c/d + claims-validator,
+  which run on any data). 55/55 green. Long teaching thread with David on git (fetch vs pull,
+  ff-only, branch/merge/commit/push, the SessionStart `git-autosync` hook that silently pulled
+  520's work), plugins/npm, fork-forward strategy for Euros 2028 / WC 2030, what the 55 tests
+  actually are (deterministic rigged scenarios vs enumeration oracle vs Monte Carlo), and a
+  qualify-% consistency check (per-branch "X% to qualify" is points-driven/conditional and
+  immune to match odds; the blended headline number is what moves with the win prob).
