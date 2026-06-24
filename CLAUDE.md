@@ -295,6 +295,18 @@ State as of 2026-06-23. 46/104 (feed + manual: ARG 2-0 AUT, FRA 3-0 IRQ, NOR 3-2
   de-vigged 48-team winner board. David headed to work mid-convo → wrote full cross-machine
   handoff for **520 (NYWDWARREN2)**: branch pushed, token SCRUBBED from synced notes, deploy
   via `gh auth login` + plain `git push origin main`. Pickup: session-notes/2026-06-23-09.md.
+- 2026-06-23 (pm, 520) — Resumed on 520; **Mark2 merged → main + deployed** (λ=0.6,
+  UNDERDOG_WIN_FLOOR=0.45; POR 5-0 UZB, ENG 0-0 GHA). Main work was a deep **3rd-place
+  qualifying analysis** (throwaway scripts `par_drill*.mjs`, `sco_*.mjs`, `third_dist.mjs` left
+  in the repo, gitignored/untracked): Scotland conditional on finishing 3rd/3pts → **88.3%**
+  qualifying overall. Decomposed by weak-thirds count — modal = 3 weak thirds (34.3% of sims)
+  → 91% SCO qual; P(≥4 weak thirds) = 22.5% (Poisson-Binomial DP). **Dead-rubber adjustment**
+  (MEX/GER rotated to ~1770 Elo): SCO drops to **83%** — Groups A and E then produce fewer
+  cheap 1-pt thirds, taking lifeboat slots from Scotland. Rival-GD analysis: GD=0 rivals
+  (IRN/URU/BEL/CPV/COD, ~50% of sims) always beat SCO on GD; cannon fodder (UZB/ALG/PAR avg
+  −4 to −5) always beaten; SEN/SWE/AUS/AUT (avg −1.0 to −1.9) are the genuine H2H contests.
+  (This note was uncommitted on 520 and kept the autosync hook from pulling; recovered + folded
+  in on the 2026-06-24 bring-up.)
 - 2026-06-23 (eve, laptop) — Deployed **Panama 0-1 Croatia** (Group L, ESPN-confirmed; commit
   449d288, 47/104). Then a NEW FEATURE (localhost-first → David approved → DEPLOYED commit
   a30e149): per-result **W/D/L probabilities** lead each own-result line in the final-round

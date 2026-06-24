@@ -13,3 +13,8 @@ node_modules/
 data/raw/
 dist/exports/
 *.log
+
+# Throwaway analysis drills (3rd-place / Scotland qualifying scratch; not kept)
+par_drill*.mjs
+sco_*.mjs
+third_dist.mjs
