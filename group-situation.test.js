@@ -3,9 +3,9 @@
 // Run: node --test group-situation.test.js
 //
 // Covers:
-//  - Real Group L (England/Ghana 3, Panama/Croatia 0, 2 games left each):
-//    prints the full groupSituation output VERBATIM for human review and
-//    asserts basic invariants.
+//  - Real Group L (LIVE data): prints the full groupSituation output VERBATIM for
+//    human review and asserts only DATA-INDEPENDENT structural + policy invariants
+//    (the live standings change every match, so exact wording is NOT pinned here).
 //  - Synthetic golden tests with hand-verified expectations:
 //    (a) a team mathematically ELIMINATED with 2 games left
 //    (b) a team that has CLINCHED top-2 with a game to spare
@@ -71,34 +71,21 @@ test('Group L (real data) — verbatim output + invariants', async () => {
     'nextRound matches the earliest-date set');
   assert.equal(sit.nextRound.date, earliest);
 
-  // With everyone on 3/3/0/0 and 2 games each, nothing is decided yet.
-  assert.equal(sit.decided, false, 'Group L is not decided');
   assert.equal(typeof sit.nextRound.triggers, 'object');
+  assert.ok(Array.isArray(sit.nextRound.triggers), 'triggers is an array');
 
-  // Regression guard for the own-result mapping bug: England clinch top-2 only
-  // when they WIN ENG-GHA (and the other match doesn't put a third team on
-  // their level), so the trigger must read "with a win", never "with a draw" or
-  // "with a loss". (Verified against a brute-force truth table.)
-  const engTrigger = sit.nextRound.triggers.find(
-    (s) => s.startsWith('England') && /clinch a top-2 place/.test(s)
-  );
-  assert.ok(engTrigger, 'England top-2 clinch trigger present');
-  assert.match(engTrigger, /with a win/);
-  assert.doesNotMatch(engTrigger, /with a (draw|loss)/);
-
-  // No team can clinch SOLE 1st after just the next round (a final-round points
-  // tie at the top is always still possible), so no "clinch top spot" triggers.
+  // NOTE: this test runs on LIVE Group L data, which changes after every match.
+  // It therefore asserts ONLY data-independent structural invariants + a string
+  // POLICY invariant (never assert bare tournament "elimination"; best-third is
+  // cross-group and never decided within one group). It does NOT pin exact
+  // scenario wording to today's standings — that is the trap that made this test
+  // break on every new result. The correctness of the wording (own-result
+  // mapping, non-monotone magic number, RPS false-guarantee) is locked down on
+  // FROZEN synthetic fixtures in tests (c) and (d) below, and exhaustively by
+  // claims-validator.test.js, neither of which depends on live data.
   for (const s of sit.nextRound.triggers) {
-    assert.doesNotMatch(s, /clinch top spot/);
-  }
-
-  // "Elimination" triggers describe loss of TOP-2 viability, not tournament
-  // elimination (a best-third berth may still be live — never asserted here).
-  const croTrigger = sit.nextRound.triggers.find((s) => s.startsWith('Croatia'));
-  assert.ok(croTrigger && /drop out of the top-two race with a loss/.test(croTrigger));
-  // Guard: this module must never assert bare tournament "elimination"/"out".
-  for (const s of sit.nextRound.triggers) {
-    assert.doesNotMatch(s, /be eliminated/);
+    assert.equal(typeof s, 'string');
+    assert.doesNotMatch(s, /be eliminated/, 'no bare tournament-elimination wording');
   }
 });
 

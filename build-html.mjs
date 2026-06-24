@@ -1759,7 +1759,21 @@ const APP_JS = String.raw`
       // Pass the Monte-Carlo per-team map (code -> perTeam entry) so headlines and
       // result-based detail are probability-aware; null until the sim returns
       // (analyzers fall back to deterministic-only output in that window).
-      try{ sum=summarizeGroup(g, { mcByCode: dist, allGroups: gs }); }
+      var matchProbs=null;
+      if(typeof outcomeProbs==='function'){
+        matchProbs=new Map();
+        var _hostSet=new Set(HOSTS);
+        var _teamElo={};
+        g.teams.forEach(function(t){ _teamElo[t.code]=t.elo||1500; });
+        g.matches.forEach(function(m){
+          if(!m.played){
+            var effH=(_teamElo[m.home]||1500)+(_hostSet.has(m.home)?80:0);
+            var effA=(_teamElo[m.away]||1500)+(_hostSet.has(m.away)?80:0);
+            matchProbs.set(m.home+'_'+m.away, outcomeProbs(effH,effA));
+          }
+        });
+      }
+      try{ sum=summarizeGroup(g, { mcByCode: dist, allGroups: gs, matchProbs: matchProbs }); }
       catch(e){ var er=document.createElement('div'); er.className='muted tiny'; er.textContent='Final-round summary unavailable: '+esc(e.message); card.appendChild(er); sec.appendChild(card); return sec; }
       var byCode={}; sum.teams.forEach(function(t){ byCode[t.code]=t; });
       orderedTeams.forEach(function(team){

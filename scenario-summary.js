@@ -1478,7 +1478,7 @@ function outcomeSet(x, mc) {
  *
  * Returns null when the subject plays no relevant match (caller falls back).
  */
-function mcResultLedDetail(code, group, unplayed, scenarios, mc, nameOf) {
+function mcResultLedDetail(code, group, unplayed, scenarios, mc, nameOf, matchProbs) {
   const relevant = relevantMatchIndices(code, unplayed, scenarios);
   if (relevant.length === 0) return null;
   const { cells } = buildRelevantCells(code, unplayed, scenarios, relevant);
@@ -1489,6 +1489,18 @@ function mcResultLedDetail(code, group, unplayed, scenarios, mc, nameOf) {
   if (ownRel < 0) return null; // rank driven purely by others -> let describeConditional handle it
   const ownMatch = unplayed[relevant[ownRel]];
   const otherRel = relevant.findIndex((_, i) => i !== ownRel); // -1 if none (single remaining match)
+
+  // W/D/L probabilities for the subject team's own remaining match
+  let pByResult = null;
+  if (matchProbs) {
+    const key = `${ownMatch.home}_${ownMatch.away}`;
+    const mp = matchProbs.get ? matchProbs.get(key) : matchProbs[key];
+    if (mp) {
+      pByResult = ownMatch.home === code
+        ? { W: mp.pWin, D: mp.pDraw, L: mp.pLoss }
+        : { W: mp.pLoss, D: mp.pDraw, L: mp.pWin };
+    }
+  }
   const otherMatch = otherRel >= 0 ? unplayed[relevant[otherRel]] : null;
   const ownSubj = (coarse) => fromSubjectPerspective(coarse[ownRel], ownMatch, code);
   const keyOf = (c) => c.coarse.join('|');
@@ -1703,7 +1715,12 @@ function mcResultLedDetail(code, group, unplayed, scenarios, mc, nameOf) {
   }
   const words = (rs) => {
     const w = rs.map((r) => RWORD[r]).join(' or ');
-    return w.charAt(0).toUpperCase() + w.slice(1);
+    const label = w.charAt(0).toUpperCase() + w.slice(1);
+    if (pByResult) {
+      const p = rs.reduce((sum, r) => sum + (pByResult[r] || 0), 0);
+      return `${label} (${Math.round(p * 100)}%)`;
+    }
+    return label;
   };
   return groupsOut.map((g) => `${words(g.rs)} → ${g.desc}`).join('; ') + '.';
 }
@@ -1982,7 +1999,7 @@ export function summarizeGroup(group, opts = {}) {
     // best achievable POSITION is 3rd.
     if (minRank === 3) {
       let detail = null;
-      if (mc) detail = mcResultLedDetail(code, group, unplayed, scenarios, mc, nameOf);
+      if (mc) detail = mcResultLedDetail(code, group, unplayed, scenarios, mc, nameOf, opts.matchProbs);
       if (detail == null && maxRank > 3) {
         detail = describeConditional(code, team.name, unplayed, scenarios, relevant, nameOf);
       }
@@ -1994,7 +2011,7 @@ export function summarizeGroup(group, opts = {}) {
 
     // ---- conditional ----
     let detail = null;
-    if (mc) detail = mcResultLedDetail(code, group, unplayed, scenarios, mc, nameOf);
+    if (mc) detail = mcResultLedDetail(code, group, unplayed, scenarios, mc, nameOf, opts.matchProbs);
     if (detail == null) {
       detail = describeConditional(code, team.name, unplayed, scenarios, relevant, nameOf);
     }
