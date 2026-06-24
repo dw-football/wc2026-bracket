@@ -726,7 +726,10 @@ test('MC (b): Group E Ivory Coast loss clause conditions the 4th on the other ma
 });
 
 test('MC (c): a Group B team with pTop2<0.5% has no 2nd-place headline; surfaces the vanishing 2nd inline', async () => {
-  const { groups, mcByCode } = await buildMcByCode();
+  // FROZEN: this pins Group-B-specific (BIH/QAT) infinitesimal-2nd wording, which
+  // only holds while Group B is still in its final round — on the live feed Group B
+  // is now complete. Frozen snapshot keeps it in the contested state it tests.
+  const { groups, mcByCode } = await frozenMcByCode();
   const out = summarizeGroup(groups.find((g) => g.name === 'Group B'), { mcByCode });
   let checked = 0;
   for (const t of out.teams) {

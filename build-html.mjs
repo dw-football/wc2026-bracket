@@ -19,7 +19,7 @@ import { dirname, join } from 'node:path';
 
 import { toGroups, fetchRaw } from './adapter.js';
 import { resolveThirdPlaceSlots } from './allocation.js';
-import { monteCarlo } from './model.js';
+import { monteCarlo, venueCountryOf } from './model.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const readText = (f) => readFile(join(__dirname, f), 'utf8');
@@ -165,13 +165,14 @@ function trimSlotList(arr, k) {
 // distributions need every team and its full ptsTally); perSlot / perR32Slot are
 // trimmed to the top PERSLOT_KEEP candidates per side (the popover shows the full
 // distribution it has, and 16 deep covers every realistically-reachable team).
-function bakeMonteCarlo(groups, bracket) {
+function bakeMonteCarlo(groups, bracket, koVenueCountry) {
   const mc = monteCarlo(groups, bracket, {
     n: BAKE_N,
     seed: BAKE_SEED,
     hostCodes: new Set(BAKE_HOSTS),
     topCandidates: BAKE_TOP,
     koLambda: KO_LAMBDA,
+    koVenueCountry: koVenueCountry,
     resolveThirdPlaceSlots,
   });
   return {
@@ -253,11 +254,19 @@ async function main() {
   // ---- bake the high-n Monte Carlo ONCE (the slow step; ~50s at n=200k) ----
   console.log(`Baking Monte Carlo: n=${BAKE_N.toLocaleString()}, seed ${BAKE_SEED}, hosts ${BAKE_HOSTS.join('/')} …`);
   const mcT0 = Date.now();
-  const bakedMc = bakeMonteCarlo(groups, bracket);
+  // Venue-aware host bonus: matchNo -> country of its venue, so a co-host only
+  // gets +80 when actually playing in its OWN country (e.g. Canada at SoFi/LA does
+  // NOT). Group matches carry their own venue; KO venues come from the schedule.
+  const koVenueCountry = {};
+  for (const k of Object.keys(koSchedule)) {
+    koVenueCountry[k] = venueCountryOf(koSchedule[k].venue || koSchedule[k].ground);
+  }
+
+  const bakedMc = bakeMonteCarlo(groups, bracket, koVenueCountry);
   const mcMs = Date.now() - mcT0;
   console.log(`Bake done in ${(mcMs / 1000).toFixed(1)}s  (${(mcMs / BAKE_N * 1000).toFixed(1)} µs/sim)`);
 
-  const data = { teams, bracket, allocation, groups, freshness, bakedMc, koSchedule };
+  const data = { teams, bracket, allocation, groups, freshness, bakedMc, koSchedule, koVenueCountry };
 
   const html = renderHTML(logicBundle, data);
 
@@ -356,6 +365,7 @@ self.onmessage = function (e) {
     hostCodes: hostCodes,
     topCandidates: d.topCandidates || 32,
     koLambda: d.koLambda,
+    koVenueCountry: d.koVenueCountry,
     resolveThirdPlaceSlots: function (letters, bracket) {
       return resolveThirdPlaceSlots(letters, bracket);
     }
@@ -618,6 +628,7 @@ const APP_JS = String.raw`
   var TEAMS = DATA.teams;
   var BRACKET = DATA.bracket;
   var KOSCHED = DATA.koSchedule || {};   // matchNo -> { venue, ground, dateLabel, timeEDT }
+  var KO_VC = DATA.koVenueCountry || null; // matchNo -> 'USA'|'MEX'|'CAN' (venue-aware host bonus)
   var FRESH = DATA.freshness;
   var BAKED_MC = DATA.bakedMc || null;   // high-n Monte Carlo baked at build time
   var HOSTS = ['USA','MEX','CAN'];
@@ -730,7 +741,7 @@ const APP_JS = String.raw`
     state.simming=true; render();
     var groups=groupsForCompute();
     var payload={ groups:groups, bracket:BRACKET, n:SIM_N, seed:SIM_SEED,
-      hostCodes:HOSTS, topCandidates:32, koLambda:KO_LAMBDA };
+      hostCodes:HOSTS, topCandidates:32, koLambda:KO_LAMBDA, koVenueCountry:KO_VC };
     var w=buildWorker();
     if(w){
       w.onmessage=function(ev){
@@ -748,7 +759,7 @@ const APP_JS = String.raw`
   }
   function syncMonte(groups){
     return monteCarlo(groups, BRACKET, { n:SIM_N, seed:SIM_SEED,
-      hostCodes:new Set(HOSTS), topCandidates:32, koLambda:KO_LAMBDA, resolveThirdPlaceSlots:resolveThirdPlaceSlots });
+      hostCodes:new Set(HOSTS), topCandidates:32, koLambda:KO_LAMBDA, koVenueCountry:KO_VC, resolveThirdPlaceSlots:resolveThirdPlaceSlots });
   }
 
   // ====================================================================

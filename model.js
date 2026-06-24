@@ -282,9 +282,28 @@ export function sampleKnockout(eloA, eloB, rng, opts = {}) {
 // Internal helpers
 // ----------------------------------------------------------------------------
 
-/** Host bonus for a given team code under opts.hostCodes (a Set). */
-function hostBonusFor(code, opts) {
+// 2026 is co-hosted across three nations, so a "host" only earns the home bonus
+// when actually playing IN ITS OWN country (Canada at SoFi/LA gets nothing — that
+// is not a Canadian home game). venueCountryOf maps a venue string (openfootball
+// `ground` / schedule venue) to 'USA'|'MEX'|'CAN'; only the two non-US hosts need
+// matching since every other 2026 venue is in the USA. We do NOT model diaspora
+// crowds — purely which country the stadium is in.
+const CAN_VENUE = /toronto|vancouver|bmo field|bc place/i;
+const MEX_VENUE = /mexico city|guadalajara|zapopan|monterrey|guadalupe|azteca|akron|bbva/i;
+export function venueCountryOf(venue) {
+  if (!venue) return null;
+  if (CAN_VENUE.test(venue)) return 'CAN';
+  if (MEX_VENUE.test(venue)) return 'MEX';
+  return 'USA';
+}
+
+/** Host bonus for a given team code under opts.hostCodes (a Set). When the match
+ *  venue's country is known, a host earns the bonus ONLY when playing in its own
+ *  country. Callers that pass no venueCountry (e.g. synthetic tests) keep the
+ *  always-on legacy behavior. */
+function hostBonusFor(code, opts, venueCountry) {
   if (opts.hostCodes && opts.hostCodes.has && opts.hostCodes.has(code)) {
+    if (venueCountry != null && code !== venueCountry) return 0;
     return opts.hostBonus ?? DEFAULT_HOST_BONUS;
   }
   return 0;
@@ -356,8 +375,9 @@ export function simulateTournament(groups, bracket, rng, opts = {}) {
   for (const g of sim) {
     for (const m of g.matches) {
       if (m.played) continue;
-      const hb = hostBonusFor(m.home, opts);
-      const ab = hostBonusFor(m.away, opts);
+      const vc = venueCountryOf(m.venue);
+      const hb = hostBonusFor(m.home, opts, vc);
+      const ab = hostBonusFor(m.away, opts, vc);
       const { ga, gb } = sampleMatch(eloOf(m.home), eloOf(m.away), rng, {
         ...opts,
         hostBonusA: hb,
@@ -453,9 +473,10 @@ export function simulateTournament(groups, bracket, rng, opts = {}) {
   };
 
   // R32: play each fixture.
-  const playKnockout = (homeCode, awayCode) => {
-    const hb = hostBonusFor(homeCode, opts);
-    const ab = hostBonusFor(awayCode, opts);
+  const playKnockout = (homeCode, awayCode, matchNo) => {
+    const vc = opts.koVenueCountry ? (opts.koVenueCountry[matchNo] ?? null) : null;
+    const hb = hostBonusFor(homeCode, opts, vc);
+    const ab = hostBonusFor(awayCode, opts, vc);
     const res = sampleKnockout(eloOf(homeCode), eloOf(awayCode), rng, {
       ...opts,
       hostBonusA: hb,
@@ -467,7 +488,7 @@ export function simulateTournament(groups, bracket, rng, opts = {}) {
   };
 
   for (const fx of r32) {
-    const { winner, loser } = playKnockout(fx.home, fx.away);
+    const { winner, loser } = playKnockout(fx.home, fx.away, fx.match);
     winnerByMatch[fx.match] = winner;
     loserByMatch[fx.match] = loser;
     bump(winner, ROUND_INDEX.R16); // winning R32 => reached R16
@@ -479,7 +500,7 @@ export function simulateTournament(groups, bracket, rng, opts = {}) {
     for (const m of roundMatches) {
       const homeCode = sideCode(m.home);
       const awayCode = sideCode(m.away);
-      const { winner, loser } = playKnockout(homeCode, awayCode);
+      const { winner, loser } = playKnockout(homeCode, awayCode, m.match);
       winnerByMatch[m.match] = winner;
       loserByMatch[m.match] = loser;
       bump(winner, advanceRoundIdx);
@@ -495,7 +516,7 @@ export function simulateTournament(groups, bracket, rng, opts = {}) {
   const finalM = bracket.rounds.Final[0];
   const fHome = winnerByMatch[finalM.home.match];
   const fAway = winnerByMatch[finalM.away.match];
-  const { winner: champion } = playKnockout(fHome, fAway);
+  const { winner: champion } = playKnockout(fHome, fAway, finalM.match);
   winnerByMatch[finalM.match] = champion;
   bump(champion, ROUND_INDEX.Champion);
   knockout.push({ match: finalM.match, round: 'Final', home: fHome, away: fAway, winner: champion });
@@ -507,7 +528,7 @@ export function simulateTournament(groups, bracket, rng, opts = {}) {
     const a = loserByMatch[tpM.home.match];
     const b = loserByMatch[tpM.away.match];
     if (a && b) {
-      const { winner } = playKnockout(a, b);
+      const { winner } = playKnockout(a, b, tpM.match);
       winnerByMatch[tpM.match] = winner;
       knockout.push({ match: tpM.match, round: 'ThirdPlace', home: a, away: b, winner });
     }
