@@ -2,241 +2,289 @@
   {
     "name": "Spain",
     "code": "ESP",
-    "elo": 2129
+    "elo": 2129,
+    "worldRank": 2
   },
   {
     "name": "Argentina",
     "code": "ARG",
-    "elo": 2128
+    "elo": 2128,
+    "worldRank": 1
   },
   {
     "name": "France",
     "code": "FRA",
-    "elo": 2084
+    "elo": 2084,
+    "worldRank": 3
   },
   {
     "name": "England",
     "code": "ENG",
-    "elo": 2055
+    "elo": 2055,
+    "worldRank": 4
   },
   {
     "name": "Colombia",
     "code": "COL",
-    "elo": 1998
+    "elo": 1998,
+    "worldRank": 13
   },
   {
     "name": "Brazil",
     "code": "BRA",
-    "elo": 1986
+    "elo": 1986,
+    "worldRank": 6
   },
   {
     "name": "Netherlands",
     "code": "NED",
-    "elo": 1972
+    "elo": 1972,
+    "worldRank": 8
   },
   {
     "name": "Portugal",
     "code": "POR",
-    "elo": 1967
+    "elo": 1967,
+    "worldRank": 5
   },
   {
     "name": "Germany",
     "code": "GER",
-    "elo": 1954
+    "elo": 1954,
+    "worldRank": 10
   },
   {
     "name": "Norway",
     "code": "NOR",
-    "elo": 1929
+    "elo": 1929,
+    "worldRank": 31
   },
   {
     "name": "Japan",
     "code": "JPN",
-    "elo": 1925
+    "elo": 1925,
+    "worldRank": 18
   },
   {
     "name": "Mexico",
     "code": "MEX",
-    "elo": 1896
+    "elo": 1896,
+    "worldRank": 14
   },
   {
     "name": "Switzerland",
     "code": "SUI",
-    "elo": 1885
+    "elo": 1885,
+    "worldRank": 19
   },
   {
     "name": "Croatia",
     "code": "CRO",
-    "elo": 1881
+    "elo": 1881,
+    "worldRank": 11
   },
   {
     "name": "Belgium",
     "code": "BEL",
-    "elo": 1879
+    "elo": 1879,
+    "worldRank": 9
   },
   {
     "name": "Uruguay",
     "code": "URU",
-    "elo": 1870
+    "elo": 1870,
+    "worldRank": 16
   },
   {
     "name": "Morocco",
     "code": "MAR",
-    "elo": 1866
+    "elo": 1866,
+    "worldRank": 7
   },
   {
     "name": "Ecuador",
     "code": "ECU",
-    "elo": 1864
+    "elo": 1864,
+    "worldRank": 23
   },
   {
     "name": "Austria",
     "code": "AUT",
-    "elo": 1857
+    "elo": 1857,
+    "worldRank": 24
   },
   {
     "name": "Senegal",
     "code": "SEN",
-    "elo": 1839
+    "elo": 1839,
+    "worldRank": 15
   },
   {
     "name": "USA",
     "code": "USA",
-    "elo": 1820
+    "elo": 1820,
+    "worldRank": 17
   },
   {
     "name": "Paraguay",
     "code": "PAR",
-    "elo": 1816
+    "elo": 1816,
+    "worldRank": 41
   },
   {
     "name": "Turkey",
     "code": "TUR",
-    "elo": 1813
+    "elo": 1813,
+    "worldRank": 22
   },
   {
     "name": "Australia",
     "code": "AUS",
-    "elo": 1799
+    "elo": 1799,
+    "worldRank": 27
   },
   {
     "name": "Canada",
     "code": "CAN",
-    "elo": 1777
+    "elo": 1777,
+    "worldRank": 30
   },
   {
     "name": "South Korea",
     "code": "KOR",
-    "elo": 1771
+    "elo": 1771,
+    "worldRank": 25
   },
   {
     "name": "Scotland",
     "code": "SCO",
-    "elo": 1768
+    "elo": 1768,
+    "worldRank": 42
   },
   {
     "name": "Algeria",
     "code": "ALG",
-    "elo": 1759
+    "elo": 1759,
+    "worldRank": 28
   },
   {
     "name": "Iran",
     "code": "IRN",
-    "elo": 1756
+    "elo": 1756,
+    "worldRank": 20
   },
   {
     "name": "Ivory Coast",
     "code": "CIV",
-    "elo": 1728
+    "elo": 1728,
+    "worldRank": 33
   },
   {
     "name": "Sweden",
     "code": "SWE",
-    "elo": 1727
+    "elo": 1727,
+    "worldRank": 38
   },
   {
     "name": "Egypt",
     "code": "EGY",
-    "elo": 1711
+    "elo": 1711,
+    "worldRank": 29
   },
   {
     "name": "Uzbekistan",
     "code": "UZB",
-    "elo": 1698
+    "elo": 1698,
+    "worldRank": 50
   },
   {
     "name": "Czech Republic",
     "code": "CZE",
-    "elo": 1696
+    "elo": 1696,
+    "worldRank": 40
   },
   {
     "name": "Panama",
     "code": "PAN",
-    "elo": 1683
+    "elo": 1683,
+    "worldRank": 34
   },
   {
     "name": "DR Congo",
     "code": "COD",
-    "elo": 1674
+    "elo": 1674,
+    "worldRank": 46
   },
   {
     "name": "Jordan",
     "code": "JOR",
-    "elo": 1653
+    "elo": 1653,
+    "worldRank": 63
   },
   {
     "name": "Cape Verde",
     "code": "CPV",
-    "elo": 1606
+    "elo": 1606,
+    "worldRank": 67
   },
   {
     "name": "Saudi Arabia",
     "code": "KSA",
-    "elo": 1598
+    "elo": 1598,
+    "worldRank": 61
   },
   {
     "name": "Bosnia & Herzegovina",
     "code": "BIH",
-    "elo": 1596
+    "elo": 1596,
+    "worldRank": 64
   },
   {
     "name": "Iraq",
     "code": "IRQ",
-    "elo": 1592
+    "elo": 1592,
+    "worldRank": 57
   },
   {
     "name": "New Zealand",
     "code": "NZL",
-    "elo": 1578
+    "elo": 1578,
+    "worldRank": 85
   },
   {
     "name": "Tunisia",
     "code": "TUN",
-    "elo": 1570
+    "elo": 1570,
+    "worldRank": 45
   },
   {
     "name": "Ghana",
     "code": "GHA",
-    "elo": 1557
+    "elo": 1557,
+    "worldRank": 73
   },
   {
     "name": "Haiti",
     "code": "HAI",
-    "elo": 1528
+    "elo": 1528,
+    "worldRank": 83
   },
   {
     "name": "South Africa",
     "code": "RSA",
-    "elo": 1527
+    "elo": 1527,
+    "worldRank": 60
   },
   {
     "name": "Curaçao",
     "code": "CUW",
-    "elo": 1453
+    "elo": 1453,
+    "worldRank": 82
   },
   {
     "name": "Qatar",
     "code": "QAT",
-    "elo": 1437
+    "elo": 1437,
+    "worldRank": 56
   }
 ]

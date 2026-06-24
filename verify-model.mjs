@@ -10,7 +10,7 @@ import { dirname, join } from 'node:path';
 
 import { toGroups, fetchRaw } from './adapter.js';
 import { resolveThirdPlaceSlots } from './allocation.js';
-import { monteCarlo } from './model.js';
+import { monteCarlo, venueCountryOf } from './model.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const loadJSON = async (f) => JSON.parse(await readFile(join(__dirname, f), 'utf8'));
@@ -20,8 +20,17 @@ const pct = (p) => (p * 100).toFixed(1).padStart(5) + '%';
 async function main() {
   const teams = await loadJSON('teams.json');
   const bracket = await loadJSON('bracket.json');
+  const koSchedule = await loadJSON('knockout-schedule.json');
   const raw = await fetchRaw(); // uses cached data/raw/worldcup.json
   const groups = toGroups(raw, teams);
+
+  // Venue-aware host bonus: map each knockout match to its host-country venue (or
+  // null) so the +80 Elo only applies when USA/MEX/CAN actually play at home —
+  // mirrors build-html.mjs's bake.
+  const koVenueCountry = {};
+  for (const k of Object.keys(koSchedule)) {
+    koVenueCountry[k] = venueCountryOf(koSchedule[k].venue || koSchedule[k].ground);
+  }
 
   const codeName = new Map(teams.map((t) => [t.code, t.name]));
   const N = 20000;
@@ -32,6 +41,7 @@ async function main() {
     seed: 12345,
     hostCodes: new Set(['USA', 'MEX', 'CAN']),
     koLambda: 0.6, // mirror build-html KO_LAMBDA (live Mark2 model)
+    koVenueCountry, // venue-aware host bonus (mirror build-html bake)
     resolveThirdPlaceSlots,
   });
   const elapsedMs = Date.now() - t0;

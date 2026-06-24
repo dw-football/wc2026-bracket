@@ -317,13 +317,30 @@ function ownResultOf(match, coarse, code) {
 
 /** A 3rd place on P points is a GUARANTEED top-8 third iff at most 7 OTHER groups
  *  can field a third with >= P points (worst case: every other group maxes out). */
-function thirdOnPointsClinches(P, ownLetter, ceilings) {
+export function thirdOnPointsClinches(P, ownLetter, ceilings) {
   let canMatch = 0;
   for (const [L, ceil] of ceilings) {
     if (L === ownLetter) continue;
     if (ceil >= P) canMatch++;
   }
   return canMatch <= 7;
+}
+
+/**
+ * The SYMMETRIC floor side: a group's best-possible 3rd (on Pmax points) is
+ * MATHEMATICALLY ELIMINATED from the top-8 thirds iff at least 8 OTHER groups
+ * GUARANTEE a third with strictly MORE points than Pmax — i.e. their floor
+ * (minThirdPoints) > Pmax. Groups are independent, so 8 such groups each fielding
+ * a higher third simultaneously is achievable, pushing this group's third to 9th
+ * or worse no matter what. Returns true iff that count is >= 8.
+ */
+export function thirdOnPointsEliminated(Pmax, ownLetter, floors) {
+  let beatenForSure = 0;
+  for (const [L, floor] of floors) {
+    if (L === ownLetter) continue;
+    if (floor > Pmax) beatenForSure++;
+  }
+  return beatenForSure >= 8;
 }
 
 /**
@@ -808,7 +825,7 @@ const groupLetter = (g) => {
  * the per-group ceiling used to bound how many other groups could field a third
  * that matches-or-beats a given team's worst-case third-place total.
  */
-function maxThirdPoints(group) {
+export function maxThirdPoints(group) {
   const { pts } = currentPoints(group);
   const unplayed = group.matches.filter((m) => !m.played);
   let mx = -1;
@@ -819,12 +836,38 @@ function maxThirdPoints(group) {
   return mx;
 }
 
+/**
+ * MINIMUM points a THIRD-place team in this group can finish on, over every
+ * completion of its unplayed matches. Mirror of maxThirdPoints tracking the
+ * minimum of sorted[2]. Returns 0 if there are no completions to evaluate.
+ */
+export function minThirdPoints(group) {
+  const { pts } = currentPoints(group);
+  const unplayed = group.matches.filter((m) => !m.played);
+  let mn = Infinity;
+  for (const finalPts of enumeratePoints(pts, unplayed)) {
+    const sorted = [...finalPts.values()].sort((a, b) => b - a);
+    if (sorted[2] < mn) mn = sorted[2];
+  }
+  return mn === Infinity ? 0 : mn;
+}
+
 /** Map group-letter -> maxThirdPoints, across all groups. */
-function thirdCeilings(allGroups) {
+export function thirdCeilings(allGroups) {
   const m = new Map();
   for (const g of allGroups) {
     const L = groupLetter(g);
     if (L) m.set(L, maxThirdPoints(g));
+  }
+  return m;
+}
+
+/** Map group-letter -> minThirdPoints, across all groups (mirror thirdCeilings). */
+export function thirdFloors(allGroups) {
+  const m = new Map();
+  for (const g of allGroups) {
+    const L = groupLetter(g);
+    if (L) m.set(L, minThirdPoints(g));
   }
   return m;
 }

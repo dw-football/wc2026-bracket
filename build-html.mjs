@@ -219,7 +219,7 @@ async function main() {
   // (COARSE, matchKey, ordinal, MAX_GOALS, …) don't collide with each other or
   // with engine/model; only their public exports are hoisted to the bundle scope.
   const scenarioSummaryBundle = wrapModuleIIFE(scenarioSummarySrc, ['summarizeGroup', '__test'], '__scnSummaryMod');
-  const groupSituationBundle = wrapModuleIIFE(groupSituationSrc, ['groupSituation'], '__grpSituationMod');
+  const groupSituationBundle = wrapModuleIIFE(groupSituationSrc, ['groupSituation', 'maxThirdPoints', 'minThirdPoints', 'thirdCeilings', 'thirdFloors', 'thirdOnPointsClinches', 'thirdOnPointsEliminated'], '__grpSituationMod');
 
   const logicBundle = [
     '/* ===== engine.js ===== */',
@@ -1591,6 +1591,12 @@ const APP_JS = String.raw`
       return any?s:null;
     }
     function groupDone(groupName){ var g=gByName[groupName]; return !!(g&&g.matches.every(function(m){return m.played;})); }
+    // MATHEMATICAL banding (not Monte-Carlo): green only when a 3rd on the group's
+    // current points is a GUARANTEED top-8 third AND the group is done; red only
+    // when the group's BEST-possible 3rd still can't crack the top 8. Computed from
+    // the deterministic third-place points ceilings/floors across all 12 groups.
+    var ceilings=thirdCeilings(gs), floors=thirdFloors(gs);
+    var gByLetter={}; gs.forEach(function(g){ var L=(/Group\s+([A-L])/i.exec(g.name||'')||[])[1]; if(L) gByLetter[L.toUpperCase()]=g; });
     var lg=document.createElement('div'); lg.className='thlegend muted tiny';
     lg.innerHTML='Each row = a group’s 3rd-place team. <b>% = model chance that group’s 3rd advances</b> (open the Scenario tab for detail). '+
       '<span class="sw clinch"></span> through · <span class="sw elim"></span> out.';
@@ -1605,9 +1611,15 @@ const APP_JS = String.raw`
       var t=r.t, p=r.p, done=r.done;
       if(i===8){ var cut=document.createElement('div'); cut.className='cut'; cut.innerHTML='<span>cut line — top 8 advance</span>'; panel.appendChild(cut); }
       var prov = i<8;  // model projects this group's 3rd among the advancing 8
+      // MATHEMATICAL band (deterministic), not the MC %. The % column already
+      // conveys "virtually". GREEN only when the group is DONE and a 3rd on its
+      // current points is a guaranteed top-8 third; RED only when even the group's
+      // best-possible 3rd is mathematically beaten out of the top 8.
       var band='';
-      if(p!=null && p>=0.9995 && done) band=' clinch';   // group settled + virtually certain → through
-      else if(p!=null && p<0.0005) band=' elim';          // can't make it → out
+      var gl0=(/Group\s+([A-L])/i.exec(t.group)||[])[1]; gl0=gl0?gl0.toUpperCase():null;
+      var g0=gl0?gByLetter[gl0]:null;
+      if(gl0 && done && thirdOnPointsClinches(t.points, gl0, ceilings)) band=' clinch';
+      else if(gl0 && g0 && thirdOnPointsEliminated(maxThirdPoints(g0), gl0, floors)) band=' elim';
       var row=document.createElement('div'); row.className='trow'+(prov?' qual':'')+band;
       var lots=t.tiedByLots?' ⚖':'';
       var gl=(/Group\s+([A-L])/i.exec(t.group)||[])[1]||t.group;
