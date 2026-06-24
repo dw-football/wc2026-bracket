@@ -16,16 +16,35 @@ result vs. swap in Mark2), ASSUME ROUTINE and confirm before the huge thing.
 halted it. Mark2 stays parked on its `model-mark2` branch until explicit go-ahead.)
 
 ## RESUME
-Next action: **Today (2026-06-24) Groups A, B & C decide** — and **see ## CALENDAR AUTO-SYNC: new label-sync tool built, dry-run awaiting David's go.**
-Original: — routine score updates via **"Find new scores and GO"** as those final-round games finish. Live site: **Mark2 deployed**, 48/104 (latest: COL 1-0 COD, commit bef0de7). Mark2 = outcome-first Elo model, KO-variance λ=0.6, UNDERDOG_WIN_FLOOR=0.45. main and model-mark2-ko in sync. Tests: 55/55 green.
-NEW since last wrap (DEPLOYED, commit a30e149): per-result **W/D/L probabilities** now lead each own-result line in the final-round scenario text ("Win (84%) → 1st; Draw (12%) → …"). Source: `outcomeProbs()` (Elo+host bonus) → `matchProbs` map in build-html.mjs `renderGroup` → `summarizeGroup(opts.matchProbs)` → `mcResultLedDetail`. Merged results sum ("Draw or loss (91%)"). The Group-I "Wins the group with a win or draw" prose path does NOT carry a % (different renderer) — David may want it added later.
+Next action: routine score updates — **"Find new scores and GO"** (or just tell me a result). Each update now refreshes **BOTH the live site AND David's Sports calendar** off ONE 200k bake (single source of truth). **Groups A & C were due to finish 2026-06-24** — grab those scores next. Live: **50/104**, Mark2 (λ=0.6, UNDERDOG_WIN_FLOOR=0.45), 74/74 tests green, commit **0f5a2b3**.
+**AWAITING DAVID — #4 unattended auto-sync** (he's reading the plan from the 2026-06-24 session): decide (a) reuse the existing Google OAuth token vs a service account, (b) local Task Scheduler vs cloud routine, (c) OK with auto-push-to-LIVE-site unattended, or calendar-only auto + keep site pushes on "go". On his answer: locate the token in `~/My Drive/Computing/Claude/integrations.md`, build the dry-run orchestrator (score-poller + `calendar-apply.mjs` REST writer + chain). See Session Notes 2026-06-24 (pm).
+Open code TODO (Claude-autonomous): guard `build-teams.mjs` so an Elo re-scrape preserves `team.worldRank` (else the real-FIFA-ranking tiebreaker silently reverts to the Elo proxy).
 
-Remaining open: **market blend** (Elo\* soft shrink k≈0.35, force Elo input to match markets) — approach confirmed by David but GATED on fetching + de-vigging full 48-team tournament-winner board. Currently live on pure Elo with a "market says France higher" caveat in the header. Not urgent.
+Remaining open (parked): **market blend** (Elo\* soft shrink k≈0.35) — confirmed by David, GATED on a de-vigged 48-team winner board; David said NOT now. **Visual-design polish** (#6b): widest R32 3rd-place lines, title/stamp crowding — cosmetic, parked.
 
-⚠️ **CROSS-MACHINE / TOKEN-FREE DEPLOY:** repo is local+GitHub only (not synced). On any machine: `git clone https://github.com/dw-football/wc2026-bracket.git` → `gh auth login` (GitHub.com/HTTPS/"Authenticate Git: Yes", log in as **dw-football**) → use plain **`git push origin main`** for deploys. No `.env` token on 520.
-NEW feature/edit → WORKFLOW RULE (localhost first). Routine scores → "Find new scores and GO".
+⚠️ **CROSS-MACHINE / TOKEN-FREE DEPLOY:** repo is local+GitHub only (not Drive-synced). On any machine: `git clone https://github.com/dw-football/wc2026-bracket.git` → `gh auth login` (GitHub.com/HTTPS/"Authenticate Git: Yes", log in as **dw-football**) → plain **`git push origin main`**. No `.env` token needed.
+NEW feature/edit → WORKFLOW RULE (localhost first, push on "go"). Routine scores → "Find new scores and GO" (now also auto-updates the calendar).
+
+## OPEN — #4: UNATTENDED AUTO-SYNC (full plan; awaiting David's 3 decisions, 2026-06-24)
+Goal: a timer job that, with NO human in the loop, detects a finished score → updates the live site AND David's Sports calendar → notifies him. TODAY both need an interactive Claude session (calendar writes go through the gcal MCP authed in-session; that's the gap).
+
+**The 4-step loop** (every ~20 min during match windows): (1) poll ESPN `fifa.world` scoreboard (open JSON, no key, near-real-time) for a new FT result; (2) append to `manual-results.json` → `node build-html.mjs --refresh` → `cp dist/index.html docs/index.html` → `git push` (site — git creds already work headless via Windows Credential Manager); (3) `node sync-calendar.mjs` → apply the diff to the Sports calendar; (4) notify David. Steps 1/2/4 need NO new setup.
+
+**The ONE blocker = headless calendar-write auth.** The MCP is tied to the interactive session and is typically ABSENT in a cron/headless run. Need a NON-interactive Google credential:
+ - **(a) PREFERRED** — reuse the existing gsuite/gmail-MCP OAuth refresh token for david@warren1.net (Calendar scope); location/setup is in `~/My Drive/Computing/Claude/integrations.md`. If reusable, a small **`calendar-apply.mjs`** hits the Calendar REST API directly → basically immediate AND machine-independent.
+ - **(b)** a Google **service account**, share the Sports calendar with it — cleaner long-term, a few minutes of setup.
+
+**Buildable immediately (no auth needed):** the score-poller, `calendar-apply.mjs` (REST writer that reads `calendar-sync-plan.json` + the token), the orchestrator chaining build→push→calendar→notify, PLUS a **dry-run mode** (logs what it WOULD do, writes nothing) so David can watch it for a day before arming.
+
+**Runner:** local **Windows Task Scheduler** on an always-on machine (simplest; that machine must be awake during match windows) OR a Claude Code **cloud routine** (`/schedule` skill; machine-independent — works with approach (a) because it's token-based, sidestepping the headless-MCP caveat).
+
+**Judgment / trust (David's call, not technical):** unattended = no human sanity-check on scores (ESPN becomes the trusted FT source) + auto-push to the LIVE site + auto-write the LIVE calendar with no review → a STANDING exception to the "push only on GO" rule. Blast radius bounded (routine score refreshes on the current model only; the feed self-corrects a bad manual entry next day). David is already OK with auto-CALENDAR; auto-SITE-push unattended is the bigger trust step → hence decision (c).
+
+**DECISIONS NEEDED FROM DAVID:** (a) reuse existing Google token vs service account; (b) local Task Scheduler vs cloud routine; (c) auto-push-to-live-site unattended OK, or calendar-only auto + keep site pushes on "go". **Claude's rec:** confirm token reuse (a) → build the dry-run orchestrator + scripts → run as a local Task Scheduler job on 520 first (watchable/killable) → graduate to a cloud routine later.
 
 ## CALENDAR AUTO-SYNC (NEW 2026-06-24 — built; dry-run awaiting David's GO, NOT yet applied)
+> ⚠️ **SUPERSEDED 2026-06-24 (pm) — see Session Notes + RESUME.** This is now LIVE and APPLIED: David's Sports calendar is fully labeled (R32 M73-88 + KO M89-103) and auto-updates on each score. The LABEL RULES below are OUTDATED — the deployed `bracket-labels.mjs` now uses: R32 n-based tiers ("A2 (KOR 90%)", "SUI (60%)/CAN", bare code), KO = HIGHLIGHTED teams only with % ("FRA (28%)/GER (17%)/…"), readable structural ("G1/?3" not "Wxx"), 3rd-place blank till SFs. Labels read the SINGLE baked sim (`dist/baked-mc.json`), NOT a re-sim. The PENDING DECISIONS below were RESOLVED (kept David's two-horse guesses; USA-path uses %-breadcrumbs). Open now = #4 unattended auto-sync (RESUME). Kept below for history only.
+
 Tooling to auto-update the Sports-calendar knockout events as results come in, so we stop hand-editing labels. Does NOT write to any calendar — emits a plan; a human/Claude applies it via the gcal MCP after David approves.
 - **`bracket-labels.mjs`** — PURE, shareable resolver, ZERO calendar/personal data. `computeMatchLabels(engineState, { watchedTeams, maxPreview=4 })` → label per match 73–103. Rules: R32 group slots (73–88) = 4-tier (locked / exactly-two→favorite-first / ≥75% dominant→`NAME/code` / structural `K2`,`3rd E/H/I/J/K`); knockout (89–103) = ≤4 candidate list favorite-first, else `WATCHED?/…` breadcrumb if a watched team is in the pool, else keep current label. `DOMINANT_THRESHOLD=0.75`. **Group slot codes are GROUP-FIRST per David's preference — `A2`/`F1`/`K2`, NOT FIFA `2A`/`1F`** (a forker may flip it; it's a one-liner). Locked/alive is DETERMINISTIC (scenarioGrid for groups; recursive feeder-tree union for KO); Monte-Carlo used ONLY for favorite ordering + the ≥75% test.
 - **`sync-calendar.mjs`** — thin glue: loads gitignored `calendar-map.local.json` (real eventIds + `watchedTeams:["USA"]`), runs the resolver, prints the dry-run table, writes `calendar-sync-plan.json` (gitignored). NO network/apply mode. Final (104) skipped (it's on the Family calendar).
@@ -218,7 +237,7 @@ https://raw.githubusercontent.com/openfootball/worldcup.json/master/2026/worldcu
 API-Football key in .env (gitignored) is UNUSABLE on the free tier for 2026
 (capped to seasons 2022-24). football-data.org is a possible fallback (free token).
 
-State as of 2026-06-23. 46/104 (feed + manual: ARG 2-0 AUT, FRA 3-0 IRQ, NOR 3-2 SEN, ALG 2-1 JOR, POR 5-0 UZB, ENG 0-0 GHA); group stage in progress. Live model = **Mark2** (λ=0.6, deployed 2026-06-23).
+State as of 2026-06-24. **50/104** (added COL 1-0 COD, SUI 2-1 CAN, BIH 3-1 QAT — Group B complete: SUI 1st, CAN 2nd, BIH 3rd, QAT out). Live model = **Mark2** (λ=0.6, **now venue-aware host bonus** + real FIFA worldRank). Group stage finishing (A/C due 6-24).
 
 ## Session Notes
 - 2026-06-21 — Built the full projector end-to-end: engine + FIFA-2026 tiebreakers
@@ -323,3 +342,25 @@ State as of 2026-06-23. 46/104 (feed + manual: ARG 2-0 AUT, FRA 3-0 IRQ, NOR 3-2
   actually are (deterministic rigged scenarios vs enumeration oracle vs Monte Carlo), and a
   qualify-% consistency check (per-branch "X% to qualify" is points-driven/conditional and
   immune to match odds; the blended headline number is what moves with the win prob).
+- 2026-06-24 (big session) — Closed the 520 bring-up (was 6 commits behind; dirty tree blocked
+  the autosync pull). Then a large run, all DEPLOYED: (1) **de-brittled the test suite** — split
+  "does the prose make SENSE" property/oracle checks (stay LIVE) from "exact-string" golden tests
+  (now pinned to a FROZEN snapshot in `test-fixtures/`, MC at 50k so wording matches the 200k
+  build); fixed a real `bracket-labels.mjs` crash (scenarioGrid throws on ≠1-2 unplayed → safe
+  superset). (2) **`3rd (<1%)`** — a 3rd-place outcome shows its sliver % until mathematically out
+  (was collapsing <0.5% to "out"); routed 3 render paths through one `thirdIsOut`. (3) **Calendar
+  auto-sync built + David's Sports calendar fully labeled** (R32 M73-88 + KO M89-103): new
+  `bracket-labels.mjs` rules — R32 n-based tiers ("A2 (KOR 90%)", "SUI (60%)/CAN"), KO shows only
+  highlighted teams w/ % ("FRA (28%)/GER (17%)/…"), readable structural ("G1/?3"), 3rd-place blank
+  till SFs. **Single source of truth**: `build-html.mjs` writes `dist/baked-mc.json`; `sync-calendar.mjs`
+  consumes it (no re-sim → calendar == page always). Fixed a koLambda drift David caught. (4) **UI
+  overhaul**: tabs → Projected/Knockout bracket · Group by Group scenarios · Group stage tables
+  (tab1 auto-flips when group stage done); **third-place RACE panel** (games-played, % to advance,
+  prob-ordered, cut line, MATHEMATICAL green/red bands via group-situation `thirdOnPointsClinches`/
+  `…Eliminated`); group-by-group shows completed fixtures w/ score·date·venue. (5) **Venue-aware
+  host bonus** — a co-host gets +80 only IN ITS OWN country (Canada at SoFi/LA gets nothing); CAN/MEX
+  title odds drop, USA flat. (6) **Real FIFA World Ranking** (11 Jun 2026) → `team.worldRank` for the
+  step-7 tiebreaker. Group B updated on both site + calendar. Annex C research (agents): D1←B 99.7%,
+  K↔L a 100% locked reciprocal pair, near-locked driven by no-rematch + fixed-bracket + rest (late
+  groups barred from early R32 slots). Discussed **#4 unattended auto-sync** — plan delivered, awaiting
+  David's 3 decisions (see RESUME). Commits e7fd003→0f5a2b3.
