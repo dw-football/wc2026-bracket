@@ -31,6 +31,8 @@ import {
   renderSideLabel,
   orderByProb,
   computeMatchLabels,
+  r32SlotCode,
+  groupSlotCode,
   DOMINANT_THRESHOLD,
   DEFAULT_MAX_PREVIEW,
 } from './bracket-labels.mjs';
@@ -47,37 +49,47 @@ const mcMap = (obj) => new Map(Object.entries(obj));
 // R32 GROUP SLOT — 4 tiers
 // ---------------------------------------------------------------------------
 
+// Slot codes are GROUP-FIRST per David's convention: "A1"=winner A, "K2"=runner-up K.
+test('group slot codes are GROUP-FIRST (David convention): A1 winner, K2 runner-up', () => {
+  assert.equal(groupSlotCode('A', 1), 'A1');
+  assert.equal(groupSlotCode('K', 2), 'K2');
+  assert.equal(r32SlotCode({ type: 'winner', group: 'F' }), 'F1');
+  assert.equal(r32SlotCode({ type: 'runnerup', group: 'C' }), 'C2');
+  // third-place codes are UNAFFECTED — keep the FIFA candidate-list style.
+  assert.equal(r32SlotCode({ type: 'third', from: ['A', 'B', 'C', 'D', 'F'] }), '3rd A/B/C/D/F');
+});
+
 test('R32 tier 1: a single alive team -> LOCKED to its full name', () => {
-  const res = classifyR32Side(['USA'], mcMap({ USA: 1 }), '1D');
+  const res = classifyR32Side(['USA'], mcMap({ USA: 1 }), 'D1');
   assert.equal(res.kind, 'locked');
   assert.equal(renderSideLabel(res, fullName), 'United States');
 });
 
 test('R32 tier 2: exactly two alive -> favorite-first "FAV/OTHER" pair', () => {
   // POR favored over COL for this slot.
-  const res = classifyR32Side(['COL', 'POR'], mcMap({ POR: 0.62, COL: 0.38 }), '1K');
+  const res = classifyR32Side(['COL', 'POR'], mcMap({ POR: 0.62, COL: 0.38 }), 'K1');
   assert.equal(res.kind, 'two');
   assert.deepEqual(res.codes, ['POR', 'COL']);
   assert.equal(renderSideLabel(res, fullName), 'POR/COL');
 });
 
 test('R32 tier 2 holds even at a lopsided 80/20 (two known names beat tier 3)', () => {
-  const res = classifyR32Side(['COL', 'POR'], mcMap({ POR: 0.8, COL: 0.2 }), '1K');
+  const res = classifyR32Side(['COL', 'POR'], mcMap({ POR: 0.8, COL: 0.2 }), 'K1');
   assert.equal(res.kind, 'two');
   assert.equal(renderSideLabel(res, fullName), 'POR/COL');
 });
 
-test('R32 tier 3: 3+ alive with a >=75% favorite -> "FAV/<slotCode>"', () => {
-  const res = classifyR32Side(['KOR', 'RSA', 'CZE'], mcMap({ KOR: 0.90, RSA: 0.09, CZE: 0.01 }), '2A');
+test('R32 tier 3: 3+ alive with a >=75% favorite -> "FAV/<slotCode>" (group-first)', () => {
+  const res = classifyR32Side(['KOR', 'RSA', 'CZE'], mcMap({ KOR: 0.90, RSA: 0.09, CZE: 0.01 }), 'A2');
   assert.equal(res.kind, 'dominant');
   assert.equal(res.dominantCode, 'KOR');
-  assert.equal(renderSideLabel(res, fullName), 'KOR/2A');
+  assert.equal(renderSideLabel(res, fullName), 'KOR/A2');
 });
 
-test('R32 tier 4: 3+ alive, nobody dominant -> structural placeholder', () => {
-  const res = classifyR32Side(['BRA', 'MAR', 'SCO'], mcMap({ BRA: 0.5, MAR: 0.3, SCO: 0.2 }), '1C');
+test('R32 tier 4: 3+ alive, nobody dominant -> structural placeholder (group-first)', () => {
+  const res = classifyR32Side(['BRA', 'MAR', 'SCO'], mcMap({ BRA: 0.5, MAR: 0.3, SCO: 0.2 }), 'C1');
   assert.equal(res.kind, 'multi');
-  assert.equal(renderSideLabel(res, fullName), '1C');
+  assert.equal(renderSideLabel(res, fullName), 'C1');
 });
 
 test('R32 tier 4: a third slot placeholder keeps the FIFA group-list style', () => {
@@ -91,9 +103,9 @@ test('R32 tier 4: a third slot placeholder keeps the FIFA group-list style', () 
 });
 
 test('R32 dominance is strictly at the threshold boundary (74.9% -> placeholder)', () => {
-  const below = classifyR32Side(['A', 'B', 'C'], mcMap({ A: DOMINANT_THRESHOLD - 0.001, B: 0.2, C: 0.05 }), '1X');
+  const below = classifyR32Side(['A', 'B', 'C'], mcMap({ A: DOMINANT_THRESHOLD - 0.001, B: 0.2, C: 0.05 }), 'X1');
   assert.equal(below.kind, 'multi');
-  const at = classifyR32Side(['A', 'B', 'C'], mcMap({ A: DOMINANT_THRESHOLD, B: 0.2, C: 0.05 }), '1X');
+  const at = classifyR32Side(['A', 'B', 'C'], mcMap({ A: DOMINANT_THRESHOLD, B: 0.2, C: 0.05 }), 'X1');
   assert.equal(at.kind, 'dominant');
 });
 

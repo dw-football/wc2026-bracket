@@ -87,10 +87,22 @@ export function orderByProb(codes, mcP) {
   });
 }
 
-/** Structural placeholder for an R32 group slot. */
+/**
+ * Group slot code in DAVID'S GROUP-FIRST convention: `${GROUP}${POSITION}`,
+ * position 1 = winner, 2 = runner-up — e.g. winner A = "A1", runner-up K = "K2".
+ * This matches his original calendar labels. A forker who prefers FIFA's
+ * placement-first style ("1A"/"2A") only needs to flip this one helper.
+ */
+export function groupSlotCode(groupLetter, position) {
+  return `${groupLetter}${position}`;
+}
+
+/** Structural placeholder for an R32 group slot. Group slots use the group-first
+ *  convention above; third-place slots keep the FIFA candidate-list style
+ *  ("3rd E/H/I/J/K"), which is intentionally left UNAFFECTED. */
 export function r32SlotCode(side) {
-  if (side.type === 'winner') return '1' + side.group;
-  if (side.type === 'runnerup') return '2' + side.group;
+  if (side.type === 'winner') return groupSlotCode(side.group, 1);
+  if (side.type === 'runnerup') return groupSlotCode(side.group, 2);
   if (side.type === 'third') return '3rd ' + (side.from || []).join('/');
   return '?';
 }
