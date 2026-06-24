@@ -141,6 +141,7 @@ export function toGroups(raw, teamsTable) {
       played,
       date: m.date ?? null,
       time: m.time ?? null,
+      venue: m.ground ?? m.venue ?? null,
     });
   }
 

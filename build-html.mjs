@@ -469,14 +469,28 @@ tr.q3 td:first-child{box-shadow:inset 3px 0 0 var(--qual3line)}
 .glegend .sw.q3{background:var(--qual3);box-shadow:inset 3px 0 0 var(--qual3line)}
 .lots{color:var(--warn);cursor:help}
 .thirds{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:8px 12px;margin-top:8px}
-.thirds .cut{border-top:2px dashed var(--warn);margin:4px 0;position:relative}
+.thirds .thlegend{margin:0 0 6px}
+.thirds .thlegend .sw{display:inline-block;width:10px;height:10px;border-radius:2px;vertical-align:middle;margin:0 2px 0 6px}
+.thirds .thlegend .sw.clinch{background:var(--good)}
+.thirds .thlegend .sw.elim{background:var(--bad)}
+.thirds .cut{border-top:2px dashed var(--warn);margin:5px 0;position:relative}
 .thirds .cut span{position:absolute;right:0;top:-9px;background:var(--panel);
   color:var(--warn);font-size:10px;padding:0 4px}
-.thirds .trow{display:flex;gap:8px;padding:3px 4px;font-size:12.5px;border-bottom:1px solid var(--line)}
-.thirds .trow.qual{color:var(--good)}
-.thirds .trow .g{min-width:62px;color:var(--dim)}
-.thirds .trow .cd{font-weight:700;min-width:40px}
-.thirds .trow .st{flex:1;text-align:right;color:var(--dim);font-variant-numeric:tabular-nums}
+.thirds .trow{display:flex;align-items:center;gap:8px;padding:4px 6px;font-size:12.5px;border-bottom:1px solid var(--line);border-radius:4px}
+.thirds .trow.qual{border-left:3px solid var(--warn);padding-left:5px}
+.thirds .trow.clinch{background:rgba(18,122,66,.16);border-left:3px solid var(--good)}
+.thirds .trow.elim{background:rgba(204,58,58,.10);color:var(--dim);border-left:3px solid var(--bad)}
+.thirds .trow .g{min-width:44px;color:var(--dim)}
+.thirds .trow .cd{font-weight:700;min-width:36px}
+.thirds .trow .nm{flex:1;min-width:80px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.thirds .trow .pl{min-width:40px;color:var(--dim);text-align:center;font-variant-numeric:tabular-nums}
+.thirds .trow .pp{min-width:118px;color:var(--dim);text-align:right;font-variant-numeric:tabular-nums}
+.thirds .trow .adv{min-width:94px;text-align:right;font-weight:600;font-variant-numeric:tabular-nums;display:flex;align-items:center;justify-content:flex-end;gap:6px}
+.thirds .trow .adv .advbar{display:inline-block;width:40px;height:6px;background:var(--line);border-radius:3px;overflow:hidden}
+.thirds .trow .adv .advbar i{display:block;height:100%;background:var(--accent)}
+.scn-final-table{width:auto !important;min-width:360px;max-width:580px}
+.fx .fxs{color:var(--txt);font-variant-numeric:tabular-nums}
+.fx .fxv{color:var(--dim)}
 
 /* score editor */
 .editor{display:flex;align-items:center;gap:4px;font-size:12px;margin:3px 0;
@@ -874,9 +888,12 @@ const APP_JS = String.raw`
     });
     wrap.appendChild(seg);
 
-    // tabs
+    // tabs — order: bracket | scenarios | tables. The bracket tab is "Projected"
+    // until all 32 R32 teams lock (group stage complete), then "Knockout bracket".
+    var groupStageDone=false;
+    try{ groupStageDone=groupsForCompute().every(function(g){return g.matches.every(function(m){return m.played;});}); }catch(e){}
     var tabs=document.createElement('div'); tabs.className='tabbar';
-    [['bracket','Knockout bracket'],['groups','Group stage'],['scenario','Scenario calculator']].forEach(function(t){
+    [['bracket',groupStageDone?'Knockout bracket':'Projected bracket'],['scenario','Group by Group scenarios'],['groups','Group stage tables']].forEach(function(t){
       var b=document.createElement('button'); b.className='tab'+(state.tab===t[0]?' active':'');
       b.textContent=t[1]; b.onclick=function(){ state.tab=t[0]; render(); };
       tabs.appendChild(b);
@@ -1547,17 +1564,50 @@ const APP_JS = String.raw`
   function thirdsPanel(gs){
     var panel=document.createElement('div'); panel.className='thirds';
     var h=document.createElement('h3'); h.style.margin='2px 0 6px'; h.style.fontSize='14px';
-    h.textContent='Third-place ranking (top 8 advance)'; panel.appendChild(h);
+    h.textContent='Third-place race — top 8 advance'; panel.appendChild(h);
     var ranked;
     try{ ranked=rankThirdPlaceTeams(gs); }
     catch(e){ var er=document.createElement('div'); er.className='muted tiny'; er.textContent='Third-place ranking unavailable: '+e.message; panel.appendChild(er); return panel; }
-    ranked.forEach(function(t,i){
-      if(i===8){ var cut=document.createElement('div'); cut.className='cut'; cut.innerHTML='<span>cut line</span>'; panel.appendChild(cut); }
-      var row=document.createElement('div'); row.className='trow'+(t.qualifies?' qual':'');
+    // P(this group's third advances) = Σ pThirdQualify over the group's teams,
+    // from the SAME baked sim the bracket/scenario tabs use (single source).
+    var dist=eloDistByCode();
+    var gByName={}; gs.forEach(function(g){ gByName[g.name]=g; });
+    function pAdv(groupName){
+      if(!dist) return null;
+      var g=gByName[groupName]; if(!g) return null;
+      var s=0, any=false;
+      g.teams.forEach(function(t){ var e=dist[t.code]; if(e){ any=true; s+=(e.pThirdQualify||0); } });
+      return any?s:null;
+    }
+    function groupDone(groupName){ var g=gByName[groupName]; return !!(g&&g.matches.every(function(m){return m.played;})); }
+    var lg=document.createElement('div'); lg.className='thlegend muted tiny';
+    lg.innerHTML='Each row = a group’s 3rd-place team. <b>% = model chance that group’s 3rd advances</b> (open the Scenario tab for detail). '+
+      '<span class="sw clinch"></span> through · <span class="sw elim"></span> out.';
+    panel.appendChild(lg);
+    // ORDER BY P(advance) desc — the forward-looking race order (so through floats
+    // to the top, out sinks, and the cut marks the model's projected 8). Tiebreak:
+    // current 3rd-place standing (the ranked order). Until the sim loads, p is null
+    // for all and this is a stable no-op (keeps the standings order).
+    var rows=ranked.map(function(t){ return { t:t, p:pAdv(t.group), done:groupDone(t.group) }; });
+    rows.sort(function(a,b){ var pa=a.p==null?-1:a.p, pb=b.p==null?-1:b.p; return pb-pa; });
+    rows.forEach(function(r,i){
+      var t=r.t, p=r.p, done=r.done;
+      if(i===8){ var cut=document.createElement('div'); cut.className='cut'; cut.innerHTML='<span>cut line — top 8 advance</span>'; panel.appendChild(cut); }
+      var prov = i<8;  // model projects this group's 3rd among the advancing 8
+      var band='';
+      if(p!=null && p>=0.9995 && done) band=' clinch';   // group settled + virtually certain → through
+      else if(p!=null && p<0.0005) band=' elim';          // can't make it → out
+      var row=document.createElement('div'); row.className='trow'+(prov?' qual':'')+band;
       var lots=t.tiedByLots?' ⚖':'';
-      row.innerHTML='<span class="g">'+esc(t.group)+'</span>'+
+      var gl=(/Group\s+([A-L])/i.exec(t.group)||[])[1]||t.group;
+      var pctTxt = p==null?'—':(p>=0.9995?'>99%':(p<0.0005?'<1%':Math.round(p*100)+'%'));
+      var bar = p==null?'':'<span class="advbar"><i style="width:'+Math.max(2,Math.round((p||0)*100))+'%"></i></span>';
+      row.innerHTML='<span class="g">Grp '+gl+'</span>'+
         '<span class="cd" style="color:'+accentFor(t.code)+'">'+t.code+lots+'</span>'+
-        '<span class="st">'+t.points+' pts &middot; GD '+(t.gd>0?'+':'')+t.gd+' &middot; GF '+t.gf+'</span>';
+        '<span class="nm">'+esc(t.name)+'</span>'+
+        '<span class="pl">'+(done?'done':t.played+'/3')+'</span>'+
+        '<span class="pp">'+t.points+' pts · GD '+(t.gd>0?'+':'')+t.gd+'</span>'+
+        '<span class="adv">'+pctTxt+bar+'</span>';
       panel.appendChild(row);
     });
     return panel;
@@ -1605,24 +1655,57 @@ const APP_JS = String.raw`
     return wd+' '+mon+' '+day+', '+h12+':'+mm+' '+ap+' ET';
   }
 
-  // "Remaining fixtures" block: one line per UNPLAYED match in the group, using
-  // full team names and the kickoff converted to ET. "Group complete" if none.
+  // Short calendar date "Jun 12" from an ISO yyyy-mm-dd.
+  function shortDate(iso){
+    if(!iso) return '';
+    var p=String(iso).split('-'); if(p.length<3) return iso;
+    return MON[(+p[1]||1)-1]+' '+(+p[2]);
+  }
+  // Matches sorted chronologically (date then time).
+  function chronoMatches(g){
+    return g.matches.slice().sort(function(a,b){
+      var da=(a.date||'')+'|'+(a.time||''), db=(b.date||'')+'|'+(b.time||'');
+      return da<db?-1:da>db?1:0;
+    });
+  }
+  // One fixture line. Played → with the EXACT score; unplayed → "vs" + kickoff.
+  // Both show date and venue when available, so people see the results behind the
+  // tables.
+  function fixtureLine(m){
+    var n1=nameByCode[m.home]||m.home, n2=nameByCode[m.away]||m.away;
+    var row=document.createElement('div'); row.className='fx';
+    var venue=m.venue?' · <span class="fxv">'+esc(m.venue)+'</span>':'';
+    if(m.played){
+      var dt=m.date?'<span class="when">'+esc(shortDate(m.date))+'</span>':'';
+      row.innerHTML='<span class="fxt">'+esc(n1)+' <b class="fxs">'+m.homeGoals+'–'+m.awayGoals+'</b> '+esc(n2)+'</span>'+
+        ((dt||venue)?' — ':'')+dt+venue;
+    } else {
+      var when=fixtureWhenET(m.date, m.time);
+      row.innerHTML='<span class="fxt">'+esc(n1)+' vs '+esc(n2)+'</span>'+
+        ((when||venue)?' — ':'')+(when?'<span class="when">'+esc(when)+'</span>':'')+venue;
+    }
+    return row;
+  }
+  // PLAYED results block (chronological, score+date+venue). Null if none yet.
+  function playedFixtures(g){
+    var played=chronoMatches(g).filter(function(m){return m.played;});
+    if(!played.length) return null;
+    var d=document.createElement('div'); d.className='scn-fixtures';
+    var h=document.createElement('div'); h.className='fx-h'; h.textContent='Results'; d.appendChild(h);
+    played.forEach(function(m){ d.appendChild(fixtureLine(m)); });
+    return d;
+  }
+  // UNPLAYED "Remaining fixtures" block (chronological). "Group complete" if none.
   function remainingFixtures(g){
     var d=document.createElement('div'); d.className='scn-fixtures';
-    var unplayed=g.matches.filter(function(m){return !m.played;});
+    var unplayed=chronoMatches(g).filter(function(m){return !m.played;});
     var h=document.createElement('div'); h.className='fx-h'; h.textContent='Remaining fixtures';
     d.appendChild(h);
     if(!unplayed.length){
       var c=document.createElement('div'); c.className='fx'; c.textContent='Group complete'; d.appendChild(c);
       return d;
     }
-    unplayed.forEach(function(m){
-      var n1=nameByCode[m.home]||m.home, n2=nameByCode[m.away]||m.away;
-      var when=fixtureWhenET(m.date, m.time);
-      var row=document.createElement('div'); row.className='fx';
-      row.innerHTML=esc(n1)+' vs '+esc(n2)+(when?' — <span class="when">'+esc(when)+'</span>':'');
-      d.appendChild(row);
-    });
+    unplayed.forEach(function(m){ d.appendChild(fixtureLine(m)); });
     return d;
   }
 
@@ -1738,15 +1821,17 @@ const APP_JS = String.raw`
     head.appendChild(pbtn);
     card.appendChild(head);
 
-    // Remaining fixtures (date + time in ET) replace the old placeholder text.
-    card.appendChild(remainingFixtures(g));
+    // IN-PLAY groups: results so far + remaining fixtures up top, so the exact
+    // scores behind the table are visible. A COMPLETE group shows its results
+    // BELOW the final table instead (see the nUn===0 branch).
+    if(nUn>=1){ var _pf=playedFixtures(g); if(_pf) card.appendChild(_pf); card.appendChild(remainingFixtures(g)); }
 
     if(nUn===0){
-      // ---- STAGE: complete -> final standings table ----
+      // ---- STAGE: complete -> final standings table + the 6 results below ----
       var note=document.createElement('div'); note.className='scn-note';
       note.textContent='Group complete — final standings:';
       card.appendChild(note);
-      var t=document.createElement('table'); t.style.marginBottom='6px';
+      var t=document.createElement('table'); t.className='scn-final-table'; t.style.marginBottom='6px';
       t.innerHTML='<thead><tr><th>#</th><th>Team</th><th>P</th><th>W</th><th>D</th><th>L</th><th>GF</th><th>GA</th><th>GD</th><th>Pts</th></tr></thead>';
       var tb=document.createElement('tbody');
       standing.forEach(function(s){
@@ -1758,14 +1843,9 @@ const APP_JS = String.raw`
         tb.appendChild(tr);
       });
       t.appendChild(tb); card.appendChild(t);
-      // Elo finish row per team (in standing order).
-      orderedTeams.forEach(function(team){
-        var e=dist?dist[team.code]:null;
-        var row=document.createElement('div'); row.className='scn-team';
-        row.appendChild(teamHeader(team.code, team.name, e, stByCode[team.code]));
-        appendDist(row, team.code, dist);
-        card.appendChild(row);
-      });
+      // The six completed fixtures (chronological, scores + dates + venues) below
+      // the final table. (No per-team Elo rows — they'd just repeat the table.)
+      var pfDone=playedFixtures(g); if(pfDone) card.appendChild(pfDone);
 
     } else if(nUn<=2){
       // ---- STAGE: final round (1-2 unplayed) -> summarizeGroup ----
