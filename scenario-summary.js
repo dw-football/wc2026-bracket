@@ -1239,12 +1239,14 @@ function mcQualifiedHeadline(mc, firstReachable) {
   return base;
 }
 
-/** A 3rd-place advance probability that COLLAPSES to "out": it rounds to <=2%
- *  (covers an exact 0, a "<1%" tail, 1%, and 2%). pctWhole prints "0%"/"<1%"/
- *  "1%"/"2%" for these; we never show that noisy near-zero — we say "out".
- *  GENERAL rule (Fix 1). */
+/** A 3rd-place advance probability that COLLAPSES to a bare "out". David's rule
+ *  (2026-06-24): show "3rd (<1% to qualify)" for ANY non-zero sliver — name the
+ *  chance right up until a team is mathematically out. So "out" is reserved for
+ *  the genuinely dead branch: the result can't yield a 3rd at all (p == null, a
+ *  4th) or NO simulated world has that 3rd qualifying (p == 0). A tiny positive
+ *  p prints "<1%" via the pct formatter; it is no longer swallowed. */
 function thirdIsOut(p) {
-  return p == null || p < 0.005; // only a truly negligible (<0.5%) 3rd is "out"
+  return p == null || p <= 0;
 }
 
 /** Monte-Carlo probability the team finishes in `pos` (1..4), or null. */
@@ -1309,7 +1311,7 @@ function posBelowFloor(mc, pos) {
 function posToken(rankSet, pThird) {
   const top2 = [...rankSet].filter((r) => r <= 2);
   const has4 = rankSet.has(4);
-  const live3 = rankSet.has(3) && !(pThird == null || pThird < 0.005);
+  const live3 = rankSet.has(3) && !thirdIsOut(pThird);
   // "out-ish" = a genuine 4th, or a 3rd whose advance odds are negligible.
   const outish = has4 || (rankSet.has(3) && !live3);
   const parts = [];
@@ -1529,12 +1531,12 @@ function mcResultLedDetail(code, group, unplayed, scenarios, mc, nameOf, matchPr
 
   // Position token for a finishing rank at a given points total.
   const qOf = (pts) => qualIfThirdGivenPoints(mc, pts)?.pQualIfThird ?? null;
-  const liveThird = (pts) => { const q = qOf(pts); return q != null && q >= 0.005; };
+  const liveThird = (pts) => !thirdIsOut(qOf(pts));
   const posTok = (rank, pts) => {
     if (rank <= 2) return ordinal(rank);
     if (rank === 4) return '4th (out)';
     const q = qOf(pts);
-    return q != null && q >= 0.005 ? `3rd (${pctWhole(q)} to qualify)` : '3rd (out)';
+    return !thirdIsOut(q) ? `3rd (${pctWhole(q)} to qualify)` : '3rd (out)';
   };
 
   // Find the rival the subject swaps with in a GD-split cell (the team at the

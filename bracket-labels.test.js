@@ -31,6 +31,7 @@ import {
   renderSideLabel,
   orderByProb,
   computeMatchLabels,
+  groupRankSets,
   r32SlotCode,
   groupSlotCode,
   DOMINANT_THRESHOLD,
@@ -252,6 +253,52 @@ test('computeMatchLabels (live data): R32 fully labeled, knockout obeys the rule
   const m94 = labels.get(94);
   assert.ok(m94 && m94.full, 'M94 carries a label (USA breadcrumb)');
   assert.match(m94.home, /USA\?/, `M94 home shows USA breadcrumb: ${m94.home}`);
+});
+
+// ---------------------------------------------------------------------------
+// groupRankSets must survive ANY group stage (0, 1-2, or 3+ unplayed).
+// REGRESSION: scenarioGrid throws on != 1-2 unplayed, so a group sitting at 3
+// unplayed (or fully decided) once crashed the whole calendar tool. 0 unplayed
+// -> exact standings; 3+ -> safe superset (every team can still finish 1/2/3).
+// ---------------------------------------------------------------------------
+
+const RR = (codes) => codes.map((c) => ({ code: c, name: c, elo: 1600 }));
+// All 6 round-robin pairings for a 4-team group, in order.
+const PAIRS = [[0, 1], [0, 2], [0, 3], [1, 2], [1, 3], [2, 3]];
+function groupWithPlayed(letter, codes, nPlayed) {
+  const matches = PAIRS.map(([h, a], i) => {
+    const played = i < nPlayed;
+    return {
+      home: codes[h], away: codes[a],
+      homeGoals: played ? 1 : null, awayGoals: played ? 0 : null, played,
+      date: '2026-06-2' + (i % 9), time: '12:00',
+    };
+  });
+  return { name: 'Group ' + letter, teams: RR(codes), matches };
+}
+
+test('groupRankSets: a group with 3 unplayed yields the safe superset (no scenarioGrid throw)', () => {
+  // 3 of 6 played -> 3 unplayed. Must NOT throw; every team can still place 1/2/3.
+  const g = groupWithPlayed('K', ['POR', 'COD', 'UZB', 'COL'], 3);
+  let rs;
+  assert.doesNotThrow(() => { rs = groupRankSets([g]); }, 'must not throw on 3 unplayed');
+  const K = rs.K;
+  assert.ok(K, 'Group K rank sets present');
+  for (const code of ['POR', 'COD', 'UZB', 'COL']) {
+    assert.ok(K.r1.has(code) && K.r2.has(code) && K.r3.has(code),
+      `${code} in the safe superset for all of 1st/2nd/3rd`);
+  }
+});
+
+test('groupRankSets: a fully decided group (0 unplayed) uses exact final standings', () => {
+  // All 6 played, seeded so c0 wins, c1 2nd, c2 3rd (1-0 wins down the order).
+  const g = groupWithPlayed('K', ['AAA', 'BBB', 'CCC', 'DDD'], 6);
+  const rs = groupRankSets([g]);
+  const K = rs.K;
+  // Exactly one team per rank — the deterministic finishers, not a superset.
+  assert.equal(K.r1.size, 1, 'one clear winner');
+  assert.equal(K.r2.size, 1, 'one runner-up');
+  assert.equal(K.r3.size, 1, 'one third');
 });
 
 test('computeMatchLabels: WITHOUT a watched team, deep knockout slots stay unchanged', async () => {

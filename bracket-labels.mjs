@@ -128,6 +128,17 @@ export function groupRankSets(groups) {
       out[L] = { r1, r2, r3 };
       continue;
     }
+    if (unplayedKeys.length > 2) {
+      // scenarioGrid only enumerates 1-2 unplayed matches (it throws otherwise).
+      // With 3+ still to play (early in the group) the field is wide open, so take
+      // the SAFE SUPERSET — every team can still finish 1st/2nd/3rd. Over-wide,
+      // never a false lock; exact enumeration resumes automatically once the group
+      // narrows to <=2 unplayed. (Without this, the calendar tool crashed whenever
+      // a group sat at 3 unplayed.)
+      for (const t of g.teams) { r1.add(t.code); r2.add(t.code); r3.add(t.code); }
+      out[L] = { r1, r2, r3 };
+      continue;
+    }
     const grid = scenarioGrid(g, unplayedKeys, 6);
     for (const t of g.teams) {
       const s = grid.teams[t.code];

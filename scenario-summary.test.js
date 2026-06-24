@@ -3,9 +3,13 @@
 //
 //   node --test scenario-summary.test.js
 //
-// Covers:
-//   - the GOLDEN Group D case loaded via the real adapter (fetchRaw + toGroups
-//     + teams.json);
+// Covers, in TWO deliberately-separate buckets (see test-fixtures/README.md):
+//   - "EXACT WORDING" golden tests (GOLDEN Group D/A/C/F + the MC verbatim
+//     Group D/A/E/B blocks) load a FROZEN snapshot (test-fixtures/*.json) so a
+//     pinned sentence can never break just because a new game was played;
+//   - "DOES THE PROSE MAKE SENSE" property sweeps (<=2 sentences, % only on a
+//     3rd, no bare "on goal difference", no false "through", etc.) read the LIVE
+//     feed (fetchRaw) — they hold on ANY board, so they flag real bugs only;
 //   - one synthetic group per headline branch (won-group, qualified-but-1st-
 //     still-possible, best-3rd, eliminated, conditional), with hand-verified
 //     expected text.
@@ -18,20 +22,67 @@ import { summarizeGroup, __test } from './scenario-summary.js';
 import { monteCarlo } from './model.js';
 import { resolveThirdPlaceSlots } from './allocation.js';
 
-// Build a real Monte-Carlo per-team map (code -> perTeam entry) for the live
-// data, shared across the mc-aware tests below.
-async function buildMcByCode() {
-  const teams = JSON.parse(await readFile('teams.json', 'utf8'));
+// ---------------------------------------------------------------------------
+// TWO data sources, by design (see the file header):
+//   * LIVE  (fetchRaw) — feeds the "does the live prose make SENSE?" property
+//     sweeps: every 3rd carries a %, no bare "on goal difference", <= 2
+//     sentences, no false "through", etc. These hold on ANY valid board, so
+//     they never break on a new result — only on a genuine wording bug.
+//   * FROZEN (test-fixtures/*.json) — feeds the "does the prose match this
+//     EXACT string?" golden tests. A verbatim sentence is only ever right for
+//     one day's standings, so it is pinned to a FROZEN snapshot of the board +
+//     team Elos. A new result can never break these; regenerate the snapshot
+//     (and re-sign-off the strings) only when the wording LOGIC changes on
+//     purpose — see test-fixtures/README.md.
+// ---------------------------------------------------------------------------
+
+async function mcFrom(raw, teams, n) {
   const bracket = JSON.parse(await readFile('bracket.json', 'utf8'));
-  const raw = await fetchRaw();
   const groups = toGroups(raw, teams);
   const mc = monteCarlo(groups, bracket, {
-    n: 4000, seed: 12345, hostCodes: new Set(['USA', 'MEX', 'CAN']),
+    n, seed: 12345, hostCodes: new Set(['USA', 'MEX', 'CAN']),
     topCandidates: 6, resolveThirdPlaceSlots,
   });
   const map = {};
   mc.perTeam.forEach((e) => { map[e.code] = e; });
   return { groups, mcByCode: map };
+}
+
+// LIVE feed — used by the property sweeps that validate today's prose is sane.
+// n=4000 is plenty for property checks (no exact % is pinned). Memoized so the
+// repeated sweeps share one MC run.
+let _liveMc;
+function buildMcByCode() {
+  if (!_liveMc) _liveMc = (async () =>
+    mcFrom(await fetchRaw(), JSON.parse(await readFile('teams.json', 'utf8')), 4000))();
+  return _liveMc;
+}
+
+// FROZEN snapshot — used by the verbatim golden tests so exact wording is
+// immune to tournament progression. n=50000 (not 4000) so the wording MATCHES
+// the live 200k build even for ultra-rare branches: a ~0.01% goal-difference-flip
+// 3rd (e.g. SUI/CAN losing into a 3rd) is sampled ~0 times at 4000 and would
+// mis-print "out", but at 50k it samples and prints the true "3rd (99%)" — what
+// the deployed site actually shows. Memoized: one MC run shared by every golden.
+const FROZEN_FEED = new URL('./test-fixtures/feed-snapshot.json', import.meta.url);
+const FROZEN_TEAMS = new URL('./test-fixtures/teams-snapshot.json', import.meta.url);
+const FROZEN_MC_N = 50000;
+async function loadFrozen() {
+  const teams = JSON.parse(await readFile(FROZEN_TEAMS, 'utf8'));
+  const raw = JSON.parse(await readFile(FROZEN_FEED, 'utf8'));
+  return { raw, teams };
+}
+async function frozenGroups() {
+  const { raw, teams } = await loadFrozen();
+  return toGroups(raw, teams);
+}
+let _frozenMc;
+function frozenMcByCode() {
+  if (!_frozenMc) _frozenMc = (async () => {
+    const { raw, teams } = await loadFrozen();
+    return mcFrom(raw, teams, FROZEN_MC_N);
+  })();
+  return _frozenMc;
 }
 
 // --- helpers ---------------------------------------------------------------
@@ -59,9 +110,7 @@ const sentenceCount = (s) => {
 // ===========================================================================
 
 test('GOLDEN Group D — USA clinched, TUR out, AUS/PAR depend only on their own match', async () => {
-  const teams = JSON.parse(await readFile('teams.json', 'utf8'));
-  const raw = await fetchRaw();
-  const groupD = toGroups(raw, teams).find((g) => g.name === 'Group D');
+  const groupD = (await frozenGroups()).find((g) => g.name === 'Group D');
   assert.ok(groupD, 'Group D must exist in the adapter output');
 
   const out = summarizeGroup(groupD);
@@ -101,9 +150,7 @@ test('GOLDEN Group D — USA clinched, TUR out, AUS/PAR depend only on their own
 // ===========================================================================
 
 test('GOLDEN Group A — South Korea reduces to the minimal coupled-group form', async () => {
-  const teams = JSON.parse(await readFile('teams.json', 'utf8'));
-  const raw = await fetchRaw();
-  const groups = toGroups(raw, teams);
+  const groups = await frozenGroups();
   const groupA = groups.find((g) => g.name === 'Group A');
   assert.ok(groupA, 'Group A must exist');
 
@@ -362,9 +409,7 @@ test('two-match group: each team only references the matches it depends on', () 
 // ===========================================================================
 
 test('GOLDEN — Group C Haiti and Group F Tunisia are Eliminated', async () => {
-  const teams = JSON.parse(await readFile('teams.json', 'utf8'));
-  const raw = await fetchRaw();
-  const groups = toGroups(raw, teams);
+  const groups = await frozenGroups();
 
   const hai = byCode(summarizeGroup(groups.find((g) => g.name === 'Group C')), 'HAI');
   assert.equal(hai.status, 'eliminated');
@@ -498,7 +543,7 @@ test('minimalCover: single-variable W/D/L partition yields three singleton subcu
 // ===========================================================================
 
 test('MC: Group D final-round headlines + result-based detail (verbatim sign-off)', async () => {
-  const { groups, mcByCode } = await buildMcByCode();
+  const { groups, mcByCode } = await frozenMcByCode();
   const out = summarizeGroup(groups.find((g) => g.name === 'Group D'), { mcByCode });
   const get = (c) => out.teams.find((t) => t.code === c);
 
@@ -524,7 +569,7 @@ test('MC: Group D final-round headlines + result-based detail (verbatim sign-off
 });
 
 test('MC: Group A KOR/CZE detail names the OTHER-match condition that splits 3rd vs 4th', async () => {
-  const { groups, mcByCode } = await buildMcByCode();
+  const { groups, mcByCode } = await frozenMcByCode();
   const out = summarizeGroup(groups.find((g) => g.name === 'Group A'), { mcByCode });
   const kor = out.teams.find((t) => t.code === 'KOR');
   const cze = out.teams.find((t) => t.code === 'CZE');
@@ -554,12 +599,14 @@ test('MC: Group A KOR/CZE detail names the OTHER-match condition that splits 3rd
     cze.detail
   );
 
-  // RSA: the regression case — a DRAW can finish 3rd (low %) if Mexico beat
-  // Czech, NOT a bare "out". Must show the 3rd with its advance %.
+  // RSA: a WIN names the realistic 3rd + the rare GD-flip 2nd; a DRAW is the
+  // genuine (if <1%) 3rd it really is if Mexico beat Czech, else a 4th; only a
+  // LOSS is a bare "out". (David's rule, 2026-06-24: name the sliver as
+  // "3rd (<1%)" right up until a team is mathematically out — never swallow it.)
   const rsa = out.teams.find((t) => t.code === 'RSA');
   assert.match(
     rsa.detail,
-    /Draw → 3rd \((?:\d+|<1)% to qualify\) if Mexico beat Czech Republic, 4th \(out\) if Czech Republic win or draw/,
+    /^Win → 2nd if Mexico win or draw, 3rd \(\d+% to qualify\) if Czech Republic beat Mexico \(or 2nd if South Africa overturn Czech Republic's \d+-goal goal-difference edge\); Draw → 3rd \((?:\d+|<1)% to qualify\) if Mexico beat Czech Republic, 4th \(out\) if Czech Republic win or draw; Loss → out\.$/,
     rsa.detail
   );
 });
@@ -662,7 +709,7 @@ test('MC (a): no detail ever has a "4th" token followed by a parenthetical %', a
 });
 
 test('MC (b): Group E Ivory Coast loss clause conditions the 4th on the other match', async () => {
-  const { groups, mcByCode } = await buildMcByCode();
+  const { groups, mcByCode } = await frozenMcByCode();
   const out = summarizeGroup(groups.find((g) => g.name === 'Group E'), { mcByCode });
   const civ = out.teams.find((t) => t.code === 'CIV');
   assert.ok(civ, 'CIV must be in Group E');
@@ -710,7 +757,11 @@ test('MC (c): a Group B team with pTop2<0.5% has no 2nd-place headline; surfaces
       );
     }
   }
-  assert.ok(checked >= 1, 'expected at least one Group B infinitesimal-2nd team (BIH/QAT)');
+  // No ">=1" anchor: this runs on the LIVE board, where Group B may have no
+  // infinitesimal-2nd team (they resolve as games are played) — requiring one is
+  // exactly the brittleness we're removing. The property is checked for any that
+  // exist; the branch itself is locked verbatim by the FROZEN Bosnia test below.
+  assert.ok(checked >= 0);
 });
 
 // ===========================================================================
@@ -793,11 +844,13 @@ test('MC wording (c): an infinitesimal-2nd team (pTop2<0.5%) names 2nd ONLY as t
       }
     }
   }
-  assert.ok(checked >= 1, 'expected at least one infinitesimal-2nd team (BIH/QAT)');
+  // No ">=1" anchor — runs on the LIVE board (see the Group B sweep above for why).
+  // The frozen Bosnia verbatim test guarantees this branch is exercised.
+  assert.ok(checked >= 0);
 });
 
 test('MC wording: Group E verbatim — conditioned splits; bare "out" only when truly out', async () => {
-  const { groups, mcByCode } = await buildMcByCode();
+  const { groups, mcByCode } = await frozenMcByCode();
   const out = summarizeGroup(groups.find((g) => g.name === 'Group E'), { mcByCode });
   const ecu = out.teams.find((t) => t.code === 'ECU');
   const cuw = out.teams.find((t) => t.code === 'CUW');
@@ -829,7 +882,7 @@ test('MC wording: Group E verbatim — conditioned splits; bare "out" only when 
 });
 
 test('MC wording: Group B Bosnia verbatim — win = "3rd (99% to qualify)", 2nd only as the GD flip', async () => {
-  const { groups, mcByCode } = await buildMcByCode();
+  const { groups, mcByCode } = await frozenMcByCode();
   const out = summarizeGroup(groups.find((g) => g.name === 'Group B'), { mcByCode });
   const bih = out.teams.find((t) => t.code === 'BIH');
   assert.ok(bih, 'BIH must be in Group B');
@@ -845,24 +898,30 @@ test('MC wording: Group B Bosnia verbatim — win = "3rd (99% to qualify)", 2nd 
     /but 2nd if Switzerland beat Canada and Bosnia & Herzegovina overturn Canada's \d+-goal goal-difference edge/,
     bih.detail
   );
-  assert.match(bih.detail, /Draw → 3rd \(\d+% to qualify\); Loss → out/, bih.detail);
+  // David's rule (2026-06-24): the draw is named as the <1% 3rd it really is,
+  // never swallowed into "out"; only the loss (a 4th) is a bare "out".
+  assert.match(bih.detail, /Draw → 3rd \((?:\d+|<1)% to qualify\); Loss → out\.$/, bih.detail);
 });
 
-test('MC wording: Switzerland loss = 2nd with the rare GD-flip 3rd (out), never a bare "through"', async () => {
-  const { groups, mcByCode } = await buildMcByCode();
+test('MC wording: Switzerland loss = 2nd with the rare GD-flip 3rd that itself qualifies, never a bare "through"', async () => {
+  const { groups, mcByCode } = await frozenMcByCode();
   const out = summarizeGroup(groups.find((g) => g.name === 'Group B'), { mcByCode });
   const sui = out.teams.find((t) => t.code === 'SUI');
   assert.ok(sui, 'SUI must be in Group B');
   // Win → 1st, Draw → 2nd. A loss leaves SUI 2nd in the dominant case, but it can
   // still slip to 3rd on the rare goal-difference flip (Qatar beat Bosnia AND
-  // overturn the 9-goal edge); finishing 3rd there is, for SUI, "(out)". A bare
-  // "through" must never appear (3rd is mathematically reachable).
+  // overturn the 9-goal edge). Crucially that 3rd is on FOUR points, which
+  // qualifies as a best-third ~99% — so it must read "3rd (99% to qualify)", NOT
+  // "out": being knocked to 3rd here is rare, but it is NOT elimination. (This is
+  // why the frozen MC runs at 50k, not 4k — at 4k this ~0.01% world is never
+  // sampled and the clause mis-collapses to "out".) A bare "through" must never
+  // appear (3rd is mathematically reachable).
   assert.match(sui.detail, /^Win → 1st; Draw → 2nd; Loss → /, sui.detail);
   assert.doesNotMatch(sui.detail, /\bthrough\b/, `SUI must not claim "through": ${sui.detail}`);
   const suiLoss = (sui.detail.match(/Loss → [^;.]*/) || [])[0] || '';
   assert.match(
     suiLoss,
-    /^Loss → 2nd, but 3rd \(out\) if Qatar beat Bosnia & Herzegovina and also overturn Switzerland's \d+-goal goal-difference edge$/,
+    /^Loss → 2nd, but 3rd \((?:\d+|<1)% to qualify\) if Qatar beat Bosnia & Herzegovina and also overturn Switzerland's \d+-goal goal-difference edge$/,
     `SUI loss clause: ${sui.detail}`
   );
 });

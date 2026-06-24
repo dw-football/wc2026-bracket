@@ -1,0 +1,242 @@
+[
+  {
+    "name": "Spain",
+    "code": "ESP",
+    "elo": 2129
+  },
+  {
+    "name": "Argentina",
+    "code": "ARG",
+    "elo": 2128
+  },
+  {
+    "name": "France",
+    "code": "FRA",
+    "elo": 2084
+  },
+  {
+    "name": "England",
+    "code": "ENG",
+    "elo": 2055
+  },
+  {
+    "name": "Colombia",
+    "code": "COL",
+    "elo": 1998
+  },
+  {
+    "name": "Brazil",
+    "code": "BRA",
+    "elo": 1986
+  },
+  {
+    "name": "Netherlands",
+    "code": "NED",
+    "elo": 1972
+  },
+  {
+    "name": "Portugal",
+    "code": "POR",
+    "elo": 1967
+  },
+  {
+    "name": "Germany",
+    "code": "GER",
+    "elo": 1954
+  },
+  {
+    "name": "Norway",
+    "code": "NOR",
+    "elo": 1929
+  },
+  {
+    "name": "Japan",
+    "code": "JPN",
+    "elo": 1925
+  },
+  {
+    "name": "Mexico",
+    "code": "MEX",
+    "elo": 1896
+  },
+  {
+    "name": "Switzerland",
+    "code": "SUI",
+    "elo": 1885
+  },
+  {
+    "name": "Croatia",
+    "code": "CRO",
+    "elo": 1881
+  },
+  {
+    "name": "Belgium",
+    "code": "BEL",
+    "elo": 1879
+  },
+  {
+    "name": "Uruguay",
+    "code": "URU",
+    "elo": 1870
+  },
+  {
+    "name": "Morocco",
+    "code": "MAR",
+    "elo": 1866
+  },
+  {
+    "name": "Ecuador",
+    "code": "ECU",
+    "elo": 1864
+  },
+  {
+    "name": "Austria",
+    "code": "AUT",
+    "elo": 1857
+  },
+  {
+    "name": "Senegal",
+    "code": "SEN",
+    "elo": 1839
+  },
+  {
+    "name": "USA",
+    "code": "USA",
+    "elo": 1820
+  },
+  {
+    "name": "Paraguay",
+    "code": "PAR",
+    "elo": 1816
+  },
+  {
+    "name": "Turkey",
+    "code": "TUR",
+    "elo": 1813
+  },
+  {
+    "name": "Australia",
+    "code": "AUS",
+    "elo": 1799
+  },
+  {
+    "name": "Canada",
+    "code": "CAN",
+    "elo": 1777
+  },
+  {
+    "name": "South Korea",
+    "code": "KOR",
+    "elo": 1771
+  },
+  {
+    "name": "Scotland",
+    "code": "SCO",
+    "elo": 1768
+  },
+  {
+    "name": "Algeria",
+    "code": "ALG",
+    "elo": 1759
+  },
+  {
+    "name": "Iran",
+    "code": "IRN",
+    "elo": 1756
+  },
+  {
+    "name": "Ivory Coast",
+    "code": "CIV",
+    "elo": 1728
+  },
+  {
+    "name": "Sweden",
+    "code": "SWE",
+    "elo": 1727
+  },
+  {
+    "name": "Egypt",
+    "code": "EGY",
+    "elo": 1711
+  },
+  {
+    "name": "Uzbekistan",
+    "code": "UZB",
+    "elo": 1698
+  },
+  {
+    "name": "Czech Republic",
+    "code": "CZE",
+    "elo": 1696
+  },
+  {
+    "name": "Panama",
+    "code": "PAN",
+    "elo": 1683
+  },
+  {
+    "name": "DR Congo",
+    "code": "COD",
+    "elo": 1674
+  },
+  {
+    "name": "Jordan",
+    "code": "JOR",
+    "elo": 1653
+  },
+  {
+    "name": "Cape Verde",
+    "code": "CPV",
+    "elo": 1606
+  },
+  {
+    "name": "Saudi Arabia",
+    "code": "KSA",
+    "elo": 1598
+  },
+  {
+    "name": "Bosnia & Herzegovina",
+    "code": "BIH",
+    "elo": 1596
+  },
+  {
+    "name": "Iraq",
+    "code": "IRQ",
+    "elo": 1592
+  },
+  {
+    "name": "New Zealand",
+    "code": "NZL",
+    "elo": 1578
+  },
+  {
+    "name": "Tunisia",
+    "code": "TUN",
+    "elo": 1570
+  },
+  {
+    "name": "Ghana",
+    "code": "GHA",
+    "elo": 1557
+  },
+  {
+    "name": "Haiti",
+    "code": "HAI",
+    "elo": 1528
+  },
+  {
+    "name": "South Africa",
+    "code": "RSA",
+    "elo": 1527
+  },
+  {
+    "name": "Curaçao",
+    "code": "CUW",
+    "elo": 1453
+  },
+  {
+    "name": "Qatar",
+    "code": "QAT",
+    "elo": 1437
+  }
+]
