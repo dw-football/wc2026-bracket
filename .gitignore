@@ -2,6 +2,10 @@
 .env
 *.key
 
+# Personal calendar binding + generated apply plan (never commit David's IDs)
+calendar-map.local.json
+calendar-sync-plan.json
+
 # Node
 node_modules/
 

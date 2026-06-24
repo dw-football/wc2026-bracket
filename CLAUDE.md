@@ -16,13 +16,24 @@ result vs. swap in Mark2), ASSUME ROUTINE and confirm before the huge thing.
 halted it. Mark2 stays parked on its `model-mark2` branch until explicit go-ahead.)
 
 ## RESUME
-Next action: **Tomorrow (2026-06-24) Groups A, B & C decide** — routine score updates via **"Find new scores and GO"** as those final-round games finish. Live site: **Mark2 deployed**, 47/104 (latest: PAN 0-1 CRO). Mark2 = outcome-first Elo model, KO-variance λ=0.6, UNDERDOG_WIN_FLOOR=0.45. main and model-mark2-ko in sync. Tests: 55/55 green.
+Next action: **Today (2026-06-24) Groups A, B & C decide** — and **see ## CALENDAR AUTO-SYNC: new label-sync tool built, dry-run awaiting David's go.**
+Original: — routine score updates via **"Find new scores and GO"** as those final-round games finish. Live site: **Mark2 deployed**, 48/104 (latest: COL 1-0 COD, commit bef0de7). Mark2 = outcome-first Elo model, KO-variance λ=0.6, UNDERDOG_WIN_FLOOR=0.45. main and model-mark2-ko in sync. Tests: 55/55 green.
 NEW since last wrap (DEPLOYED, commit a30e149): per-result **W/D/L probabilities** now lead each own-result line in the final-round scenario text ("Win (84%) → 1st; Draw (12%) → …"). Source: `outcomeProbs()` (Elo+host bonus) → `matchProbs` map in build-html.mjs `renderGroup` → `summarizeGroup(opts.matchProbs)` → `mcResultLedDetail`. Merged results sum ("Draw or loss (91%)"). The Group-I "Wins the group with a win or draw" prose path does NOT carry a % (different renderer) — David may want it added later.
 
 Remaining open: **market blend** (Elo\* soft shrink k≈0.35, force Elo input to match markets) — approach confirmed by David but GATED on fetching + de-vigging full 48-team tournament-winner board. Currently live on pure Elo with a "market says France higher" caveat in the header. Not urgent.
 
 ⚠️ **CROSS-MACHINE / TOKEN-FREE DEPLOY:** repo is local+GitHub only (not synced). On any machine: `git clone https://github.com/dw-football/wc2026-bracket.git` → `gh auth login` (GitHub.com/HTTPS/"Authenticate Git: Yes", log in as **dw-football**) → use plain **`git push origin main`** for deploys. No `.env` token on 520.
 NEW feature/edit → WORKFLOW RULE (localhost first). Routine scores → "Find new scores and GO".
+
+## CALENDAR AUTO-SYNC (NEW 2026-06-24 — built; dry-run awaiting David's GO, NOT yet applied)
+Tooling to auto-update the Sports-calendar knockout events as results come in, so we stop hand-editing labels. Does NOT write to any calendar — emits a plan; a human/Claude applies it via the gcal MCP after David approves.
+- **`bracket-labels.mjs`** — PURE, shareable resolver, ZERO calendar/personal data. `computeMatchLabels(engineState, { watchedTeams, maxPreview=4 })` → label per match 73–103. Rules: R32 group slots (73–88) = 4-tier (locked / exactly-two→favorite-first / ≥75% dominant→`NAME/code` / structural `2K`,`3rd E/H/I/J/K`); knockout (89–103) = ≤4 candidate list favorite-first, else `WATCHED?/…` breadcrumb if a watched team is in the pool, else keep current label. `DOMINANT_THRESHOLD=0.75`. Locked/alive is DETERMINISTIC (scenarioGrid for groups; recursive feeder-tree union for KO); Monte-Carlo used ONLY for favorite ordering + the ≥75% test.
+- **`sync-calendar.mjs`** — thin glue: loads gitignored `calendar-map.local.json` (real eventIds + `watchedTeams:["USA"]`), runs the resolver, prints the dry-run table, writes `calendar-sync-plan.json` (gitignored). NO network/apply mode. Final (104) skipped (it's on the Family calendar).
+- **`calendar-map.example.json`** — COMMITTED template (placeholder ids) so the code can be shared/forked without exposing David's calendar. Mirrors `.env`/`.env.example`.
+- **Private map is gitignored** so it won't reach GitHub; a synced copy lives at `G:\Computing\Projects\wc2026-calendar-map.local.json` (copy into the repo on another machine before running sync).
+- Tests: `bracket-labels.test.js` 17/17 green (pure logic). Full suite 70/72 — the 2 fails are the pre-existing live-data brittleness in `scenario-summary.test.js` (Group A/B verbatim wording), unrelated to this code.
+- **GO-flow addition:** after `node build-html.mjs --refresh`, run `node sync-calendar.mjs` → review `calendar-sync-plan.json` → apply each non-`unchanged` entry (set summary + stadium description) to the Sports calendar; `unchanged:true`/`summary:null` = leave as-is. R32 fills as groups decide; R16+ reveal only as feeders resolve, plus a `USA?/…` breadcrumb down USA's path.
+- **PENDING DECISION (full writeup: vault note `Personal/soccer/World Cup 2026 calendar project.md`):** dry-run today = 20 edits. (a) It reverts match 83 `POR/COL→2K` and 73 `SUI/CAN→2B` (those runner-up slots aren't mathematically two-horse yet) — keep David's guesses or accept the codes? (b) The 4 USA-path KO events render the non-USA side as `Wxx/Lxx` codes (less readable than `G1/?3`,`W QF(Fox)`) — likely wants a friendlier structural label first. Awaiting **go / go R32 only / fix …**.
 
 ## MARKET-VS-ELO (done directionally — 2026-06-22)
 Our Elo P(advance to R32), 200k sims (regenerate via verify-model.mjs →

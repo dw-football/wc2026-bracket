@@ -1,0 +1,164 @@
+{
+  "_comment": "TEMPLATE — copy to calendar-map.local.json (gitignored) and fill in your own Google Calendar id + per-match eventIds. Mirrors the .env/.env.example convention. watchedTeams = FIFA codes you want highlighted as breadcrumbs deep in the bracket (e.g. [\"USA\"]).",
+  "calendarId": "your_calendar_id@group.calendar.google.com",
+  "watchedTeams": [
+    "USA"
+  ],
+  "events": {
+    "73": {
+      "round": "R32",
+      "venue": "Los Angeles (SoFi)",
+      "eventId": "REPLACE_WITH_YOUR_EVENT_ID_73"
+    },
+    "74": {
+      "round": "R32",
+      "venue": "Boston",
+      "eventId": "REPLACE_WITH_YOUR_EVENT_ID_74"
+    },
+    "75": {
+      "round": "R32",
+      "venue": "Monterrey",
+      "eventId": "REPLACE_WITH_YOUR_EVENT_ID_75"
+    },
+    "76": {
+      "round": "R32",
+      "venue": "Houston",
+      "eventId": "REPLACE_WITH_YOUR_EVENT_ID_76"
+    },
+    "77": {
+      "round": "R32",
+      "venue": "NY/NJ",
+      "eventId": "REPLACE_WITH_YOUR_EVENT_ID_77"
+    },
+    "78": {
+      "round": "R32",
+      "venue": "Dallas",
+      "eventId": "REPLACE_WITH_YOUR_EVENT_ID_78"
+    },
+    "79": {
+      "round": "R32",
+      "venue": "Mexico City",
+      "eventId": "REPLACE_WITH_YOUR_EVENT_ID_79"
+    },
+    "80": {
+      "round": "R32",
+      "venue": "Atlanta",
+      "eventId": "REPLACE_WITH_YOUR_EVENT_ID_80"
+    },
+    "81": {
+      "round": "R32",
+      "venue": "SF Bay Area",
+      "eventId": "REPLACE_WITH_YOUR_EVENT_ID_81"
+    },
+    "82": {
+      "round": "R32",
+      "venue": "Seattle",
+      "eventId": "REPLACE_WITH_YOUR_EVENT_ID_82"
+    },
+    "83": {
+      "round": "R32",
+      "venue": "Toronto",
+      "eventId": "REPLACE_WITH_YOUR_EVENT_ID_83"
+    },
+    "84": {
+      "round": "R32",
+      "venue": "Los Angeles (SoFi)",
+      "eventId": "REPLACE_WITH_YOUR_EVENT_ID_84"
+    },
+    "85": {
+      "round": "R32",
+      "venue": "Vancouver",
+      "eventId": "REPLACE_WITH_YOUR_EVENT_ID_85"
+    },
+    "86": {
+      "round": "R32",
+      "venue": "Miami",
+      "eventId": "REPLACE_WITH_YOUR_EVENT_ID_86"
+    },
+    "87": {
+      "round": "R32",
+      "venue": "Kansas City",
+      "eventId": "REPLACE_WITH_YOUR_EVENT_ID_87"
+    },
+    "88": {
+      "round": "R32",
+      "venue": "Dallas",
+      "eventId": "REPLACE_WITH_YOUR_EVENT_ID_88"
+    },
+    "89": {
+      "round": "R16",
+      "venue": "Philadelphia",
+      "eventId": "REPLACE_WITH_YOUR_EVENT_ID_89"
+    },
+    "90": {
+      "round": "R16",
+      "venue": "Houston",
+      "eventId": "REPLACE_WITH_YOUR_EVENT_ID_90"
+    },
+    "91": {
+      "round": "R16",
+      "venue": "NY/NJ",
+      "eventId": "REPLACE_WITH_YOUR_EVENT_ID_91"
+    },
+    "92": {
+      "round": "R16",
+      "venue": "Mexico City",
+      "eventId": "REPLACE_WITH_YOUR_EVENT_ID_92"
+    },
+    "93": {
+      "round": "R16",
+      "venue": "Dallas",
+      "eventId": "REPLACE_WITH_YOUR_EVENT_ID_93"
+    },
+    "94": {
+      "round": "R16",
+      "venue": "Seattle",
+      "eventId": "REPLACE_WITH_YOUR_EVENT_ID_94"
+    },
+    "95": {
+      "round": "R16",
+      "venue": "Atlanta",
+      "eventId": "REPLACE_WITH_YOUR_EVENT_ID_95"
+    },
+    "96": {
+      "round": "R16",
+      "venue": "Vancouver",
+      "eventId": "REPLACE_WITH_YOUR_EVENT_ID_96"
+    },
+    "97": {
+      "round": "QF",
+      "venue": "Boston",
+      "eventId": "REPLACE_WITH_YOUR_EVENT_ID_97"
+    },
+    "98": {
+      "round": "QF",
+      "venue": "Los Angeles (SoFi)",
+      "eventId": "REPLACE_WITH_YOUR_EVENT_ID_98"
+    },
+    "99": {
+      "round": "QF",
+      "venue": "Miami",
+      "eventId": "REPLACE_WITH_YOUR_EVENT_ID_99"
+    },
+    "100": {
+      "round": "QF",
+      "venue": "Kansas City",
+      "eventId": "REPLACE_WITH_YOUR_EVENT_ID_100"
+    },
+    "101": {
+      "round": "SF",
+      "venue": "Dallas",
+      "eventId": "REPLACE_WITH_YOUR_EVENT_ID_101"
+    },
+    "102": {
+      "round": "SF",
+      "venue": "Atlanta",
+      "eventId": "REPLACE_WITH_YOUR_EVENT_ID_102"
+    },
+    "103": {
+      "round": "3rd",
+      "venue": "Miami",
+      "eventId": "REPLACE_WITH_YOUR_EVENT_ID_103"
+    }
+  }
+}
