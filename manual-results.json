@@ -3,91 +3,330 @@
     "group": "Group G",
     "team1": "Belgium",
     "team2": "Iran",
-    "ft": [0, 0],
+    "ft": [
+      0,
+      0
+    ],
     "note": "Full time 0-0, entered manually 2026-06-21 ahead of the openfootball feed catching up."
   },
   {
     "group": "Group H",
     "team1": "Uruguay",
     "team2": "Cape Verde",
-    "ft": [2, 2],
+    "ft": [
+      2,
+      2
+    ],
     "note": "Full time 2-2, entered manually 2026-06-21 ahead of the openfootball feed."
   },
   {
     "group": "Group J",
     "team1": "Argentina",
     "team2": "Austria",
-    "ft": [2, 0],
+    "ft": [
+      2,
+      0
+    ],
     "note": "Full time 2-0, entered manually 2026-06-22 ahead of the openfootball feed."
   },
   {
     "group": "Group I",
     "team1": "France",
     "team2": "Iraq",
-    "ft": [3, 0],
+    "ft": [
+      3,
+      0
+    ],
     "note": "Full time 3-0, entered manually 2026-06-22 ahead of the openfootball feed."
   },
   {
     "group": "Group I",
     "team1": "Norway",
     "team2": "Senegal",
-    "ft": [3, 2],
+    "ft": [
+      3,
+      2
+    ],
     "note": "Full time 3-2, entered manually 2026-06-22 (ESPN-confirmed FT) ahead of the openfootball feed."
   },
   {
     "group": "Group J",
     "team1": "Jordan",
     "team2": "Algeria",
-    "ft": [1, 2],
+    "ft": [
+      1,
+      2
+    ],
     "note": "Full time 1-2 (Algeria win), entered manually 2026-06-22 (ESPN fifa.world FT-confirmed) ahead of the openfootball feed."
   },
   {
     "group": "Group K",
     "team1": "Portugal",
     "team2": "Uzbekistan",
-    "ft": [5, 0],
+    "ft": [
+      5,
+      0
+    ],
     "note": "Full time 5-0, entered manually 2026-06-23 (ESPN fifa.world FT-confirmed)."
   },
   {
     "group": "Group L",
     "team1": "England",
     "team2": "Ghana",
-    "ft": [0, 0],
+    "ft": [
+      0,
+      0
+    ],
     "note": "Full time 0-0, entered manually 2026-06-23 (ESPN fifa.world FT-confirmed)."
   },
   {
     "group": "Group L",
     "team1": "Panama",
     "team2": "Croatia",
-    "ft": [0, 1],
+    "ft": [
+      0,
+      1
+    ],
     "note": "Full time 0-1 (Croatia win), entered manually 2026-06-23 (ESPN fifa.world FT-confirmed)."
   },
   {
     "group": "Group B",
     "team1": "Bosnia & Herzegovina",
     "team2": "Qatar",
-    "ft": [3, 1],
+    "ft": [
+      3,
+      1
+    ],
     "note": "Full time 3-1 (Bosnia win), entered manually 2026-06-24 (ESPN fifa.world FT-confirmed)."
   },
   {
     "group": "Group B",
     "team1": "Switzerland",
     "team2": "Canada",
-    "ft": [2, 1],
+    "ft": [
+      2,
+      1
+    ],
     "note": "Full time 2-1 (Switzerland win), entered manually 2026-06-24 (ESPN fifa.world FT-confirmed)."
   },
   {
     "group": "Group C",
     "team1": "Scotland",
     "team2": "Brazil",
-    "ft": [0, 3],
+    "ft": [
+      0,
+      3
+    ],
     "note": "Full time 0-3 (Brazil win), entered 2026-06-24 (ESPN fifa.world FT-confirmed)."
   },
   {
     "group": "Group C",
     "team1": "Morocco",
     "team2": "Haiti",
-    "ft": [4, 2],
+    "ft": [
+      4,
+      2
+    ],
     "note": "Full time 4-2 (Morocco win), entered 2026-06-24 (ESPN fifa.world FT-confirmed)."
+  },
+  {
+    "group": "Group A",
+    "team1": "Czech Republic",
+    "team2": "Mexico",
+    "ft": [
+      0,
+      2
+    ],
+    "note": "Fake result to complete group stage for mid-R32 visual demo (throwaway)."
+  },
+  {
+    "group": "Group A",
+    "team1": "South Africa",
+    "team2": "South Korea",
+    "ft": [
+      1,
+      2
+    ],
+    "note": "Fake result to complete group stage for mid-R32 visual demo (throwaway)."
+  },
+  {
+    "group": "Group D",
+    "team1": "Turkey",
+    "team2": "USA",
+    "ft": [
+      0,
+      2
+    ],
+    "note": "Fake result to complete group stage for mid-R32 visual demo (throwaway)."
+  },
+  {
+    "group": "Group D",
+    "team1": "Paraguay",
+    "team2": "Australia",
+    "ft": [
+      1,
+      2
+    ],
+    "note": "Fake result to complete group stage for mid-R32 visual demo (throwaway)."
+  },
+  {
+    "group": "Group E",
+    "team1": "Curaçao",
+    "team2": "Ivory Coast",
+    "ft": [
+      0,
+      1
+    ],
+    "note": "Fake result to complete group stage for mid-R32 visual demo (throwaway)."
+  },
+  {
+    "group": "Group E",
+    "team1": "Ecuador",
+    "team2": "Germany",
+    "ft": [
+      1,
+      3
+    ],
+    "note": "Fake result to complete group stage for mid-R32 visual demo (throwaway)."
+  },
+  {
+    "group": "Group F",
+    "team1": "Japan",
+    "team2": "Sweden",
+    "ft": [
+      2,
+      1
+    ],
+    "note": "Fake result to complete group stage for mid-R32 visual demo (throwaway)."
+  },
+  {
+    "group": "Group F",
+    "team1": "Tunisia",
+    "team2": "Netherlands",
+    "ft": [
+      0,
+      2
+    ],
+    "note": "Fake result to complete group stage for mid-R32 visual demo (throwaway)."
+  },
+  {
+    "group": "Group G",
+    "team1": "Egypt",
+    "team2": "Iran",
+    "ft": [
+      2,
+      1
+    ],
+    "note": "Fake result to complete group stage for mid-R32 visual demo (throwaway)."
+  },
+  {
+    "group": "Group G",
+    "team1": "New Zealand",
+    "team2": "Belgium",
+    "ft": [
+      0,
+      2
+    ],
+    "note": "Fake result to complete group stage for mid-R32 visual demo (throwaway)."
+  },
+  {
+    "group": "Group H",
+    "team1": "Cape Verde",
+    "team2": "Saudi Arabia",
+    "ft": [
+      2,
+      1
+    ],
+    "note": "Fake result to complete group stage for mid-R32 visual demo (throwaway)."
+  },
+  {
+    "group": "Group H",
+    "team1": "Uruguay",
+    "team2": "Spain",
+    "ft": [
+      1,
+      2
+    ],
+    "note": "Fake result to complete group stage for mid-R32 visual demo (throwaway)."
+  },
+  {
+    "group": "Group I",
+    "team1": "Norway",
+    "team2": "France",
+    "ft": [
+      1,
+      2
+    ],
+    "note": "Fake result to complete group stage for mid-R32 visual demo (throwaway)."
+  },
+  {
+    "group": "Group I",
+    "team1": "Senegal",
+    "team2": "Iraq",
+    "ft": [
+      2,
+      0
+    ],
+    "note": "Fake result to complete group stage for mid-R32 visual demo (throwaway)."
+  },
+  {
+    "group": "Group J",
+    "team1": "Algeria",
+    "team2": "Austria",
+    "ft": [
+      1,
+      2
+    ],
+    "note": "Fake result to complete group stage for mid-R32 visual demo (throwaway)."
+  },
+  {
+    "group": "Group J",
+    "team1": "Jordan",
+    "team2": "Argentina",
+    "ft": [
+      0,
+      3
+    ],
+    "note": "Fake result to complete group stage for mid-R32 visual demo (throwaway)."
+  },
+  {
+    "group": "Group K",
+    "team1": "Colombia",
+    "team2": "Portugal",
+    "ft": [
+      1,
+      2
+    ],
+    "note": "Fake result to complete group stage for mid-R32 visual demo (throwaway)."
+  },
+  {
+    "group": "Group K",
+    "team1": "DR Congo",
+    "team2": "Uzbekistan",
+    "ft": [
+      2,
+      0
+    ],
+    "note": "Fake result to complete group stage for mid-R32 visual demo (throwaway)."
+  },
+  {
+    "group": "Group L",
+    "team1": "Panama",
+    "team2": "England",
+    "ft": [
+      0,
+      2
+    ],
+    "note": "Fake result to complete group stage for mid-R32 visual demo (throwaway)."
+  },
+  {
+    "group": "Group L",
+    "team1": "Croatia",
+    "team2": "Ghana",
+    "ft": [
+      2,
+      0
+    ],
+    "note": "Fake result to complete group stage for mid-R32 visual demo (throwaway)."
   }
 ]

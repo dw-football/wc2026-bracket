@@ -266,7 +266,47 @@ async function main() {
   const mcMs = Date.now() - mcT0;
   console.log(`Bake done in ${(mcMs / 1000).toFixed(1)}s  (${(mcMs / BAKE_N * 1000).toFixed(1)} µs/sim)`);
 
-  const data = { teams, bracket, allocation, groups, freshness, bakedMc, koSchedule, koVenueCountry };
+  // ---- THROWAWAY DEMO: injected completed R32 results + fabricated match detail -
+  // The engine has no completed-KO path, so we hand-inject 13 of the 16 R32 games
+  // (85, 87, 88 left UNPLAYED so some R16 ties are "next up"). score=[home,away]
+  // regulation/ET final; decider 'reg'|'aet'|'pens'; pens=[home,away]; winner=CODE.
+  // events = MADE-UP chronological match detail (goal scorers + minute, red cards,
+  // shootout takers) for the click-through popover. Fake names; ESPN hookup later.
+  const koResults = {
+    73: { score:[1,1], decider:'pens', pens:[4,2], winner:'KOR' }, // PENALTIES
+    74: { score:[2,0], decider:'reg',  pens:null,  winner:'GER' },
+    75: { score:[2,1], decider:'reg',  pens:null,  winner:'NED' },
+    76: { score:[2,1], decider:'reg',  pens:null,  winner:'BRA' },
+    77: { score:[3,0], decider:'reg',  pens:null,  winner:'FRA' }, // FAVORITE win
+    78: { score:[0,2], decider:'reg',  pens:null,  winner:'NOR' },
+    79: { score:[2,1], decider:'reg',  pens:null,  winner:'MEX' },
+    80: { score:[1,2], decider:'reg',  pens:null,  winner:'COD' }, // UPSET
+    81: { score:[3,1], decider:'reg',  pens:null,  winner:'USA' },
+    82: { score:[1,2], decider:'reg',  pens:null,  winner:'SEN' },
+    83: { score:[2,1], decider:'reg',  pens:null,  winner:'COL' },
+    84: { score:[2,1], decider:'aet',  pens:null,  winner:'ESP' }, // EXTRA TIME
+    86: { score:[3,0], decider:'reg',  pens:null,  winner:'ARG' }, // ARG 3-0 CPV
+  };
+  // Fabricated event timelines (home side first in each tuple). type:'goal'|'red'.
+  // pens: array of {team, code, scored:true|false} in shooting order.
+  const koDetails = {
+    73: { events:[ {min:14, type:'goal', team:'home', who:'Son'}, {min:58, type:'goal', team:'away', who:'David'}, {min:77, type:'red', team:'away', who:'Laryea'} ],
+          pens:[ {team:'home',who:'Son',ok:true},{team:'away',who:'David',ok:true},{team:'home',who:'Lee',ok:true},{team:'away',who:'Larin',ok:false},{team:'home',who:'Hwang',ok:true},{team:'away',who:'Buchanan',ok:true},{team:'home',who:'Kim',ok:true},{team:'away',who:'Eustaquio',ok:false} ] },
+    74: { events:[ {min:31, type:'goal', team:'home', who:'Musiala'}, {min:66, type:'goal', team:'home', who:'Havertz'} ] },
+    75: { events:[ {min:9, type:'goal', team:'home', who:'Gakpo'}, {min:40, type:'goal', team:'away', who:'En-Nesyri'}, {min:73, type:'goal', team:'home', who:'Depay'} ] },
+    76: { events:[ {min:22, type:'goal', team:'home', who:'Vinicius Jr'}, {min:55, type:'goal', team:'away', who:'Kubo'}, {min:81, type:'goal', team:'home', who:'Rodrygo'} ] },
+    77: { events:[ {min:18, type:'goal', team:'home', who:'Mbappe'}, {min:34, type:'goal', team:'home', who:'Mbappe'}, {min:70, type:'goal', team:'home', who:'Dembele'} ] },
+    78: { events:[ {min:27, type:'goal', team:'away', who:'Haaland'}, {min:62, type:'red', team:'home', who:'Kossounou'}, {min:84, type:'goal', team:'away', who:'Odegaard'} ] },
+    79: { events:[ {min:12, type:'goal', team:'home', who:'Jimenez'}, {min:48, type:'goal', team:'away', who:'McGinn'}, {min:75, type:'goal', team:'home', who:'Alvarez'} ] },
+    80: { events:[ {min:36, type:'goal', team:'away', who:'Bakambu'}, {min:59, type:'goal', team:'home', who:'Kane'}, {min:88, type:'goal', team:'away', who:'Wissa'} ] },
+    81: { events:[ {min:8, type:'goal', team:'home', who:'Pulisic'}, {min:25, type:'goal', team:'home', who:'Balogun'}, {min:51, type:'goal', team:'away', who:'Dzeko'}, {min:69, type:'goal', team:'home', who:'Pulisic'} ] },
+    82: { events:[ {min:33, type:'goal', team:'away', who:'Sarr'}, {min:54, type:'goal', team:'home', who:'Salah'}, {min:90, type:'goal', team:'away', who:'Jackson'} ] },
+    83: { events:[ {min:20, type:'goal', team:'home', who:'Diaz'}, {min:44, type:'goal', team:'away', who:'Kramaric'}, {min:78, type:'goal', team:'home', who:'Nunez'} ] },
+    84: { events:[ {min:39, type:'goal', team:'home', who:'Yamal'}, {min:71, type:'goal', team:'away', who:'Arnautovic'}, {min:104, type:'goal', team:'home', who:'Morata'} ] },
+    86: { events:[ {min:15, type:'goal', team:'home', who:'Messi'}, {min:50, type:'goal', team:'home', who:'Alvarez'}, {min:67, type:'goal', team:'home', who:'Messi'} ] },
+  };
+
+  const data = { teams, bracket, allocation, groups, freshness, bakedMc, koSchedule, koVenueCountry, koResults, koDetails };
 
   const html = renderHTML(logicBundle, data);
 
@@ -339,7 +379,10 @@ var __APP_DATA__ = {
   groups: ${embed(data.groups)},
   freshness: ${embed(data.freshness)},
   bakedMc: ${embed(data.bakedMc)},
-  koSchedule: ${embed(data.koSchedule)}
+  koSchedule: ${embed(data.koSchedule)},
+  koVenueCountry: ${embed(data.koVenueCountry)},
+  koResults: ${embed(data.koResults)},
+  koDetails: ${embed(data.koDetails)}
 };
 
 /* ============================================================================
@@ -631,6 +674,9 @@ const APP_JS = String.raw`
   var KO_VC = DATA.koVenueCountry || null; // matchNo -> 'USA'|'MEX'|'CAN' (venue-aware host bonus)
   var FRESH = DATA.freshness;
   var BAKED_MC = DATA.bakedMc || null;   // high-n Monte Carlo baked at build time
+  // THROWAWAY DEMO: injected completed R32 results + fabricated match detail.
+  var KO_RESULTS = DATA.koResults || {};
+  var KO_DETAILS = DATA.koDetails || {};
   var HOSTS = ['USA','MEX','CAN'];
   var SIM_N = 10000;                      // live-worker sim count (My-Picks overrides only)
   var SIM_SEED = 12345;
@@ -654,6 +700,19 @@ const APP_JS = String.raw`
     if(!code) return '#878f9c';
     var h=0; for(var i=0;i<code.length;i++) h=(h*31+code.charCodeAt(i))>>>0;
     var hue=h%360; return 'hsl('+hue+',58%,40%)';
+  }
+
+  // Head-to-head single-game advance probability for A over B, using the SAME
+  // knockout model the Monte-Carlo uses: Elo expected score shrunk toward a coin
+  // flip by KO_LAMBDA, plus the venue-aware host bonus. Returns P(A adv) in [0,1];
+  // P(B adv)=1-that, so a pair sums to 100%.
+  function h2hAdvanceProb(codeA, codeB, matchNo){
+    var vc = KO_VC ? (KO_VC[matchNo] || KO_VC[String(matchNo)] || null) : null;
+    var host=new Set(HOSTS);
+    function hb(c){ if(!host.has(c)) return 0; if(vc!=null && c!==vc) return 0; return 80; }
+    var eA=(eloByCode[codeA]||1500)+hb(codeA), eB=(eloByCode[codeB]||1500)+hb(codeB);
+    var E=1/(1+Math.pow(10,-(eA-eB)/400));
+    return 0.5 + KO_LAMBDA*(E-0.5);
   }
 
   // ---- working state ----
@@ -961,6 +1020,74 @@ const APP_JS = String.raw`
           };
         });
       });
+
+      // ===== THROWAWAY DEMO OVERLAY ============================================
+      // Resolve concrete knockout teams from the injected R32 results and decorate
+      // slots so the bracket reads like a real in-progress KO:
+      //  (a) played R32 -> score + greyed loser + click-through match detail.
+      //  (b) a knockout MATCH whose two teams are BOTH known and is the very next
+      //      to play -> show H2H advance odds (sum 100%). [R32 unplayed AND R16
+      //      with both feeders decided are treated IDENTICALLY -> parity.]
+      //  (c) a slot fed by an undecided match whose two contenders are known ->
+      //      show the contender PAIR "X/Y" on that line (the "next round" look:
+      //      ARG over BEL/AUS; one further: FRA/GER over NED/KOR).
+      //  (d) deeper/uncertain slots keep the Monte-Carlo occupancy top-2 (popover
+      //      shows all candidates).
+      var koWinnerOf={};
+      BRACKET.rounds.R32.forEach(function(m){
+        var r=KO_RESULTS[m.match]||KO_RESULTS[String(m.match)]; if(r) koWinnerOf[m.match]=r.winner;
+      });
+      // concrete two side-codes of any match (R32 occupants are 100% in perSlot).
+      function sideCodesOf(matchNo){
+        var s=byMatch[matchNo]||{home:[],away:[]};
+        function pick(arr){ var c=(arr&&arr[0])||null; return (c && (c.p||0)>=0.9995)? c.code : null; }
+        var idx2={}; Object.keys(BRACKET.rounds).forEach(function(rd){ (BRACKET.rounds[rd]||[]).forEach(function(mm){ idx2[mm.match]=mm; }); });
+        var m=idx2[matchNo];
+        function side(def, arr){
+          if(def && def.type==='winnerOf'){ return koWinnerOf[def.match]||null; }
+          return pick(arr); // R32 group/runnerup/third occupant
+        }
+        return { home: side(m&&m.home, s.home), away: side(m&&m.away, s.away) };
+      }
+      // (a) played R32
+      BRACKET.rounds.R32.forEach(function(m){
+        var r=KO_RESULTS[m.match]||KO_RESULTS[String(m.match)]; if(!r) return;
+        var inf=info[m.match]; if(!inf) return;
+        var hc=inf.home.code, ac=inf.away.code;
+        inf.home.result={ side:'home', score:r.score, decider:r.decider, pens:r.pens, won:r.winner===hc, lost:r.winner!==hc };
+        inf.away.result={ side:'away', score:r.score, decider:r.decider, pens:r.pens, won:r.winner===ac, lost:r.winner!==ac };
+      });
+      // walk every knockout match; decorate sides for (b)(c).
+      ['R32','R16','QF','SF','Final'].forEach(function(rd){
+        (BRACKET.rounds[rd]||[]).forEach(function(m){
+          var inf=info[m.match]; if(!inf) return;
+          var played = rd==='R32' && (KO_RESULTS[m.match]||KO_RESULTS[String(m.match)]);
+          if(played) return; // (a) handled
+          var sc=sideCodesOf(m.match);
+          var bothKnown = sc.home && sc.away;
+          if(bothKnown){
+            // (b) next-up tie: BOTH teams known -> H2H odds (R32-unplayed & fully-fed
+            //     R16 are identical here -> the parity David asked for).
+            var pA=h2hAdvanceProb(sc.home, sc.away, m.match);
+            inf.home=Object.assign({}, inf.home, { code:sc.home, official:true, h2h:pA, h2hLocked:true });
+            inf.away=Object.assign({}, inf.away, { code:sc.away, official:true, h2h:1-pA, h2hLocked:true });
+          } else {
+            // per-side: official if its team is known; else if its feeder match has
+            // BOTH contenders known, show the contender PAIR "X/Y" (c).
+            ['home','away'].forEach(function(sideName){
+              var known = sc[sideName];
+              if(known){ inf[sideName]=Object.assign({}, inf[sideName], { code:known, official:true }); return; }
+              var def=m[sideName];
+              if(def && def.type==='winnerOf'){
+                var fc=sideCodesOf(def.match);
+                if(fc.home && fc.away){
+                  inf[sideName]=Object.assign({}, inf[sideName], { pair:[fc.home, fc.away] });
+                }
+              }
+            });
+          }
+        });
+      });
     } else {
       rounds.forEach(function(rd){
         (BRACKET.rounds[rd]||[]).forEach(function(m){
@@ -1220,19 +1347,52 @@ const APP_JS = String.raw`
 
     var t=svgEl('text',{ x:codeX, y:midY });
     function span(txt, attrs){ var s=svgEl('tspan',attrs||{}); s.textContent=txt; t.appendChild(s); }
-
-    // ---- seed / group prefix ----
-    if(isThird){
-      span(groupTag(modal.code)+' ', { fill:'#878f9c','font-size':String(FS(9.5)),'font-weight':'700' });
-    } else if(seed){
-      span(seed+' ', { fill:'#878f9c','font-size':String(FS(9.5)),'font-weight':'700' });
+    function seedSpan(fill){
+      if(isThird) span(groupTag(modal.code)+' ', { fill:fill,'font-size':String(FS(9.5)),'font-weight':'700' });
+      else if(seed) span(seed+' ', { fill:fill,'font-size':String(FS(9.5)),'font-weight':'700' });
     }
 
-    // ---- modal code ----
-    if(clinched){
-      // popped team, no %
-      span(modal.code||'—', { fill:'#0b4fb0','font-size':String(FS(12.5)),'font-weight':'800' });
-      span('  '+(modal.code?truncName(nameByCode[modal.code]||'', COL_W-Math.round(70*_PS)):''), { fill:'#2b6fc9','font-size':String(FS(10)),'font-weight':'600' });
+    // ---- (a) PLAYED R32 GAME: code + this side's goals (+ decider tag). The
+    //      LOSER is muted in place (grey team text) but its GOAL stays legible;
+    //      never a strikethrough. ----
+    var R=si.result;
+    if(R){
+      var won=R.won;
+      seedSpan(won?'#878f9c':'#aeb4bd');
+      var myGoals = R.side==='home'? R.score[0] : R.score[1];
+      span((modal.code||'—')+' ', { fill: won?'#171a20':'#9aa1ab','font-size':String(FS(12)),'font-weight': won?'700':'600' });
+      span(String(myGoals), { fill: won?'#0b4fb0':'#5b636e','font-size':String(FS(13)),'font-weight':'800' });
+      if(won && R.decider==='aet') span('  AET', { fill:'#9a6b00','font-size':String(FS(9)),'font-weight':'700' });
+      else if(won && R.decider==='pens' && R.pens) span('  '+R.pens[0]+'–'+R.pens[1]+' pens', { fill:'#9a6b00','font-size':String(FS(9)),'font-weight':'700' });
+      g.appendChild(t); return;
+    }
+
+    // ---- (b) NEXT-UP TIE: both teams known -> code + H2H advance % (sum 100%) ----
+    if(si.h2hLocked && si.code){
+      seedSpan('#878f9c');
+      span(si.code+' ', { fill:'#171a20','font-size':String(FS(12)),'font-weight':'700' });
+      span(pct(si.h2h), { fill:'#0b4fb0','font-size':String(FS(11)),'font-weight':'700' });
+      g.appendChild(t); return;
+    }
+
+    // ---- (c) CONTENDER PAIR: slot fed by an undecided match, both contenders
+    //      known -> "X/Y" (the "next round" look). ----
+    if(si.pair && si.pair.length===2){
+      span(si.pair[0]+'/'+si.pair[1], { fill:'#3a4350','font-size':String(FS(11.5)),'font-weight':'700' });
+      g.appendChild(t); return;
+    }
+
+    // ---- seed / group prefix (projection paths) ----
+    seedSpan('#878f9c');
+
+    // ---- official locked occupant / projected modal ----
+    if(si.official && si.code){
+      // concrete team in the slot: code + name, NO %, NORMAL weight (bold retired).
+      span(si.code, { fill:'#171a20','font-size':String(FS(12)),'font-weight':'700' });
+      span('  '+truncName(nameByCode[si.code]||'', COL_W-Math.round(70*_PS)), { fill:'#56606e','font-size':String(FS(10)),'font-weight':'400' });
+    } else if(clinched){
+      span(modal.code||'—', { fill:'#171a20','font-size':String(FS(12)),'font-weight':'700' });
+      span('  '+(modal.code?truncName(nameByCode[modal.code]||'', COL_W-Math.round(70*_PS)):''), { fill:'#56606e','font-size':String(FS(10)),'font-weight':'400' });
     } else if(state.mode==='projected' && modal.code){
       span(modal.code, { fill:'#171a20','font-size':String(FS(12)),'font-weight':'700' });
       span(' '+pct(modal.p), { fill:'#1565d8','font-size':String(FS(11)) });
@@ -1243,7 +1403,6 @@ const APP_JS = String.raw`
         span(' '+pct(second.p), { fill:'#5b7da0','font-size':String(FS(10)) });
       }
     } else {
-      // picks/empty
       span(modal.code||'—', { fill: modal.code?'#171a20':'#878f9c', 'font-size':String(FS(12)),'font-weight':'700' });
       if(modal.code){ span('  '+truncName(nameByCode[modal.code]||'', COL_W-Math.round(70*_PS)), { fill:'#56606e','font-size':String(FS(10)) }); }
     }
@@ -1263,39 +1422,45 @@ const APP_JS = String.raw`
       g.appendChild(svgEl('rect',{ x:x+1, y:sy+1, width:COL_W-2, height:SLOT_H-2, rx:Math.round(4*_PS),
         fill:'none', stroke:'#1f9d54','stroke-width':String(1.5*_PS) }));
     }
-    // accent bar
-    g.appendChild(svgEl('rect',{ x:x+Math.round(3*_PS), y:sy+Math.round(4*_PS), width:Math.round(3*_PS), height:SLOT_H-Math.round(8*_PS), rx:1.5*_PS,
-      fill: code? accentFor(code) : '#878f9c' }));
+    // A played R32 game whose LOSER sits here -> mute in place (handled in the
+    // renderer: grey team text, legible goal). Dim the accent bar as a subtle cue.
+    var isLoser = !!(si.result && si.result.lost);
 
-    // CLINCHED (projected, p≈100%): pop the team (bold + accent + glow) and DROP %.
+    // accent bar (dimmed grey for a beaten loser)
+    g.appendChild(svgEl('rect',{ x:x+Math.round(3*_PS), y:sy+Math.round(4*_PS), width:Math.round(3*_PS), height:SLOT_H-Math.round(8*_PS), rx:1.5*_PS,
+      fill: isLoser ? '#c2c8d0' : (code? accentFor(code) : '#878f9c') }));
+
+    // LOCKED occupancy (projected, p≈100%): concrete team, drop %, NORMAL weight
+    // (the old bold/glow "confirmed" emphasis is RETIRED).
     var clinched = state.mode==='projected' && code && si.p>=0.9995;
+    var h2hLocked = !!si.h2hLocked;
 
     if(round==='R32'){
-      // R32 gets the compact seed-aware inline label (declutter + optional top-two).
+      // R32 inline renderer handles result / h2h / pair / official / occupancy.
       renderR32Inline(g, m[side], si, x, midY, clinched);
     } else {
       var codeX=x+Math.round(13*_PS), nameX=x+Math.round(44*_PS);
-      // code
-      if(clinched){
-        var glow=svgText(codeX, midY, code,
-          { fill:'#1565d8','font-size':String(FS(12.5)),'font-weight':'800',
-            stroke:'#1565d8','stroke-width':String(0.6*_PS),'opacity':'0.35' });
-        g.appendChild(glow);
-        g.appendChild(svgText(codeX, midY, code,
-          { fill:'#0b4fb0','font-size':String(FS(12.5)),'font-weight':'800' }));
+      if(si.pair && si.pair.length===2){
+        // contender pair "X/Y" (slot fed by an undecided match, both contenders known)
+        g.appendChild(svgText(codeX, midY, si.pair[0]+'/'+si.pair[1],
+          { fill:'#3a4350','font-size':String(FS(11.5)),'font-weight':'700' }));
       } else {
+        // code (normal weight even when locked)
         g.appendChild(svgText(codeX, midY, code||'—',
           { fill: code? '#171a20':'#878f9c', 'font-size':String(FS(12)),'font-weight':'700' }));
-      }
-      // name (clipped via truncation)
-      var nm=code?(nameByCode[code]||''):'TBD';
-      var nameMaxW=COL_W-(nameX-x)-(clinched?Math.round(10*_PS):Math.round(40*_PS));
-      g.appendChild(svgText(nameX, midY, truncName(nm, nameMaxW),
-        { fill: clinched?'#2b6fc9':'#56606e','font-size':String(FS(10)),'font-weight': clinched?'600':'400' }));
-      // probability (projected) at right — clinched slots show no %.
-      if(state.mode==='projected' && code && !clinched){
-        g.appendChild(svgText(x+COL_W-pad, midY, pct(si.p),
-          { fill:'#1565d8','font-size':String(FS(11)),'text-anchor':'end' }));
+        // name
+        var nm=code?(nameByCode[code]||''):'TBD';
+        var nameMaxW=COL_W-(nameX-x)-Math.round(40*_PS);
+        g.appendChild(svgText(nameX, midY, truncName(nm, nameMaxW),
+          { fill:'#56606e','font-size':String(FS(10)),'font-weight':'400' }));
+        // right-side number: H2H advance odds (next-up tie) else occupancy % (locked drops it)
+        if(state.mode==='projected' && code && h2hLocked){
+          g.appendChild(svgText(x+COL_W-pad, midY, pct(si.h2h),
+            { fill:'#0b4fb0','font-size':String(FS(11)),'font-weight':'700','text-anchor':'end' }));
+        } else if(state.mode==='projected' && code && !clinched && !si.official){
+          g.appendChild(svgText(x+COL_W-pad, midY, pct(si.p),
+            { fill:'#1565d8','font-size':String(FS(11)),'text-anchor':'end' }));
+        }
       }
     }
 
@@ -1307,11 +1472,19 @@ const APP_JS = String.raw`
     if(state.mode==='projected'){
       var slotDef=(round==='R32'? m[side] : null);
       var slotKey=m.match+':'+side;
+      var hasResult=!!si.result;
       g.addEventListener('click', function(ev){
         ev.stopPropagation();
         // same slot → toggle closed; any other slot → (re)open pinned here.
         if(_popKey===slotKey){ closePop(); return; }
-        showCandidates(ev, si.cands||[], m.match, side, round, slotDef, clinched, code, slotKey);
+        if(hasResult){
+          // PLAYED game -> made-up match-detail card (same for either side clicked).
+          showMatchDetail(ev, m.match, side, slotKey);
+        } else {
+          // concrete (h2h-locked / official) slots -> trivial "Locked" label.
+          var lockPop = clinched || h2hLocked || !!si.official;
+          showCandidates(ev, si.cands||[], m.match, side, round, slotDef, lockPop, code, slotKey);
+        }
       });
     } else {
       g.addEventListener('click', function(){ if(code){ state.picks[m.match]=code; render(); } });
@@ -1407,6 +1580,64 @@ const APP_JS = String.raw`
   // There is NO hover-open and NO mouseleave auto-dismiss — every open/close is
   // an explicit click/tap, which is what eliminates the old flashing.
   var _popKey=null;
+
+  // Position + wire a freshly-built popover element near the pointer (shared by
+  // showCandidates + showMatchDetail).
+  function placePop(pop, ev){
+    pop.addEventListener('click', function(e){ e.stopPropagation(); });
+    var xBtn=pop.querySelector('.x'); if(xBtn) xBtn.onclick=function(e){ e.stopPropagation(); closePop(); };
+    document.body.appendChild(pop);
+    var px=(ev&&ev.clientX!=null)?ev.clientX:window.innerWidth/2;
+    var py=(ev&&ev.clientY!=null)?ev.clientY:window.innerHeight/2;
+    var pw=pop.offsetWidth, ph=pop.offsetHeight, M=10;
+    var x=px+12; if(x+pw > window.innerWidth-M) x=Math.min(px-12-pw, window.innerWidth-pw-M);
+    var y=py+8;  if(y+ph > window.innerHeight-M) y=Math.min(py-8-ph, window.innerHeight-ph-M);
+    pop.style.left=Math.max(M,x)+'px'; pop.style.top=Math.max(M,y)+'px';
+    setTimeout(function(){ document.addEventListener('click', outsidePop); document.addEventListener('keydown', escPop); },0);
+  }
+
+  // THROWAWAY DEMO: completed-game match-detail card. Shows the fabricated event
+  // timeline (goals + scorer + minute, red cards) chronologically, plus the
+  // shootout takers for a penalties decider. Identical regardless of which side
+  // was clicked. (Real app: swap KO_DETAILS for an ESPN match-summary fetch.)
+  function showMatchDetail(ev, matchNo, side, slotKey){
+    closePop();
+    _popKey=slotKey||(matchNo+':'+side);
+    var r=KO_RESULTS[matchNo]||KO_RESULTS[String(matchNo)];
+    var d=KO_DETAILS[matchNo]||KO_DETAILS[String(matchNo)]||{};
+    var sc=_lastSlotInfo&&_lastSlotInfo[matchNo]; // resolved home/away codes
+    var hc=sc&&sc.home?sc.home.code:'?', ac=sc&&sc.away?sc.away.code:'?';
+    var pop=document.createElement('div'); pop.className='pop';
+    var scoreline=hc+' '+r.score[0]+'–'+r.score[1]+' '+ac+
+      (r.decider==='aet'?' (AET)':'')+
+      (r.decider==='pens'&&r.pens?' ('+r.pens[0]+'–'+r.pens[1]+' pens)':'');
+    var rows='';
+    (d.events||[]).slice().sort(function(a,b){return a.min-b.min;}).forEach(function(e){
+      var tc = e.team==='home'?hc:ac;
+      var icon = e.type==='red' ? '🟥' : '⚽';
+      var label = e.type==='red' ? 'Red card' : 'Goal';
+      rows+='<div class="cand"><span class="p" style="min-width:30px">'+e.min+"'</span>"+
+        '<span style="min-width:18px">'+icon+'</span>'+
+        '<span class="code" style="color:'+accentFor(tc)+';min-width:34px">'+esc(tc)+'</span>'+
+        '<span class="nm">'+esc(e.who)+'<span class="muted tiny"> · '+label+'</span></span></div>';
+    });
+    var pensHtml='';
+    if(r.decider==='pens' && d.pens && d.pens.length){
+      pensHtml='<h4 style="margin-top:8px">Penalty shootout</h4>';
+      d.pens.forEach(function(p){
+        var tc=p.team==='home'?hc:ac;
+        pensHtml+='<div class="cand"><span style="min-width:18px">'+(p.ok?'✅':'❌')+'</span>'+
+          '<span class="code" style="color:'+accentFor(tc)+';min-width:34px">'+esc(tc)+'</span>'+
+          '<span class="nm">'+esc(p.who)+'</span></div>';
+      });
+    }
+    pop.innerHTML='<span class="x">&times;</span>'+
+      '<h4>M'+matchNo+' &middot; full time</h4>'+
+      '<div class="cand" style="font-weight:700;font-size:14px">'+esc(scoreline)+'</div>'+
+      (rows||'<div class="muted tiny">No events.</div>')+pensHtml+
+      '<div class="muted tiny" style="margin-top:6px">Illustrative match detail (made-up names) — ESPN feed wires in later.</div>';
+    placePop(pop, ev);
+  }
 
   // UNIVERSAL popover (all rounds, both sides). Lists the FULL candidate
   // distribution for the slot: every team with p >= ~0.5%, sorted desc, with %.
