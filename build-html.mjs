@@ -230,9 +230,12 @@ async function main() {
   // matchNo (numeric); group entries ("g:CODE-CODE") are skipped here. Empty until
   // a KO match is played + a build-events run caches it; popover degrades gracefully.
   const matchEvents = await loadJSON('data/match-events.json').catch(() => ({}));
-  const koDetails = {};
+  const koDetails = {};      // matchNo -> {events, pens}  (knockout popovers)
+  const groupDetails = {};   // "g:HOME-AWAY" -> {events, pens}  (group-table popovers)
   for (const [k, v] of Object.entries(matchEvents)) {
-    if (/^\d+$/.test(k)) koDetails[k] = { events: v.events || [], pens: v.pens || [] };
+    const slim = { events: v.events || [], pens: v.pens || [] };
+    if (/^\d+$/.test(k)) koDetails[k] = slim;
+    else if (k.startsWith('g:')) groupDetails[k] = slim;
   }
 
   // Build the bundle: engine first (no deps), then allocation (patched), then
@@ -291,7 +294,7 @@ async function main() {
   const mcMs = Date.now() - mcT0;
   console.log(`Bake done in ${(mcMs / 1000).toFixed(1)}s  (${(mcMs / BAKE_N * 1000).toFixed(1)} µs/sim)`);
 
-  const data = { teams, bracket, allocation, groups, freshness, bakedMc, koSchedule, koVenueCountry, koResults, koDetails };
+  const data = { teams, bracket, allocation, groups, freshness, bakedMc, koSchedule, koVenueCountry, koResults, koDetails, groupDetails };
 
   const html = renderHTML(logicBundle, data);
 
@@ -367,7 +370,8 @@ var __APP_DATA__ = {
   koSchedule: ${embed(data.koSchedule)},
   koVenueCountry: ${embed(data.koVenueCountry)},
   koResults: ${embed(data.koResults)},
-  koDetails: ${embed(data.koDetails)}
+  koDetails: ${embed(data.koDetails)},
+  groupDetails: ${embed(data.groupDetails)}
 };
 
 /* ============================================================================
@@ -589,6 +593,9 @@ select,input[type=number],input[type=text]{background:#ffffff;color:var(--txt);
 .scn-fixtures .fx-h{color:var(--dim2);text-transform:uppercase;letter-spacing:.5px;font-size:10px;margin-bottom:5px}
 .scn-fixtures .fx{font-size:13px;color:var(--txt);padding:2px 0}
 .scn-fixtures .fx .when{color:var(--dim)}
+.scn-fixtures .fx.fxclick{cursor:pointer;border-radius:4px;margin:0 -4px;padding-left:4px;padding-right:4px}
+.scn-fixtures .fx.fxclick:hover{background:var(--panel)}
+.scn-fixtures .fx.fxclick .fxs{text-decoration:underline;text-decoration-color:var(--line);text-underline-offset:2px}
 .scn-next{margin-top:10px;border-top:1px solid var(--line);padding-top:8px}
 .scn-triggers{margin:4px 0 0;padding-left:18px;font-size:13px;color:var(--txt)}
 .scn-triggers li{margin:3px 0}
@@ -665,6 +672,9 @@ const APP_JS = String.raw`
   // pipeline fills it; the match-detail popover degrades to "No events." meanwhile.
   var KO_RESULTS = DATA.koResults || {};
   var KO_DETAILS = DATA.koDetails || {};
+  // Group-fixture event timelines, keyed "g:HOME-AWAY" (#3 backfill); empty if the
+  // events cache hasn't been built. Powers the click-for-detail on played fixtures.
+  var GROUP_DETAILS = DATA.groupDetails || {};
   var HOSTS = ['USA','MEX','CAN'];
   var SIM_N = 10000;                      // live-worker sim count (My-Picks overrides only)
   var SIM_SEED = 12345;
@@ -1657,11 +1667,45 @@ const APP_JS = String.raw`
     setTimeout(function(){ document.addEventListener('click', outsidePop); document.addEventListener('keydown', escPop); },0);
   }
 
-  // Completed-game match-detail card. Shows the event timeline (goals + scorer +
-  // minute, red cards) chronologically, plus the shootout takers for a penalties
-  // decider. Identical regardless of which side was clicked. KO_DETAILS is filled
-  // by the #3 ESPN events pipeline; until then a played game shows just the
-  // scoreline + "No events." (graceful — see the rows fallback below).
+  // Build the completed-game match-detail card (shared by knockout + group). Shows
+  // the event timeline (goals + scorer + minute incl "45'+7'", red cards) plus the
+  // shootout takers for a penalties decider. details (events/pens) comes from the
+  // #3 ESPN events pipeline; absent -> just the scoreline + a "coming soon" note.
+  function matchDetailCard(title, hc, ac, score, decider, pens, details){
+    var d=details||{};
+    var scoreline=hc+' '+score[0]+'–'+score[1]+' '+ac+
+      (decider==='aet'?' (AET)':'')+
+      (decider==='pens'&&pens?' ('+pens[0]+'–'+pens[1]+' pens)':'');
+    var rows='';
+    (d.events||[]).slice().sort(function(a,b){return a.min-b.min;}).forEach(function(e){
+      var tc = e.team==='home'?hc:ac;
+      var icon = e.type==='red' ? '🟥' : '⚽';
+      var label = e.type==='red' ? 'Red card' : 'Goal';
+      rows+='<div class="cand"><span class="p" style="min-width:30px">'+esc(String(e.minLabel!=null?e.minLabel:e.min))+"'</span>"+
+        '<span style="min-width:18px">'+icon+'</span>'+
+        '<span class="code" style="color:'+accentFor(tc)+';min-width:34px">'+esc(tc)+'</span>'+
+        '<span class="nm">'+esc(e.who||'')+'<span class="muted tiny"> · '+label+'</span></span></div>';
+    });
+    var pensHtml='';
+    if(decider==='pens' && d.pens && d.pens.length){
+      pensHtml='<h4 style="margin-top:8px">Penalty shootout</h4>';
+      d.pens.forEach(function(p){
+        var tc=p.team==='home'?hc:ac;
+        pensHtml+='<div class="cand"><span style="min-width:18px">'+(p.ok?'✅':'❌')+'</span>'+
+          '<span class="code" style="color:'+accentFor(tc)+';min-width:34px">'+esc(tc)+'</span>'+
+          '<span class="nm">'+esc(p.who||'')+'</span></div>';
+      });
+    }
+    var pop=document.createElement('div'); pop.className='pop';
+    pop.innerHTML='<span class="x">&times;</span>'+
+      '<h4>'+esc(title)+'</h4>'+
+      '<div class="cand" style="font-weight:700;font-size:14px">'+esc(scoreline)+'</div>'+
+      (rows||'<div class="muted tiny">Goal-by-goal detail coming soon.</div>')+pensHtml;
+    return pop;
+  }
+
+  // KNOCKOUT match detail (from a bracket slot click). Resolves home/away codes
+  // from the rendered slot info; pulls events from KO_DETAILS by matchNo.
   function showMatchDetail(ev, matchNo, side, slotKey){
     closePop();
     _popKey=slotKey||(matchNo+':'+side);
@@ -1669,35 +1713,17 @@ const APP_JS = String.raw`
     var d=KO_DETAILS[matchNo]||KO_DETAILS[String(matchNo)]||{};
     var sc=_lastSlotInfo&&_lastSlotInfo[matchNo]; // resolved home/away codes
     var hc=sc&&sc.home?sc.home.code:'?', ac=sc&&sc.away?sc.away.code:'?';
-    var pop=document.createElement('div'); pop.className='pop';
-    var scoreline=hc+' '+r.score[0]+'–'+r.score[1]+' '+ac+
-      (r.decider==='aet'?' (AET)':'')+
-      (r.decider==='pens'&&r.pens?' ('+r.pens[0]+'–'+r.pens[1]+' pens)':'');
-    var rows='';
-    (d.events||[]).slice().sort(function(a,b){return a.min-b.min;}).forEach(function(e){
-      var tc = e.team==='home'?hc:ac;
-      var icon = e.type==='red' ? '🟥' : '⚽';
-      var label = e.type==='red' ? 'Red card' : 'Goal';
-      rows+='<div class="cand"><span class="p" style="min-width:30px">'+e.min+"'</span>"+
-        '<span style="min-width:18px">'+icon+'</span>'+
-        '<span class="code" style="color:'+accentFor(tc)+';min-width:34px">'+esc(tc)+'</span>'+
-        '<span class="nm">'+esc(e.who)+'<span class="muted tiny"> · '+label+'</span></span></div>';
-    });
-    var pensHtml='';
-    if(r.decider==='pens' && d.pens && d.pens.length){
-      pensHtml='<h4 style="margin-top:8px">Penalty shootout</h4>';
-      d.pens.forEach(function(p){
-        var tc=p.team==='home'?hc:ac;
-        pensHtml+='<div class="cand"><span style="min-width:18px">'+(p.ok?'✅':'❌')+'</span>'+
-          '<span class="code" style="color:'+accentFor(tc)+';min-width:34px">'+esc(tc)+'</span>'+
-          '<span class="nm">'+esc(p.who)+'</span></div>';
-      });
-    }
-    pop.innerHTML='<span class="x">&times;</span>'+
-      '<h4>M'+matchNo+' &middot; full time</h4>'+
-      '<div class="cand" style="font-weight:700;font-size:14px">'+esc(scoreline)+'</div>'+
-      (rows||'<div class="muted tiny">Goal-by-goal detail coming soon.</div>')+pensHtml;
-    placePop(pop, ev);
+    placePop(matchDetailCard('M'+matchNo+' · full time', hc, ac, r.score, r.decider, r.pens, d), ev);
+  }
+
+  // GROUP fixture detail (from a played fixture-line click). Events come from
+  // GROUP_DETAILS keyed by "g:HOME-AWAY"; group games are always regulation.
+  function showGroupMatchDetail(ev, m){
+    closePop();
+    _popKey='g:'+m.home+'-'+m.away;
+    var d=GROUP_DETAILS[_popKey]||{};
+    var title=(m.group?esc(m.group)+' · ':'')+'full time';
+    placePop(matchDetailCard(title, m.home, m.away, [m.homeGoals, m.awayGoals], 'reg', null, d), ev);
   }
 
   // UNIVERSAL popover (all rounds, both sides). Lists the FULL candidate
@@ -1994,6 +2020,12 @@ const APP_JS = String.raw`
       var dt=m.date?'<span class="when">'+esc(shortDate(m.date))+'</span>':'';
       row.innerHTML='<span class="fxt">'+esc(n1)+' <b class="fxs">'+m.homeGoals+'–'+m.awayGoals+'</b> '+esc(n2)+'</span>'+
         ((dt||venue)?' — ':'')+dt+venue;
+      // Click a played fixture -> goal-by-goal match detail (when the events cache
+      // has it). Only wire it where there's something to show; otherwise leave plain.
+      if(GROUP_DETAILS['g:'+m.home+'-'+m.away]){
+        row.classList.add('fxclick'); row.title='Match detail';
+        row.addEventListener('click', function(ev){ ev.stopPropagation(); showGroupMatchDetail(ev, m); });
+      }
     } else {
       var when=fixtureWhenET(m.date, m.time);
       row.innerHTML='<span class="fxt">'+esc(n1)+' vs '+esc(n2)+'</span>'+
