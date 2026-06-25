@@ -30,6 +30,7 @@ import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
 
 import { pollReport } from './espn-poll.mjs';
+import { sendFailureEmail } from './notify.mjs';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const STATE_FILE = join(__dirname, 'autosync-state.json');
@@ -215,11 +216,25 @@ async function main() {
     processed.add(d.key);
   }
 
-  // FAILURE-ONLY notification (spoiler-safe). Success = silence.
+  // FAILURE-ONLY notification (spoiler-safe). Success = silence. The message
+  // carries the PROBLEM, never a score, so a finished game is never spoiled.
   const problems = [failure, ...alerts.map((a) => a.flag)].filter(Boolean);
   if (problems.length) {
     log(`  !! ${live ? 'NOTIFYING' : 'WOULD notify'} David (failure-only): ${problems.join(' | ')}`);
-    // TODO(arm): send via Gmail REST using the same gsuite token (mail scope present).
+    if (live) {
+      try {
+        await sendFailureEmail(
+          `[WC2026 auto-sync] FAILURE ${today(now)}`,
+          `The unattended auto-sync hit a problem and needs a look:\n\n` +
+          problems.map((p) => `  • ${p}`).join('\n') +
+          `\n\n(Tick ${now.toISOString()} on 520. The failing item was left UNprocessed ` +
+          `so the next tick retries; no score was spoiled.)`,
+        );
+        log('  notified David (Gmail REST).');
+      } catch (e) {
+        log(`  !! notify FAILED too: ${e.message || e}`);   // last resort — only the log has it
+      }
+    }
   }
 
   state = { processedSetKeys: [...processed], lastRun: now.toISOString() };
