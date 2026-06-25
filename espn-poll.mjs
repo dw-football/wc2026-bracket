@@ -245,34 +245,43 @@ export async function pollReport(opts = {}) {
   // results (manual/auto first, the feed last so it supersedes). A KO match is
   // pollable only once BOTH its sides are mathematically fixed — exactly when we
   // can match an ESPN event to it by team pair.
-  const bracket = await loadJSON('bracket.json');
-  const manualKo = existsSync(join(__dirname, 'manual-ko-results.json'))
-    ? await loadJSON('manual-ko-results.json') : [];
-  const koResultsNow = mergeKnockoutResults(
-    knockoutResultsFromManual(manualKo),
-    knockoutResultsFromRaw(raw, teams),
-  );
-  const groups = toGroups(raw, teams);
-  const fixtures = resolveKnockoutFixtures(groups, bracket, koResultsNow,
-    { resolveThirdPlaceSlots });
+  //
+  // DEFENSIVE: the whole KO resolution is wrapped so a knockout-side error can
+  // NEVER take down the live GROUP-stage auto-sync (the group path above is already
+  // complete by here). On any error: no KO matches this tick, group path unaffected.
+  let remainingKo = [];
+  try {
+    const bracket = await loadJSON('bracket.json');
+    const manualKo = existsSync(join(__dirname, 'manual-ko-results.json'))
+      ? await loadJSON('manual-ko-results.json') : [];
+    const koResultsNow = mergeKnockoutResults(
+      knockoutResultsFromManual(manualKo),
+      knockoutResultsFromRaw(raw, teams),
+    );
+    const groups = toGroups(raw, teams);
+    const fixtures = resolveKnockoutFixtures(groups, bracket, koResultsNow,
+      { resolveThirdPlaceSlots });
 
-  const remainingKo = [];
-  for (const m of matches) {
-    if (m.group) continue;                              // knockout only
-    const num = m.num ?? m.match ?? null;
-    if (num == null) continue;
-    if (koResultsNow[num]) continue;                    // already resolved (feed/manual/auto)
-    const fx = fixtures[num];
-    if (!fx) continue;                                  // teams not fixed yet -> can't poll
-    const ko = parseFeedKO(m.date, m.time);
-    const koMs = ko ? ko.getTime() : Infinity;
-    remainingKo.push({
-      match: num, round: fx.round,
-      home: fx.home, away: fx.away,
-      t1: byCode.get(fx.home.toUpperCase()), t2: byCode.get(fx.away.toUpperCase()),
-      ko, koMs,
-      due: now.getTime() >= koMs + FIRST_CHECK_MIN * 60000,
-    });
+    for (const m of matches) {
+      if (m.group) continue;                              // knockout only
+      const num = m.num ?? m.match ?? null;
+      if (num == null) continue;
+      if (koResultsNow[num]) continue;                    // already resolved (feed/manual/auto)
+      const fx = fixtures[num];
+      if (!fx) continue;                                  // teams not fixed yet -> can't poll
+      const ko = parseFeedKO(m.date, m.time);
+      const koMs = ko ? ko.getTime() : Infinity;
+      remainingKo.push({
+        match: num, round: fx.round,
+        home: fx.home, away: fx.away,
+        t1: byCode.get(fx.home.toUpperCase()), t2: byCode.get(fx.away.toUpperCase()),
+        ko, koMs,
+        due: now.getTime() >= koMs + FIRST_CHECK_MIN * 60000,
+      });
+    }
+  } catch (e) {
+    console.warn(`KO fixture resolution skipped this tick (group path unaffected): ${e.message || e}`);
+    remainingKo = [];
   }
 
   // Only hit ESPN once at least one match (group OR knockout) is past its 115-min
@@ -376,6 +385,7 @@ export async function pollReport(opts = {}) {
   const koSets = [];
   const koDeployable = [];
   for (const r of remainingKo) {
+   try {
     const want = new Set([r.home, r.away].map((c) => c.toUpperCase()));
     let ev = espnEvents.find((e) => { const s = codeSet(e); return [...want].every((c) => s.has(c)); });
     if (!ev && r.t1 && r.t2) {
@@ -425,6 +435,11 @@ export async function pollReport(opts = {}) {
       });
     }
     if (flag) alerts.push({ key: `ko:${r.match}`, flag, ready: 0, of: 1 });
+   } catch (e) {
+     // One KO match's classification failing must not drop the others or the
+     // group results — skip just this match this tick.
+     console.warn(`KO match ${r.match} classification skipped this tick: ${e.message || e}`);
+   }
   }
 
   return { now, sets, deployable, alerts, koSets, koDeployable };

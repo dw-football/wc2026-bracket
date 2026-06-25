@@ -1,0 +1,1567 @@
+{
+ "g:MEX-RSA": {
+  "home": "MEX",
+  "away": "RSA",
+  "events": [
+   {
+    "min": 513,
+    "minLabel": "9",
+    "type": "goal",
+    "team": "home",
+    "who": "Julián Quiñones"
+   },
+   {
+    "min": 2940,
+    "minLabel": "49",
+    "type": "red",
+    "team": "away",
+    "who": "Yaya Sithole"
+   },
+   {
+    "min": 3996,
+    "minLabel": "67",
+    "type": "goal",
+    "team": "home",
+    "who": "Raúl Jiménez"
+   },
+   {
+    "min": 5003,
+    "minLabel": "84",
+    "type": "red",
+    "team": "away",
+    "who": "Themba Zwane"
+   },
+   {
+    "min": 5400,
+    "minLabel": "90'+2",
+    "type": "red",
+    "team": "home",
+    "who": "César Montes"
+   }
+  ],
+  "pens": []
+ },
+ "g:KOR-CZE": {
+  "home": "KOR",
+  "away": "CZE",
+  "events": [
+   {
+    "min": 3491,
+    "minLabel": "59",
+    "type": "goal",
+    "team": "away",
+    "who": "Ladislav Krejcí"
+   },
+   {
+    "min": 4004,
+    "minLabel": "67",
+    "type": "goal",
+    "team": "home",
+    "who": "Hwang In-Beom"
+   },
+   {
+    "min": 4764,
+    "minLabel": "80",
+    "type": "goal",
+    "team": "home",
+    "who": "Oh Hyeon-Gyu"
+   }
+  ],
+  "pens": []
+ },
+ "g:CZE-RSA": {
+  "home": "CZE",
+  "away": "RSA",
+  "events": [
+   {
+    "min": 307,
+    "minLabel": "6",
+    "type": "goal",
+    "team": "home",
+    "who": "Michal Sadílek"
+   },
+   {
+    "min": 4968,
+    "minLabel": "83",
+    "type": "red",
+    "team": "away",
+    "who": "Teboho Mokoena"
+   }
+  ],
+  "pens": []
+ },
+ "g:MEX-KOR": {
+  "home": "MEX",
+  "away": "KOR",
+  "events": [
+   {
+    "min": 2981,
+    "minLabel": "50",
+    "type": "goal",
+    "team": "home",
+    "who": "Luis Romo"
+   }
+  ],
+  "pens": []
+ },
+ "g:SUI-BIH": {
+  "home": "SUI",
+  "away": "BIH",
+  "events": [
+   {
+    "min": 4422,
+    "minLabel": "74",
+    "type": "goal",
+    "team": "home",
+    "who": "Johan Manzambi"
+   },
+   {
+    "min": 4761,
+    "minLabel": "80",
+    "type": "red",
+    "team": "away",
+    "who": "Tarik Muharemovic"
+   },
+   {
+    "min": 5026,
+    "minLabel": "84",
+    "type": "goal",
+    "team": "home",
+    "who": "Rubén Vargas"
+   },
+   {
+    "min": 5362,
+    "minLabel": "90",
+    "type": "goal",
+    "team": "home",
+    "who": "Johan Manzambi"
+   },
+   {
+    "min": 5400,
+    "minLabel": "90'+3",
+    "type": "goal",
+    "team": "away",
+    "who": "Ermin Mahmic"
+   },
+   {
+    "min": 5400,
+    "minLabel": "90'+7",
+    "type": "red",
+    "team": "home",
+    "who": "Granit Xhaka"
+   }
+  ],
+  "pens": []
+ },
+ "g:CAN-QAT": {
+  "home": "CAN",
+  "away": "QAT",
+  "events": [
+   {
+    "min": 954,
+    "minLabel": "16",
+    "type": "goal",
+    "team": "home",
+    "who": "Cyle Larin"
+   },
+   {
+    "min": 1706,
+    "minLabel": "29",
+    "type": "goal",
+    "team": "home",
+    "who": "Jonathan David"
+   },
+   {
+    "min": 1964,
+    "minLabel": "33",
+    "type": "red",
+    "team": "away",
+    "who": "Homam El Amin"
+   },
+   {
+    "min": 2700,
+    "minLabel": "45'+3",
+    "type": "goal",
+    "team": "home",
+    "who": "Jonathan David"
+   },
+   {
+    "min": 3167,
+    "minLabel": "53",
+    "type": "red",
+    "team": "away",
+    "who": "Assim Madibo"
+   },
+   {
+    "min": 3782,
+    "minLabel": "64",
+    "type": "goal",
+    "team": "home",
+    "who": "Nathan Saliba"
+   },
+   {
+    "min": 4463,
+    "minLabel": "75",
+    "type": "goal",
+    "team": "home",
+    "who": "Mohammad Al Manai (OG)"
+   },
+   {
+    "min": 5400,
+    "minLabel": "90'+2",
+    "type": "goal",
+    "team": "home",
+    "who": "Jonathan David"
+   }
+  ],
+  "pens": []
+ },
+ "g:CZE-MEX": {
+  "home": "CZE",
+  "away": "MEX",
+  "events": [
+   {
+    "min": 3254,
+    "minLabel": "55",
+    "type": "goal",
+    "team": "away",
+    "who": "Mateo Chávez"
+   },
+   {
+    "min": 3631,
+    "minLabel": "61",
+    "type": "goal",
+    "team": "away",
+    "who": "Julián Quiñones"
+   },
+   {
+    "min": 5400,
+    "minLabel": "90'+4",
+    "type": "goal",
+    "team": "away",
+    "who": "Álvaro Fidalgo"
+   }
+  ],
+  "pens": []
+ },
+ "g:RSA-KOR": {
+  "home": "RSA",
+  "away": "KOR",
+  "events": [
+   {
+    "min": 3737,
+    "minLabel": "63",
+    "type": "goal",
+    "team": "home",
+    "who": "Thapelo Maseko"
+   }
+  ],
+  "pens": []
+ },
+ "g:SUI-CAN": {
+  "home": "SUI",
+  "away": "CAN",
+  "events": [
+   {
+    "min": 2739,
+    "minLabel": "46",
+    "type": "goal",
+    "team": "home",
+    "who": "Rubén Vargas"
+   },
+   {
+    "min": 3384,
+    "minLabel": "57",
+    "type": "goal",
+    "team": "home",
+    "who": "Johan Manzambi"
+   },
+   {
+    "min": 4511,
+    "minLabel": "76",
+    "type": "goal",
+    "team": "away",
+    "who": "Promise David"
+   }
+  ],
+  "pens": []
+ },
+ "g:BIH-QAT": {
+  "home": "BIH",
+  "away": "QAT",
+  "events": [
+   {
+    "min": 1707,
+    "minLabel": "29",
+    "type": "goal",
+    "team": "home",
+    "who": "Kerim Alajbegovic"
+   },
+   {
+    "min": 2014,
+    "minLabel": "34",
+    "type": "goal",
+    "team": "home",
+    "who": "Mahmoud Abunada (OG)"
+   },
+   {
+    "min": 2510,
+    "minLabel": "42",
+    "type": "goal",
+    "team": "away",
+    "who": "Hassan Al Haydos"
+   },
+   {
+    "min": 4788,
+    "minLabel": "80",
+    "type": "goal",
+    "team": "home",
+    "who": "Ermin Mahmic"
+   }
+  ],
+  "pens": []
+ },
+ "g:SCO-BRA": {
+  "home": "SCO",
+  "away": "BRA",
+  "events": [
+   {
+    "min": 405,
+    "minLabel": "7",
+    "type": "goal",
+    "team": "away",
+    "who": "Vinícius Júnior"
+   },
+   {
+    "min": 2700,
+    "minLabel": "45'+3",
+    "type": "goal",
+    "team": "away",
+    "who": "Vinícius Júnior"
+   },
+   {
+    "min": 3595,
+    "minLabel": "60",
+    "type": "goal",
+    "team": "away",
+    "who": "Matheus Cunha"
+   }
+  ],
+  "pens": []
+ },
+ "g:MAR-HAI": {
+  "home": "MAR",
+  "away": "HAI",
+  "events": [
+   {
+    "min": 576,
+    "minLabel": "10",
+    "type": "goal",
+    "team": "away",
+    "who": "Yassine Bounou (OG)"
+   },
+   {
+    "min": 2302,
+    "minLabel": "39",
+    "type": "goal",
+    "team": "home",
+    "who": "Achraf Hakimi"
+   },
+   {
+    "min": 2532,
+    "minLabel": "43",
+    "type": "goal",
+    "team": "away",
+    "who": "Wilson Isidor"
+   },
+   {
+    "min": 2700,
+    "minLabel": "45'+1",
+    "type": "goal",
+    "team": "home",
+    "who": "Ismael Saibari"
+   },
+   {
+    "min": 4643,
+    "minLabel": "78",
+    "type": "goal",
+    "team": "home",
+    "who": "Soufiane Rahimi"
+   },
+   {
+    "min": 5312,
+    "minLabel": "89",
+    "type": "goal",
+    "team": "home",
+    "who": "Gessime Yassine"
+   }
+  ],
+  "pens": []
+ },
+ "g:CAN-BIH": {
+  "home": "CAN",
+  "away": "BIH",
+  "events": [
+   {
+    "min": 1228,
+    "minLabel": "21",
+    "type": "goal",
+    "team": "away",
+    "who": "Jovo Lukic"
+   },
+   {
+    "min": 4679,
+    "minLabel": "78",
+    "type": "goal",
+    "team": "home",
+    "who": "Cyle Larin"
+   }
+  ],
+  "pens": []
+ },
+ "g:USA-PAR": {
+  "home": "USA",
+  "away": "PAR",
+  "events": [
+   {
+    "min": 408,
+    "minLabel": "7",
+    "type": "goal",
+    "team": "home",
+    "who": "Damián Bobadilla (OG)"
+   },
+   {
+    "min": 1819,
+    "minLabel": "31",
+    "type": "goal",
+    "team": "home",
+    "who": "Folarin Balogun"
+   },
+   {
+    "min": 2700,
+    "minLabel": "45'+5",
+    "type": "goal",
+    "team": "home",
+    "who": "Folarin Balogun"
+   },
+   {
+    "min": 3086,
+    "minLabel": "52",
+    "type": "red",
+    "team": "home",
+    "who": null
+   },
+   {
+    "min": 4362,
+    "minLabel": "73",
+    "type": "goal",
+    "team": "away",
+    "who": "Mauricio"
+   },
+   {
+    "min": 5400,
+    "minLabel": "90'+8",
+    "type": "goal",
+    "team": "home",
+    "who": "Giovanni Reyna"
+   }
+  ],
+  "pens": []
+ },
+ "g:QAT-SUI": {
+  "home": "QAT",
+  "away": "SUI",
+  "events": [
+   {
+    "min": 992,
+    "minLabel": "17",
+    "type": "red",
+    "team": "away",
+    "who": "Breel Embolo"
+   },
+   {
+    "min": 5400,
+    "minLabel": "90'+4",
+    "type": "goal",
+    "team": "home",
+    "who": "Miro Muheim (OG)"
+   }
+  ],
+  "pens": []
+ },
+ "g:BRA-MAR": {
+  "home": "BRA",
+  "away": "MAR",
+  "events": [
+   {
+    "min": 1215,
+    "minLabel": "21",
+    "type": "goal",
+    "team": "away",
+    "who": "Ismael Saibari"
+   },
+   {
+    "min": 1881,
+    "minLabel": "32",
+    "type": "goal",
+    "team": "home",
+    "who": "Vinícius Júnior"
+   }
+  ],
+  "pens": []
+ },
+ "g:HAI-SCO": {
+  "home": "HAI",
+  "away": "SCO",
+  "events": [
+   {
+    "min": 1673,
+    "minLabel": "28",
+    "type": "goal",
+    "team": "away",
+    "who": "John McGinn"
+   }
+  ],
+  "pens": []
+ },
+ "g:SCO-MAR": {
+  "home": "SCO",
+  "away": "MAR",
+  "events": [
+   {
+    "min": 70,
+    "minLabel": "2",
+    "type": "goal",
+    "team": "away",
+    "who": "Ismael Saibari"
+   }
+  ],
+  "pens": []
+ },
+ "g:BRA-HAI": {
+  "home": "BRA",
+  "away": "HAI",
+  "events": [
+   {
+    "min": 1369,
+    "minLabel": "23",
+    "type": "goal",
+    "team": "home",
+    "who": "Matheus Cunha"
+   },
+   {
+    "min": 2138,
+    "minLabel": "36",
+    "type": "goal",
+    "team": "home",
+    "who": "Matheus Cunha"
+   },
+   {
+    "min": 2700,
+    "minLabel": "45'+3",
+    "type": "goal",
+    "team": "home",
+    "who": "Vinícius Júnior"
+   }
+  ],
+  "pens": []
+ },
+ "g:USA-AUS": {
+  "home": "USA",
+  "away": "AUS",
+  "events": [
+   {
+    "min": 613,
+    "minLabel": "11",
+    "type": "goal",
+    "team": "home",
+    "who": "Cameron Burgess (OG)"
+   },
+   {
+    "min": 2578,
+    "minLabel": "43",
+    "type": "goal",
+    "team": "home",
+    "who": "Alex Freeman"
+   }
+  ],
+  "pens": []
+ },
+ "g:TUR-PAR": {
+  "home": "TUR",
+  "away": "PAR",
+  "events": [
+   {
+    "min": 64,
+    "minLabel": "2",
+    "type": "goal",
+    "team": "away",
+    "who": "Matías Galarza"
+   },
+   {
+    "min": 2700,
+    "minLabel": "45'+3",
+    "type": "red",
+    "team": "away",
+    "who": "Miguel Almirón"
+   }
+  ],
+  "pens": []
+ },
+ "g:GER-CUW": {
+  "home": "GER",
+  "away": "CUW",
+  "events": [
+   {
+    "min": 317,
+    "minLabel": "6",
+    "type": "goal",
+    "team": "home",
+    "who": "Felix Nmecha"
+   },
+   {
+    "min": 1244,
+    "minLabel": "21",
+    "type": "goal",
+    "team": "away",
+    "who": "Livano Comenencia"
+   },
+   {
+    "min": 2250,
+    "minLabel": "38",
+    "type": "goal",
+    "team": "home",
+    "who": "Nico Schlotterbeck"
+   },
+   {
+    "min": 2700,
+    "minLabel": "45'+5",
+    "type": "red",
+    "team": "home",
+    "who": "Kai Havertz"
+   },
+   {
+    "min": 2768,
+    "minLabel": "47",
+    "type": "goal",
+    "team": "home",
+    "who": "Jamal Musiala"
+   },
+   {
+    "min": 4062,
+    "minLabel": "68",
+    "type": "goal",
+    "team": "home",
+    "who": "Nathaniel Brown"
+   },
+   {
+    "min": 4626,
+    "minLabel": "78",
+    "type": "goal",
+    "team": "home",
+    "who": "Deniz Undav"
+   },
+   {
+    "min": 5263,
+    "minLabel": "88",
+    "type": "goal",
+    "team": "home",
+    "who": "Kai Havertz"
+   }
+  ],
+  "pens": []
+ },
+ "g:CIV-ECU": {
+  "home": "CIV",
+  "away": "ECU",
+  "events": [
+   {
+    "min": 5372,
+    "minLabel": "90",
+    "type": "goal",
+    "team": "home",
+    "who": "Amad Diallo"
+   }
+  ],
+  "pens": []
+ },
+ "g:NED-JPN": {
+  "home": "NED",
+  "away": "JPN",
+  "events": [
+   {
+    "min": 3001,
+    "minLabel": "51",
+    "type": "goal",
+    "team": "home",
+    "who": "Virgil van Dijk"
+   },
+   {
+    "min": 3403,
+    "minLabel": "57",
+    "type": "goal",
+    "team": "away",
+    "who": "Keito Nakamura"
+   },
+   {
+    "min": 3788,
+    "minLabel": "64",
+    "type": "goal",
+    "team": "home",
+    "who": "Crysencio Summerville"
+   },
+   {
+    "min": 5281,
+    "minLabel": "89",
+    "type": "goal",
+    "team": "away",
+    "who": "Daichi Kamada"
+   }
+  ],
+  "pens": []
+ },
+ "g:SWE-TUN": {
+  "home": "SWE",
+  "away": "TUN",
+  "events": [
+   {
+    "min": 381,
+    "minLabel": "7",
+    "type": "goal",
+    "team": "home",
+    "who": "Yasin Ayari"
+   },
+   {
+    "min": 1748,
+    "minLabel": "30",
+    "type": "goal",
+    "team": "home",
+    "who": "Alexander Isak"
+   },
+   {
+    "min": 2550,
+    "minLabel": "43",
+    "type": "goal",
+    "team": "away",
+    "who": "Omar Rekik"
+   },
+   {
+    "min": 3539,
+    "minLabel": "59",
+    "type": "goal",
+    "team": "home",
+    "who": "Viktor Gyökeres"
+   },
+   {
+    "min": 5011,
+    "minLabel": "84",
+    "type": "goal",
+    "team": "home",
+    "who": "Mattias Svanberg"
+   },
+   {
+    "min": 5400,
+    "minLabel": "90'+6",
+    "type": "goal",
+    "team": "home",
+    "who": "Yasin Ayari"
+   }
+  ],
+  "pens": []
+ },
+ "g:GER-CIV": {
+  "home": "GER",
+  "away": "CIV",
+  "events": [
+   {
+    "min": 1743,
+    "minLabel": "30",
+    "type": "goal",
+    "team": "away",
+    "who": "Franck Kessie"
+   },
+   {
+    "min": 4058,
+    "minLabel": "68",
+    "type": "goal",
+    "team": "home",
+    "who": "Deniz Undav"
+   },
+   {
+    "min": 5400,
+    "minLabel": "90'+4",
+    "type": "goal",
+    "team": "home",
+    "who": "Deniz Undav"
+   }
+  ],
+  "pens": []
+ },
+ "g:ECU-CUW": {
+  "home": "ECU",
+  "away": "CUW",
+  "events": [],
+  "pens": []
+ },
+ "g:NED-SWE": {
+  "home": "NED",
+  "away": "SWE",
+  "events": [
+   {
+    "min": 298,
+    "minLabel": "5",
+    "type": "goal",
+    "team": "home",
+    "who": "Brian Brobbey"
+   },
+   {
+    "min": 972,
+    "minLabel": "17",
+    "type": "goal",
+    "team": "home",
+    "who": "Brian Brobbey"
+   },
+   {
+    "min": 2814,
+    "minLabel": "47",
+    "type": "goal",
+    "team": "home",
+    "who": "Cody Gakpo"
+   },
+   {
+    "min": 3224,
+    "minLabel": "54",
+    "type": "goal",
+    "team": "home",
+    "who": "Cody Gakpo"
+   },
+   {
+    "min": 3488,
+    "minLabel": "59",
+    "type": "goal",
+    "team": "away",
+    "who": "Anthony Elanga"
+   },
+   {
+    "min": 5312,
+    "minLabel": "89",
+    "type": "goal",
+    "team": "home",
+    "who": "Crysencio Summerville"
+   }
+  ],
+  "pens": []
+ },
+ "g:BEL-EGY": {
+  "home": "BEL",
+  "away": "EGY",
+  "events": [
+   {
+    "min": 1142,
+    "minLabel": "20",
+    "type": "goal",
+    "team": "away",
+    "who": "Emam Ashour"
+   },
+   {
+    "min": 3944,
+    "minLabel": "66",
+    "type": "goal",
+    "team": "home",
+    "who": "Mohamed Hany (OG)"
+   }
+  ],
+  "pens": []
+ },
+ "g:IRN-NZL": {
+  "home": "IRN",
+  "away": "NZL",
+  "events": [
+   {
+    "min": 403,
+    "minLabel": "7",
+    "type": "goal",
+    "team": "away",
+    "who": "Elijah Just"
+   },
+   {
+    "min": 1908,
+    "minLabel": "32",
+    "type": "goal",
+    "team": "home",
+    "who": "Ramin Rezaeian"
+   },
+   {
+    "min": 3240,
+    "minLabel": "54",
+    "type": "goal",
+    "team": "away",
+    "who": "Elijah Just"
+   },
+   {
+    "min": 3784,
+    "minLabel": "64",
+    "type": "goal",
+    "team": "home",
+    "who": "Mohammad Mohebbi"
+   }
+  ],
+  "pens": []
+ },
+ "g:ESP-CPV": {
+  "home": "ESP",
+  "away": "CPV",
+  "events": [],
+  "pens": []
+ },
+ "g:KSA-URU": {
+  "home": "KSA",
+  "away": "URU",
+  "events": [
+   {
+    "min": 2403,
+    "minLabel": "41",
+    "type": "goal",
+    "team": "home",
+    "who": "Abdulelah Al Amri"
+   },
+   {
+    "min": 4767,
+    "minLabel": "80",
+    "type": "goal",
+    "team": "away",
+    "who": "Maxi Araújo"
+   }
+  ],
+  "pens": []
+ },
+ "g:BEL-IRN": {
+  "home": "BEL",
+  "away": "IRN",
+  "events": [
+   {
+    "min": 3960,
+    "minLabel": "66",
+    "type": "red",
+    "team": "home",
+    "who": "Nathan Ngoy"
+   }
+  ],
+  "pens": []
+ },
+ "g:NZL-EGY": {
+  "home": "NZL",
+  "away": "EGY",
+  "events": [
+   {
+    "min": 875,
+    "minLabel": "15",
+    "type": "goal",
+    "team": "home",
+    "who": "Finn Surman"
+   },
+   {
+    "min": 3475,
+    "minLabel": "58",
+    "type": "goal",
+    "team": "away",
+    "who": "Mostafa Zico"
+   },
+   {
+    "min": 4013,
+    "minLabel": "67",
+    "type": "goal",
+    "team": "away",
+    "who": "Mohamed Salah"
+   },
+   {
+    "min": 4877,
+    "minLabel": "82",
+    "type": "goal",
+    "team": "away",
+    "who": "Trezeguet"
+   }
+  ],
+  "pens": []
+ },
+ "g:ESP-KSA": {
+  "home": "ESP",
+  "away": "KSA",
+  "events": [
+   {
+    "min": 598,
+    "minLabel": "10",
+    "type": "goal",
+    "team": "home",
+    "who": "Lamine Yamal"
+   },
+   {
+    "min": 1235,
+    "minLabel": "21",
+    "type": "goal",
+    "team": "home",
+    "who": "Mikel Oyarzabal"
+   },
+   {
+    "min": 1382,
+    "minLabel": "24",
+    "type": "goal",
+    "team": "home",
+    "who": "Mikel Oyarzabal"
+   },
+   {
+    "min": 2886,
+    "minLabel": "49",
+    "type": "goal",
+    "team": "home",
+    "who": "Hassan Al Tambakti (OG)"
+   }
+  ],
+  "pens": []
+ },
+ "g:URU-CPV": {
+  "home": "URU",
+  "away": "CPV",
+  "events": [
+   {
+    "min": 1225,
+    "minLabel": "21",
+    "type": "goal",
+    "team": "away",
+    "who": "Kevin Pina"
+   },
+   {
+    "min": 2583,
+    "minLabel": "44",
+    "type": "goal",
+    "team": "home",
+    "who": "Maxi Araújo"
+   },
+   {
+    "min": 2700,
+    "minLabel": "45'+6",
+    "type": "goal",
+    "team": "home",
+    "who": "Agustín Canobbio"
+   },
+   {
+    "min": 3616,
+    "minLabel": "61",
+    "type": "goal",
+    "team": "away",
+    "who": "Hélio Varela"
+   }
+  ],
+  "pens": []
+ },
+ "g:FRA-SEN": {
+  "home": "FRA",
+  "away": "SEN",
+  "events": [
+   {
+    "min": 3931,
+    "minLabel": "66",
+    "type": "goal",
+    "team": "home",
+    "who": "Kylian Mbappé"
+   },
+   {
+    "min": 4896,
+    "minLabel": "82",
+    "type": "goal",
+    "team": "home",
+    "who": "Bradley Barcola"
+   },
+   {
+    "min": 5400,
+    "minLabel": "90'+5",
+    "type": "goal",
+    "team": "away",
+    "who": "Ibrahim Mbaye"
+   },
+   {
+    "min": 5400,
+    "minLabel": "90'+6",
+    "type": "goal",
+    "team": "home",
+    "who": "Kylian Mbappé"
+   }
+  ],
+  "pens": []
+ },
+ "g:IRQ-NOR": {
+  "home": "IRQ",
+  "away": "NOR",
+  "events": [
+   {
+    "min": 1695,
+    "minLabel": "29",
+    "type": "goal",
+    "team": "away",
+    "who": "Erling Haaland"
+   },
+   {
+    "min": 2300,
+    "minLabel": "39",
+    "type": "goal",
+    "team": "home",
+    "who": "Aymen Hussein"
+   },
+   {
+    "min": 2542,
+    "minLabel": "43",
+    "type": "goal",
+    "team": "away",
+    "who": "Erling Haaland"
+   },
+   {
+    "min": 4555,
+    "minLabel": "76",
+    "type": "goal",
+    "team": "away",
+    "who": "Leo Østigård"
+   },
+   {
+    "min": 5400,
+    "minLabel": "90'+6",
+    "type": "goal",
+    "team": "away",
+    "who": "Aymen Hussein (OG)"
+   }
+  ],
+  "pens": []
+ },
+ "g:ARG-ALG": {
+  "home": "ARG",
+  "away": "ALG",
+  "events": [
+   {
+    "min": 999,
+    "minLabel": "17",
+    "type": "goal",
+    "team": "home",
+    "who": "Lionel Messi"
+   },
+   {
+    "min": 3582,
+    "minLabel": "60",
+    "type": "goal",
+    "team": "home",
+    "who": "Lionel Messi"
+   },
+   {
+    "min": 4538,
+    "minLabel": "76",
+    "type": "goal",
+    "team": "home",
+    "who": "Lionel Messi"
+   }
+  ],
+  "pens": []
+ },
+ "g:FRA-IRQ": {
+  "home": "FRA",
+  "away": "IRQ",
+  "events": [
+   {
+    "min": 811,
+    "minLabel": "14",
+    "type": "goal",
+    "team": "home",
+    "who": "Kylian Mbappé"
+   },
+   {
+    "min": 3220,
+    "minLabel": "54",
+    "type": "goal",
+    "team": "home",
+    "who": "Kylian Mbappé"
+   },
+   {
+    "min": 3949,
+    "minLabel": "66",
+    "type": "goal",
+    "team": "home",
+    "who": "Ousmane Dembélé"
+   }
+  ],
+  "pens": []
+ },
+ "g:NOR-SEN": {
+  "home": "NOR",
+  "away": "SEN",
+  "events": [
+   {
+    "min": 2561,
+    "minLabel": "43",
+    "type": "goal",
+    "team": "home",
+    "who": "Marcus Pedersen"
+   },
+   {
+    "min": 2850,
+    "minLabel": "48",
+    "type": "goal",
+    "team": "home",
+    "who": "Erling Haaland"
+   },
+   {
+    "min": 3161,
+    "minLabel": "53",
+    "type": "goal",
+    "team": "away",
+    "who": "Ismaïla Sarr"
+   },
+   {
+    "min": 3429,
+    "minLabel": "58",
+    "type": "goal",
+    "team": "home",
+    "who": "Erling Haaland"
+   },
+   {
+    "min": 5400,
+    "minLabel": "90'+3",
+    "type": "goal",
+    "team": "away",
+    "who": "Ismaïla Sarr"
+   }
+  ],
+  "pens": []
+ },
+ "g:ARG-AUT": {
+  "home": "ARG",
+  "away": "AUT",
+  "events": [
+   {
+    "min": 2277,
+    "minLabel": "38",
+    "type": "goal",
+    "team": "home",
+    "who": "Lionel Messi"
+   },
+   {
+    "min": 5400,
+    "minLabel": "90'+5",
+    "type": "goal",
+    "team": "home",
+    "who": "Lionel Messi"
+   }
+  ],
+  "pens": []
+ },
+ "g:JOR-ALG": {
+  "home": "JOR",
+  "away": "ALG",
+  "events": [
+   {
+    "min": 2141,
+    "minLabel": "36",
+    "type": "goal",
+    "team": "home",
+    "who": "Nizar Al Rashdan"
+   },
+   {
+    "min": 4083,
+    "minLabel": "69",
+    "type": "goal",
+    "team": "away",
+    "who": "Nadhir Benbouali"
+   },
+   {
+    "min": 4900,
+    "minLabel": "82",
+    "type": "goal",
+    "team": "away",
+    "who": "Amine Gouiri"
+   }
+  ],
+  "pens": []
+ },
+ "g:POR-COD": {
+  "home": "POR",
+  "away": "COD",
+  "events": [
+   {
+    "min": 333,
+    "minLabel": "6",
+    "type": "goal",
+    "team": "home",
+    "who": "João Neves"
+   },
+   {
+    "min": 2700,
+    "minLabel": "45'+5",
+    "type": "goal",
+    "team": "away",
+    "who": "Yoane Wissa"
+   }
+  ],
+  "pens": []
+ },
+ "g:UZB-COL": {
+  "home": "UZB",
+  "away": "COL",
+  "events": [
+   {
+    "min": 2399,
+    "minLabel": "40",
+    "type": "goal",
+    "team": "away",
+    "who": "Daniel Muñoz"
+   },
+   {
+    "min": 3583,
+    "minLabel": "60",
+    "type": "goal",
+    "team": "home",
+    "who": "Abbosbek Fayzullaev"
+   },
+   {
+    "min": 3893,
+    "minLabel": "65",
+    "type": "goal",
+    "team": "away",
+    "who": "Luis Díaz"
+   },
+   {
+    "min": 5400,
+    "minLabel": "90'+9",
+    "type": "goal",
+    "team": "away",
+    "who": "Jaminton Campaz"
+   }
+  ],
+  "pens": []
+ },
+ "g:ENG-CRO": {
+  "home": "ENG",
+  "away": "CRO",
+  "events": [
+   {
+    "min": 677,
+    "minLabel": "12",
+    "type": "red",
+    "team": "home",
+    "who": "Harry Kane"
+   },
+   {
+    "min": 2132,
+    "minLabel": "36",
+    "type": "goal",
+    "team": "away",
+    "who": "Martin Baturina"
+   },
+   {
+    "min": 2475,
+    "minLabel": "42",
+    "type": "goal",
+    "team": "home",
+    "who": "Harry Kane"
+   },
+   {
+    "min": 2700,
+    "minLabel": "45'+5",
+    "type": "goal",
+    "team": "away",
+    "who": "Petar Musa"
+   },
+   {
+    "min": 2785,
+    "minLabel": "47",
+    "type": "goal",
+    "team": "home",
+    "who": "Jude Bellingham"
+   },
+   {
+    "min": 5086,
+    "minLabel": "85",
+    "type": "goal",
+    "team": "home",
+    "who": "Marcus Rashford"
+   }
+  ],
+  "pens": []
+ },
+ "g:GHA-PAN": {
+  "home": "GHA",
+  "away": "PAN",
+  "events": [
+   {
+    "min": 5400,
+    "minLabel": "90'+5",
+    "type": "goal",
+    "team": "home",
+    "who": "Caleb Yirenkyi"
+   }
+  ],
+  "pens": []
+ },
+ "g:POR-UZB": {
+  "home": "POR",
+  "away": "UZB",
+  "events": [
+   {
+    "min": 353,
+    "minLabel": "6",
+    "type": "goal",
+    "team": "home",
+    "who": "Cristiano Ronaldo"
+   },
+   {
+    "min": 986,
+    "minLabel": "17",
+    "type": "goal",
+    "team": "home",
+    "who": "Nuno Mendes"
+   },
+   {
+    "min": 2289,
+    "minLabel": "39",
+    "type": "goal",
+    "team": "home",
+    "who": "Cristiano Ronaldo"
+   },
+   {
+    "min": 3549,
+    "minLabel": "60",
+    "type": "goal",
+    "team": "home",
+    "who": "Abduvokhid Nematov (OG)"
+   },
+   {
+    "min": 5208,
+    "minLabel": "87",
+    "type": "goal",
+    "team": "home",
+    "who": "Rafael Leão"
+   }
+  ],
+  "pens": []
+ },
+ "g:COL-COD": {
+  "home": "COL",
+  "away": "COD",
+  "events": [
+   {
+    "min": 4504,
+    "minLabel": "76",
+    "type": "goal",
+    "team": "home",
+    "who": "Daniel Muñoz"
+   }
+  ],
+  "pens": []
+ },
+ "g:ENG-GHA": {
+  "home": "ENG",
+  "away": "GHA",
+  "events": [],
+  "pens": []
+ },
+ "g:PAN-CRO": {
+  "home": "PAN",
+  "away": "CRO",
+  "events": [
+   {
+    "min": 3220,
+    "minLabel": "54",
+    "type": "goal",
+    "team": "away",
+    "who": "Ante Budimir"
+   }
+  ],
+  "pens": []
+ },
+ "g:AUS-TUR": {
+  "home": "AUS",
+  "away": "TUR",
+  "events": [
+   {
+    "min": 1578,
+    "minLabel": "27",
+    "type": "goal",
+    "team": "home",
+    "who": "Nestory Irankunda"
+   },
+   {
+    "min": 4447,
+    "minLabel": "75",
+    "type": "goal",
+    "team": "home",
+    "who": "Connor Metcalfe"
+   }
+  ],
+  "pens": []
+ },
+ "g:TUN-JPN": {
+  "home": "TUN",
+  "away": "JPN",
+  "events": [
+   {
+    "min": 207,
+    "minLabel": "4",
+    "type": "goal",
+    "team": "away",
+    "who": "Daichi Kamada"
+   },
+   {
+    "min": 1805,
+    "minLabel": "31",
+    "type": "goal",
+    "team": "away",
+    "who": "Ayase Ueda"
+   },
+   {
+    "min": 4086,
+    "minLabel": "69",
+    "type": "goal",
+    "team": "away",
+    "who": "Junya Ito"
+   },
+   {
+    "min": 4976,
+    "minLabel": "83",
+    "type": "goal",
+    "team": "away",
+    "who": "Ayase Ueda"
+   }
+  ],
+  "pens": []
+ },
+ "g:AUT-JOR": {
+  "home": "AUT",
+  "away": "JOR",
+  "events": [
+   {
+    "min": 1201,
+    "minLabel": "21",
+    "type": "goal",
+    "team": "home",
+    "who": "Romano Schmid"
+   },
+   {
+    "min": 2949,
+    "minLabel": "50",
+    "type": "goal",
+    "team": "away",
+    "who": "Ali Olwan"
+   },
+   {
+    "min": 4553,
+    "minLabel": "76",
+    "type": "goal",
+    "team": "home",
+    "who": "Yazan Al Arab (OG)"
+   },
+   {
+    "min": 5400,
+    "minLabel": "90'+12",
+    "type": "red",
+    "team": "home",
+    "who": "Marko Arnautovic"
+   }
+  ],
+  "pens": []
+ }
+}

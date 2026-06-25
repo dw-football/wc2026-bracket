@@ -18,10 +18,12 @@ run-autosync.cmd
 
 # Build artifacts / cached API pulls
 data/raw/
-data/match-events.json
 dist/exports/
 dist/baked-mc.json
 *.log
+# NOTE: data/match-events.json (ESPN events cache) is COMMITTED on purpose — the
+# build bakes it into the page, and the unattended auto-sync rebuild on main has no
+# other copy, so gitignoring it would silently drop the match-detail popovers.
 
 # Throwaway analysis drills (3rd-place / Scotland qualifying scratch; not kept)
 par_drill*.mjs
