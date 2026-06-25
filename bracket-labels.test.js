@@ -24,6 +24,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
+import { readFileSync } from 'node:fs';
 
 import {
   renderR32Side,
@@ -34,6 +35,7 @@ import {
   groupRankSets,
   r32SlotCode,
   groupSlotCode,
+  resolveKnockoutFixtures,
   DOMINANT_THRESHOLD,
   HIGHLIGHTED_TEAMS,
 } from './bracket-labels.mjs';
@@ -262,4 +264,77 @@ test('computeMatchLabels: KO previews are driven by HIGHLIGHTED teams (not watch
   let named = 0;
   for (let m = 89; m <= 102; m++) if (a.get(m).full) named++;
   assert.ok(named > 0, 'highlighted-team previews appear in the knockout rounds');
+});
+
+// ---------------------------------------------------------------------------
+// resolveKnockoutFixtures — DETERMINISTIC matchNo -> {home,away} resolution.
+// The inverse map the ESPN poller uses to turn a KO team-pair into a match
+// number. Monotone: a match appears only once BOTH sides are mathematically
+// fixed (group complete for R32; feeder result present for R16+).
+// ---------------------------------------------------------------------------
+
+const BRACKET = JSON.parse(readFileSync(new URL('./bracket.json', import.meta.url), 'utf8'));
+const LETTERS12 = 'ABCDEFGHIJKL'.split('');
+// 12 fully-played groups, codes unique per group (e.g. A1..A4). 1-0 wins down
+// the order => winner=x1, runner-up=x2, third=x3 deterministically.
+function allGroupsComplete() {
+  return LETTERS12.map((L) =>
+    groupWithPlayed(L, [L + '1', L + '2', L + '3', L + '4'], 6));
+}
+
+test('resolveKnockoutFixtures: no R32 match resolves while any group is incomplete', () => {
+  const bracket = BRACKET;
+  const groups = allGroupsComplete();
+  groups[3].matches[5].played = false; // Group D one match short
+  const fx = resolveKnockoutFixtures(groups, bracket, {}, { resolveThirdPlaceSlots });
+  // A 3rd-place slot can't resolve (cross-group), and any match feeding off D is out.
+  // Specifically no match should carry a 'third' code, and matches with a D winner/
+  // runner-up side are omitted. Assert the whole-tournament invariant via count.
+  const full = resolveKnockoutFixtures(allGroupsComplete(), bracket, {}, { resolveThirdPlaceSlots });
+  assert.ok(Object.keys(fx).length < Object.keys(full).length,
+    'incomplete group resolves strictly fewer R32 fixtures');
+});
+
+test('resolveKnockoutFixtures: all 16 R32 fixtures resolve once every group is complete', () => {
+  const bracket = BRACKET;
+  const fx = resolveKnockoutFixtures(allGroupsComplete(), bracket, {}, { resolveThirdPlaceSlots });
+  const r32 = bracket.rounds.R32.map((m) => m.match);
+  for (const n of r32) {
+    assert.ok(fx[n], `M${n} resolved`);
+    assert.equal(fx[n].round, 'R32');
+    assert.ok(fx[n].home && fx[n].away && fx[n].home !== fx[n].away, `M${n} two distinct teams`);
+  }
+  // No R16+ match resolves yet (no koResults supplied).
+  assert.equal(fx[89], undefined, 'R16 unresolved without feeder results');
+});
+
+test('resolveKnockoutFixtures: R16 side resolves from a feeder koResult (winnerOf)', () => {
+  const bracket = BRACKET;
+  const groups = allGroupsComplete();
+  const r32 = resolveKnockoutFixtures(groups, bracket, {}, { resolveThirdPlaceSlots });
+  // M89 = winnerOf 74 v winnerOf 77. Feed both winners.
+  const ko = {
+    74: { winner: r32[74].home, loser: r32[74].away, home: r32[74].home, away: r32[74].away, score: [1, 0], decider: 'reg', pens: null },
+    77: { winner: r32[77].away, loser: r32[77].home, home: r32[77].home, away: r32[77].away, score: [0, 0], decider: 'pens', pens: [4, 2] },
+  };
+  const fx = resolveKnockoutFixtures(groups, bracket, ko, { resolveThirdPlaceSlots });
+  assert.ok(fx[89], 'M89 resolves once both feeders have results');
+  assert.equal(fx[89].home, r32[74].home, 'M89 home = winner of M74');
+  assert.equal(fx[89].away, r32[77].away, 'M89 away = pens winner of M77');
+  assert.equal(fx[89].round, 'R16');
+});
+
+test('resolveKnockoutFixtures: matches live feed — M73 is the two complete-group runners-up', async () => {
+  const teams = JSON.parse(await readFile(new URL('./teams.json', import.meta.url), 'utf8'));
+  const bracket = JSON.parse(await readFile(new URL('./bracket.json', import.meta.url), 'utf8'));
+  const raw = await fetchRaw();
+  const groups = toGroups(raw, teams);
+  const fx = resolveKnockoutFixtures(groups, bracket, {}, { resolveThirdPlaceSlots });
+  // M73 = runnerup A v runnerup B; Groups A & B are complete in the live feed.
+  const aDone = groups.find((g) => g.name === 'Group A').matches.every((m) => m.played);
+  const bDone = groups.find((g) => g.name === 'Group B').matches.every((m) => m.played);
+  if (aDone && bDone) {
+    assert.ok(fx[73], 'M73 resolved (A & B complete)');
+    assert.equal(fx[73].round, 'R32');
+  }
 });

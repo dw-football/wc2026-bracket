@@ -37,7 +37,7 @@
 // Browser-safe ES module: imports only the pure engine/model layers. The caller
 // injects resolveThirdPlaceSlots (Annex C) so this file never touches the fs.
 
-import { computeGroupStanding, scenarioGrid } from './engine.js';
+import { computeGroupStanding, rankThirdPlaceTeams, scenarioGrid } from './engine.js';
 import { monteCarlo } from './model.js';
 // (koStructuralCode is defined below and used within this module.)
 
@@ -488,4 +488,84 @@ export function knockoutResultsFromRaw(raw, teams) {
     };
   }
   return byMatch;
+}
+
+/**
+ * DETERMINISTIC knockout fixture resolution. Given the current groups + bracket +
+ * any played knockout results, returns { [matchNo]: {home, away, round} } (team
+ * CODES) for every knockout match whose BOTH sides are now FIXED. A match is
+ * omitted while either side is still undetermined — so the result grows
+ * monotonically as the tournament progresses.
+ *
+ *   - A group winner / runner-up is fixed only once that group is fully played.
+ *   - A 3rd-place R32 slot is fixed only once ALL groups are fully played (the
+ *     8-best set and the Annex C allocation are cross-group, so a single missing
+ *     group result can flip who lands in any 3rd slot).
+ *   - An R16+ side (winnerOf / loserOf) is fixed once its feeder match carries a
+ *     result in `koResults`.
+ *
+ * Pure (no fs): caller injects resolveThirdPlaceSlots (Annex C), mirroring
+ * computeMatchLabels. This is the inverse map the poller uses to turn an ESPN
+ * KO event (a team pair) into one of our match numbers (73-104).
+ */
+export function resolveKnockoutFixtures(groups, bracket, koResults = {}, opts = {}) {
+  const resolveThirds = opts.resolveThirdPlaceSlots;
+  const letterOf = (name) => /Group\s+([A-L])/i.exec(name)?.[1]?.toUpperCase()
+    ?? String(name).trim().slice(-1).toUpperCase();
+
+  // 1) per-group winner / runner-up — only for COMPLETE groups
+  const winnerOfGroup = {};
+  const runnerUpOfGroup = {};
+  let allGroupsComplete = (groups || []).length > 0;
+  for (const g of groups || []) {
+    const complete = g.matches.length > 0 && g.matches.every((m) => m.played);
+    if (!complete) { allGroupsComplete = false; continue; }
+    const standing = computeGroupStanding(g);
+    const letter = letterOf(g.name);
+    winnerOfGroup[letter] = standing[0]?.code;
+    runnerUpOfGroup[letter] = standing[1]?.code;
+  }
+
+  // 2) 3rd-place R32 slots — only once EVERY group is complete (cross-group)
+  const thirdCodeForMatch = {};
+  if (allGroupsComplete && resolveThirds) {
+    const thirdCodeByLetter = {};
+    const qualifiedLetters = [];
+    for (const t of rankThirdPlaceTeams(groups).filter((x) => x.qualifies)) {
+      const letter = letterOf(t.group);
+      thirdCodeByLetter[letter] = t.code;
+      qualifiedLetters.push(letter);
+    }
+    for (const s of resolveThirds(qualifiedLetters, bracket)) {
+      thirdCodeForMatch[s.match] = thirdCodeByLetter[s.group];
+    }
+  }
+
+  const r32SlotCode = (side, matchNo) => {
+    if (side.type === 'winner') return winnerOfGroup[side.group] || null;
+    if (side.type === 'runnerup') return runnerUpOfGroup[side.group] || null;
+    if (side.type === 'third') return thirdCodeForMatch[matchNo] || null;
+    return null;
+  };
+
+  const r32Set = new Set(bracket.rounds.R32.map((m) => m.match));
+  const sideCode = (side, matchNo, isR32) => {
+    if (isR32) return r32SlotCode(side, matchNo);
+    if (side.type === 'winnerOf') return koResults[side.match]?.winner || null;
+    if (side.type === 'loserOf') return koResults[side.match]?.loser || null;
+    return null;
+  };
+
+  // Round order so feeders resolve before the matches that depend on them.
+  const out = {};
+  const order = ['R32', 'R16', 'QF', 'SF', 'Final', 'ThirdPlace'];
+  for (const round of order) {
+    for (const m of bracket.rounds[round] || []) {
+      const isR32 = r32Set.has(m.match);
+      const home = sideCode(m.home, m.match, isR32);
+      const away = sideCode(m.away, m.match, isR32);
+      if (home && away) out[m.match] = { home, away, round };
+    }
+  }
+  return out;
 }
