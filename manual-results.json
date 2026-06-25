@@ -148,5 +148,25 @@
       0
     ],
     "note": "Full time 1-0, auto-synced from ESPN fifa.world FT on 2026-06-25."
+  },
+  {
+    "group": "Group E",
+    "team1": "Curaçao",
+    "team2": "Ivory Coast",
+    "ft": [
+      0,
+      2
+    ],
+    "note": "Full time 0-2, auto-synced from ESPN fifa.world FT on 2026-06-25."
+  },
+  {
+    "group": "Group E",
+    "team1": "Ecuador",
+    "team2": "Germany",
+    "ft": [
+      2,
+      1
+    ],
+    "note": "Full time 2-1, auto-synced from ESPN fifa.world FT on 2026-06-25."
   }
 ]
