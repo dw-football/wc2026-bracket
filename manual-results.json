@@ -75,5 +75,19 @@
     "team2": "Canada",
     "ft": [2, 1],
     "note": "Full time 2-1 (Switzerland win), entered manually 2026-06-24 (ESPN fifa.world FT-confirmed)."
+  },
+  {
+    "group": "Group C",
+    "team1": "Scotland",
+    "team2": "Brazil",
+    "ft": [0, 3],
+    "note": "Full time 0-3 (Brazil win), entered 2026-06-24 (ESPN fifa.world FT-confirmed)."
+  },
+  {
+    "group": "Group C",
+    "team1": "Morocco",
+    "team2": "Haiti",
+    "ft": [4, 2],
+    "note": "Full time 4-2 (Morocco win), entered 2026-06-24 (ESPN fifa.world FT-confirmed)."
   }
 ]
