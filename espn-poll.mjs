@@ -34,7 +34,14 @@ import { existsSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
 
-import { fetchRaw } from './adapter.js';
+import { fetchRaw, toGroups } from './adapter.js';
+import {
+  knockoutResultsFromRaw,
+  knockoutResultsFromManual,
+  mergeKnockoutResults,
+  resolveKnockoutFixtures,
+} from './bracket-labels.mjs';
+import { resolveThirdPlaceSlots } from './allocation.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const loadJSON = async (f) => JSON.parse(await readFile(join(__dirname, f), 'utf8'));
@@ -43,9 +50,14 @@ const loadJSON = async (f) => JSON.parse(await readFile(join(__dirname, f), 'utf
 export const FIRST_CHECK_MIN = 115;     // start checking 115 min after scheduled KO
 export const ET_BACKOFF_MIN = 30;       // (KO only) if a game is in extra time, skip ~30 min
 export const ABANDON_BACKSTOP_MIN = 360; // 6h: a sibling that never resolves -> deploy partial + flag
+// A KO match can run 90' + 30' ET + a shootout — past the 115-min START gate but
+// nowhere near the 6h backstop. The clock still only GATES THE START; "done" is
+// always ESPN status.completed.
 
 const ESPN_SCOREBOARD =
   'https://site.api.espn.com/apis/site/v2/sports/soccer/fifa.world/scoreboard?dates=';
+const ESPN_SUMMARY =
+  'https://site.api.espn.com/apis/site/v2/sports/soccer/fifa.world/summary?event=';
 
 // ---------------------------------------------------------------------------
 // helpers
@@ -117,6 +129,71 @@ function classifyEspn(ev) {
     isET: /EXTRA|\bET\b|PENALT/.test(blob),
     isDead: /POSTPON|ABANDON|CANCEL|SUSPEND/.test(blob),
     detail: detail || name,
+    blob,
+  };
+}
+
+const numOrNull = (x) => { const n = Number(x); return Number.isFinite(n) ? n : null; };
+
+/** Pull a competitor's shootout (penalty) tally from the several shapes ESPN
+ *  has used for it. null when there was no shootout. */
+function shootoutOf(c) {
+  return numOrNull(c?.shootoutScore) ?? numOrNull(c?.penaltyScore) ??
+    numOrNull(c?.shootout) ?? numOrNull(c?.penalties);
+}
+
+async function fetchEspnSummary(eventId, fetchImpl = fetch) {
+  try {
+    const res = await fetchImpl(ESPN_SUMMARY + eventId);
+    if (!res.ok) return null;
+    return await res.json();
+  } catch { return null; }
+}
+
+/**
+ * Turn a COMPLETED ESPN knockout event into the shared KO-result shape, oriented
+ * to OUR (homeCode, awayCode):
+ *   { score:[h,a], decider:'reg'|'aet'|'pens', pens:[h,a]|null, winner:code }
+ * Returns { ambiguous } when ESPN says the match is done but we can't yet read a
+ * winner (a level score with no shootout numbers) — the orchestrator HOLDS such a
+ * match rather than deploying a winnerless KO result. `summary` (optional, fetched
+ * lazily for the level-score fallback) supplies the authoritative shootout tally.
+ */
+export function koResultFromEvent(ev, homeCode, awayCode, summary = null) {
+  const cls = classifyEspn(ev);
+  if (!cls.completed) return { completed: false };
+  const comps = ev.competitions?.[0]?.competitors || [];
+  const sumComps = summary?.header?.competitions?.[0]?.competitors || [];
+  const pick = (list, code) => list.find((c) =>
+    (c.team?.abbreviation || c.code || '').toUpperCase() === String(code || '').toUpperCase());
+  const hc = pick(comps, homeCode), ac = pick(comps, awayCode);
+  if (!hc || !ac) return { completed: true, ambiguous: 'code-mismatch' };
+
+  const score = [numOrNull(hc.score), numOrNull(ac.score)];
+  if (score[0] == null || score[1] == null) return { completed: true, ambiguous: 'no-score' };
+
+  // shootout numbers: prefer scoreboard, fall back to the summary header
+  const shHome = shootoutOf(hc) ?? shootoutOf(pick(sumComps, homeCode));
+  const shAway = shootoutOf(ac) ?? shootoutOf(pick(sumComps, awayCode));
+  const hasPens = shHome != null && shAway != null && shHome !== shAway;
+
+  if (hasPens || /PEN|SHOOT/.test(cls.blob)) {
+    if (shHome == null || shAway == null || shHome === shAway) {
+      return { completed: true, score, ambiguous: 'pens-no-tally' };
+    }
+    return {
+      completed: true, score, decider: 'pens', pens: [shHome, shAway],
+      winner: shHome > shAway ? homeCode : awayCode,
+    };
+  }
+  if (score[0] === score[1]) {
+    // level, completed, no shootout numbers yet — can't name a winner. HOLD.
+    return { completed: true, score, ambiguous: 'level-no-shootout' };
+  }
+  const decider = (cls.isET || /AET|EXTRA/.test(cls.blob)) ? 'aet' : 'reg';
+  return {
+    completed: true, score, decider, pens: null,
+    winner: score[0] > score[1] ? homeCode : awayCode,
   };
 }
 
@@ -161,10 +238,47 @@ export async function pollReport(opts = {}) {
     });
   }
 
-  // Only hit ESPN once at least one match is past its 115-min check time. Until
-  // then every tick is a free no-op — no network call (answers "why poll before
-  // 115 min past kickoff?"). Not-due matches simply carry no ESPN status.
-  const anyDue = remaining.some((r) => r.due);
+  // --- KNOCKOUT matches (73-104) ------------------------------------------
+  // The feed carries every KO fixture's num + date + time (with a UTC offset) as
+  // PLACEHOLDER team names ("2A", "3A/B/C/D/F") until feeders resolve. The actual
+  // teams come from the DETERMINISTIC resolver, fed by the current merged KO
+  // results (manual/auto first, the feed last so it supersedes). A KO match is
+  // pollable only once BOTH its sides are mathematically fixed — exactly when we
+  // can match an ESPN event to it by team pair.
+  const bracket = await loadJSON('bracket.json');
+  const manualKo = existsSync(join(__dirname, 'manual-ko-results.json'))
+    ? await loadJSON('manual-ko-results.json') : [];
+  const koResultsNow = mergeKnockoutResults(
+    knockoutResultsFromManual(manualKo),
+    knockoutResultsFromRaw(raw, teams),
+  );
+  const groups = toGroups(raw, teams);
+  const fixtures = resolveKnockoutFixtures(groups, bracket, koResultsNow,
+    { resolveThirdPlaceSlots });
+
+  const remainingKo = [];
+  for (const m of matches) {
+    if (m.group) continue;                              // knockout only
+    const num = m.num ?? m.match ?? null;
+    if (num == null) continue;
+    if (koResultsNow[num]) continue;                    // already resolved (feed/manual/auto)
+    const fx = fixtures[num];
+    if (!fx) continue;                                  // teams not fixed yet -> can't poll
+    const ko = parseFeedKO(m.date, m.time);
+    const koMs = ko ? ko.getTime() : Infinity;
+    remainingKo.push({
+      match: num, round: fx.round,
+      home: fx.home, away: fx.away,
+      t1: byCode.get(fx.home.toUpperCase()), t2: byCode.get(fx.away.toUpperCase()),
+      ko, koMs,
+      due: now.getTime() >= koMs + FIRST_CHECK_MIN * 60000,
+    });
+  }
+
+  // Only hit ESPN once at least one match (group OR knockout) is past its 115-min
+  // check time. Until then every tick is a free no-op — no network call. Not-due
+  // matches simply carry no ESPN status.
+  const anyDue = remaining.some((r) => r.due) || remainingKo.some((r) => r.due);
   const espnEvents = opts.espnEvents ||
     (anyDue ? await fetchEspnEvents(now, opts.fetchImpl || fetch) : []);
 
@@ -254,7 +368,66 @@ export async function pollReport(opts = {}) {
     }
   }
 
-  return { now, sets, deployable, alerts };
+  // --- attach ESPN to KO matches + classify each as its own set ------------
+  // Unlike a group's final matchday, KO matches are INDEPENDENT — each deploys on
+  // its own FT, no set-batching. Same rain-delay doctrine: the clock only gates
+  // the start; "done" is status.completed; a level FT with no shootout numbers is
+  // HELD (winnerless) until the next tick / summary resolves it.
+  const koSets = [];
+  const koDeployable = [];
+  for (const r of remainingKo) {
+    const want = new Set([r.home, r.away].map((c) => c.toUpperCase()));
+    let ev = espnEvents.find((e) => { const s = codeSet(e); return [...want].every((c) => s.has(c)); });
+    if (!ev && r.t1 && r.t2) {
+      const wn = new Set([norm(r.t1.name), norm(r.t2.name)]);
+      ev = espnEvents.find((e) => { const s = nameSet(e); return [...wn].every((n) => s.has(n)); });
+    }
+    if (ev) {
+      r.espn = classifyEspn(ev);
+      let res = koResultFromEvent(ev, r.home, r.away);
+      // Level FT (or pens flagged) but no shootout numbers on the scoreboard —
+      // fetch the summary once for the authoritative tally.
+      if (res.completed && res.ambiguous && /shootout|tally|pens/.test(res.ambiguous) && ev.id) {
+        const summary = await fetchEspnSummary(ev.id, opts.fetchImpl || fetch);
+        if (summary) res = koResultFromEvent(ev, r.home, r.away, summary);
+      }
+      r.res = res;
+      r.koEspn = ev.date ? new Date(ev.date) : null;
+    } else {
+      r.espn = null;
+      r.res = null;
+    }
+
+    const done = r.res && r.res.completed && r.res.winner != null;
+    const backstopTripped = !done && r.koMs !== Infinity &&
+      now.getTime() >= r.koMs + ABANDON_BACKSTOP_MIN * 60000;
+    let status, flag = null;
+    if (!r.due) status = 'not-due';
+    else if (done) status = 'complete';
+    else if (r.espn?.isDead) { status = 'partial-flagged'; flag = `${r.home}-${r.away} (${r.espn.detail})`; }
+    else if (r.res?.ambiguous && r.res.ambiguous !== 'code-mismatch') {
+      // ESPN says completed but we can't name a winner yet (level/no tally).
+      status = backstopTripped ? 'partial-flagged' : 'waiting';
+      if (backstopTripped) flag = `M${r.match} ${r.home}-${r.away}: ESPN done but ${r.res.ambiguous} after ${ABANDON_BACKSTOP_MIN}min`;
+    } else if (backstopTripped) { status = 'partial-flagged'; flag = `M${r.match} >${ABANDON_BACKSTOP_MIN}min past KO with no FT`; }
+    else status = 'waiting';
+
+    koSets.push({ match: r.match, round: r.round, home: r.home, away: r.away,
+      ko: r.ko, status, espn: r.espn, res: r.res, inEt: !!(r.espn?.isET && !done) });
+
+    if (status === 'complete') {
+      koDeployable.push({
+        key: `ko:${r.match}`,
+        match: r.match, round: r.round,
+        home: r.home, away: r.away,
+        score: r.res.score, decider: r.res.decider, pens: r.res.pens, winner: r.res.winner,
+        partial: false, flag: null,
+      });
+    }
+    if (flag) alerts.push({ key: `ko:${r.match}`, flag, ready: 0, of: 1 });
+  }
+
+  return { now, sets, deployable, alerts, koSets, koDeployable };
 }
 
 // ---------------------------------------------------------------------------
@@ -277,7 +450,7 @@ async function main() {
   const atIx = args.indexOf('--at');
   const now = atIx >= 0 ? args[atIx + 1] : undefined;
 
-  const { now: nowD, sets, deployable, alerts } = await pollReport({ refresh, now });
+  const { now: nowD, sets, deployable, alerts, koSets, koDeployable } = await pollReport({ refresh, now });
 
   console.log(`\n=== ESPN poll (READ-ONLY dry-run) — now=${nowD.toISOString()} — first-check ${FIRST_CHECK_MIN}min after KO ===\n`);
   console.log('  ' + pad('KO (UTC)', 18) + pad('Set status', 17) + 'Matches');
@@ -291,10 +464,34 @@ async function main() {
     });
   }
 
-  console.log(`\n${deployable.length} set(s) ready to deploy:`);
+  // Knockout matches (each its own line; teams resolved deterministically).
+  if (koSets && koSets.length) {
+    console.log('\n  --- knockout ---');
+    for (const s of koSets) {
+      const koStr = s.ko ? s.ko.toISOString().slice(5, 16).replace('T', ' ') : '(unscheduled)';
+      const head = '  ' + pad(koStr, 18) + pad(s.status + (s.inEt ? ' *ET' : ''), 17);
+      const koState = !s.espn ? 'no-espn'
+        : (s.res && s.res.completed && s.res.winner)
+          ? `FT ${s.res.score[0]}-${s.res.score[1]}${s.res.decider === 'pens' ? ` (${s.res.pens[0]}-${s.res.pens[1]} pens, ${s.res.winner})` : s.res.decider === 'aet' ? ' (AET)' : ''}`
+          : s.res?.ambiguous ? `done? (${s.res.ambiguous})`
+            : s.espn.isDead ? s.espn.detail
+              : s.espn.isET ? 'EXTRA TIME'
+                : s.espn.state === 'in' ? `in (${s.espn.detail})` : 'scheduled';
+      console.log(head + `${pad('M' + s.match, 5)} ${pad(s.home + ' v ' + s.away, 18)} ${koState}`);
+    }
+  }
+
+  console.log(`\n${deployable.length} group set(s) ready to deploy:`);
   for (const d of deployable) {
     console.log(`  - ${d.matches.map((m) => `${m.team1} ${m.ft[0]}-${m.ft[1]} ${m.team2}`).join('  |  ')}` +
       (d.partial ? `   [PARTIAL — ${d.flag}]` : ''));
+  }
+  if (koDeployable && koDeployable.length) {
+    console.log(`\n${koDeployable.length} KO match(es) ready to deploy:`);
+    for (const d of koDeployable) {
+      const tag = d.decider === 'pens' ? ` (${d.pens[0]}-${d.pens[1]} pens)` : d.decider === 'aet' ? ' AET' : '';
+      console.log(`  - M${d.match} ${d.home} ${d.score[0]}-${d.score[1]} ${d.away}${tag} -> ${d.winner}`);
+    }
   }
   if (alerts.length) {
     console.log(`\n!! ${alerts.length} alert(s) needing attention:`);
