@@ -225,9 +225,15 @@ async function main() {
     knockoutResultsFromRaw(raw, teams),
   );
   // Per-match event timeline (goals + scorer/minute, cards, shootout takers) for
-  // the completed-KO match-detail popover. EMPTY until the #3 ESPN events pipeline
-  // fills it; the popover degrades to "No events." gracefully meanwhile.
+  // the completed-KO match-detail popover, baked from the cache that
+  // build-events.mjs writes (data/match-events.json). KNOCKOUT entries are keyed by
+  // matchNo (numeric); group entries ("g:CODE-CODE") are skipped here. Empty until
+  // a KO match is played + a build-events run caches it; popover degrades gracefully.
+  const matchEvents = await loadJSON('data/match-events.json').catch(() => ({}));
   const koDetails = {};
+  for (const [k, v] of Object.entries(matchEvents)) {
+    if (/^\d+$/.test(k)) koDetails[k] = { events: v.events || [], pens: v.pens || [] };
+  }
 
   // Build the bundle: engine first (no deps), then allocation (patched), then
   // model (depends on engine functions, now in-scope).

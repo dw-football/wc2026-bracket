@@ -18,6 +18,7 @@ run-autosync.cmd
 
 # Build artifacts / cached API pulls
 data/raw/
+data/match-events.json
 dist/exports/
 dist/baked-mc.json
 *.log
