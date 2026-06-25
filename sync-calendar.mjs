@@ -25,7 +25,12 @@ import { dirname, join } from 'node:path';
 import { toGroups, fetchRaw } from './adapter.js';
 import { rankThirdPlaceTeams } from './engine.js';
 import { resolveThirdPlaceSlots } from './allocation.js';
-import { computeMatchLabels, knockoutResultsFromRaw } from './bracket-labels.mjs';
+import {
+  computeMatchLabels,
+  knockoutResultsFromRaw,
+  knockoutResultsFromManual,
+  mergeKnockoutResults,
+} from './bracket-labels.mjs';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const loadJSON = async (f) => JSON.parse(await readFile(join(__dirname, f), 'utf8'));
@@ -82,7 +87,14 @@ export async function buildPlan(opts = {}) {
   const { map, source } = await loadCalendarMap();
   const raw = await fetchRaw({ refresh: !!opts.refresh });
   const groups = toGroups(raw, teams);
-  const koResults = knockoutResultsFromRaw(raw, teams);
+  // Merged KO results (manual/auto first, feed last) so the calendar reflects a
+  // near-real-time KO score before the feed publishes it — same source the page bakes.
+  const manualKo = existsSync(join(__dirname, 'manual-ko-results.json'))
+    ? await loadJSON('manual-ko-results.json') : [];
+  const koResults = mergeKnockoutResults(
+    knockoutResultsFromManual(manualKo),
+    knockoutResultsFromRaw(raw, teams),
+  );
   const bakedMc = await loadBakedMc();
 
   const labels = computeMatchLabels(

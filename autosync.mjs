@@ -34,6 +34,7 @@ import { pollReport } from './espn-poll.mjs';
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const STATE_FILE = join(__dirname, 'autosync-state.json');
 const MANUAL_FILE = join(__dirname, 'manual-results.json');
+const MANUAL_KO_FILE = join(__dirname, 'manual-ko-results.json');
 
 async function loadState() {
   if (!existsSync(STATE_FILE)) return { processedSetKeys: [], lastRun: null };
@@ -68,6 +69,26 @@ async function appendManualResults(matches, now) {
   await writeFile(MANUAL_FILE, JSON.stringify(cur, null, 2) + '\n');
 }
 
+/** One-line description of a KO deploy item (shared by commit msg + dry-run). */
+const koLine = (d) => {
+  const tag = d.decider === 'pens' ? ` (${d.pens[0]}-${d.pens[1]} pens)` : d.decider === 'aet' ? ' AET' : '';
+  return `M${d.match} ${d.home} ${d.score[0]}-${d.score[1]} ${d.away}${tag} -> ${d.winner}`;
+};
+
+/** Append a finished KNOCKOUT result to manual-ko-results.json (LIVE only).
+ *  Same shared shape the build + poller use; the (AET-blind) feed supersedes it
+ *  next refresh, self-correcting any mis-entry exactly like the group path. */
+async function appendKnockoutResult(d, now) {
+  const cur = existsSync(MANUAL_KO_FILE)
+    ? JSON.parse(await readFile(MANUAL_KO_FILE, 'utf8')) : [];
+  cur.push({
+    match: d.match, home: d.home, away: d.away,
+    score: d.score, decider: d.decider, pens: d.pens,
+    note: `${koLine(d)}, auto-synced from ESPN fifa.world FT on ${today(now)}.`,
+  });
+  await writeFile(MANUAL_KO_FILE, JSON.stringify(cur, null, 2) + '\n');
+}
+
 const sh = (cmd, args) =>
   execFileSync(cmd, args, { cwd: __dirname, stdio: 'inherit', shell: false });
 
@@ -86,6 +107,18 @@ async function deployLive(matches, now) {
   sh('node', ['calendar-apply.mjs', '--apply']);
 }
 
+/** The LIVE KO deploy chain — same as deployLive but stages manual-ko-results.json. */
+async function deployLiveKo(d, now) {
+  await appendKnockoutResult(d, now);
+  sh('node', ['build-html.mjs', '--refresh']);
+  copyFileSync(join(__dirname, 'dist', 'index.html'), join(__dirname, 'docs', 'index.html'));
+  sh('git', ['add', 'manual-ko-results.json', 'docs/index.html', 'dist/index.html']);
+  sh('git', ['commit', '-m', `Auto-sync KO: ${koLine(d)}`]);
+  sh('git', ['push', 'origin', 'main']);
+  sh('node', ['sync-calendar.mjs']);
+  sh('node', ['calendar-apply.mjs', '--apply']);
+}
+
 function describeDryRun(set, log) {
   const line = set.matches.map((m) => `${m.team1} ${m.ft[0]}-${m.ft[1]} ${m.team2} (${m.group})`).join('  |  ');
   log(`  NEW SET READY: ${line}${set.partial ? `   [PARTIAL — ${set.flag}]` : ''}`);
@@ -93,6 +126,16 @@ function describeDryRun(set, log) {
   log('    WOULD: node build-html.mjs --refresh   (re-bake 200k)');
   log('    WOULD: cp dist/index.html docs/index.html');
   log('    WOULD: git add -A && git commit && git push origin main   (LIVE site)');
+  log('    WOULD: node sync-calendar.mjs && node calendar-apply.mjs --apply   (LIVE calendar)');
+  log('    WOULD: notify David — failure-only, so SILENT on this success (no spoiler)');
+}
+
+function describeDryRunKo(d, log) {
+  log(`  NEW KO RESULT READY: ${koLine(d)}${d.partial ? `   [PARTIAL — ${d.flag}]` : ''}`);
+  log('    WOULD: append above to manual-ko-results.json');
+  log('    WOULD: node build-html.mjs --refresh   (re-bake 200k)');
+  log('    WOULD: cp dist/index.html docs/index.html');
+  log('    WOULD: git add manual-ko-results.json docs/ dist/ && commit && push   (LIVE site)');
   log('    WOULD: node sync-calendar.mjs && node calendar-apply.mjs --apply   (LIVE calendar)');
   log('    WOULD: notify David — failure-only, so SILENT on this success (no spoiler)');
 }
@@ -119,21 +162,22 @@ async function main() {
   let state = reset ? { processedSetKeys: [], lastRun: null } : await loadState();
   const processed = new Set(state.processedSetKeys);
 
-  const { now, sets, deployable, alerts } = await pollReport({ refresh, now: nowArg });
+  const { now, sets, deployable, alerts, koSets, koDeployable } = await pollReport({ refresh, now: nowArg });
 
   log(`\n=== autosync tick — ${now.toISOString()} — ${live ? 'LIVE (ARMED)' : 'DRY-RUN'} ===`);
-  const waiting = sets.filter((s) => s.status === 'waiting' || s.status === 'not-due');
+  const waiting = [...sets, ...(koSets || [])].filter((s) => s.status === 'waiting' || s.status === 'not-due');
   if (waiting.length) {
     log(`  ${waiting.length} set(s) pending: ` +
       waiting.map((s) => `${s.status}${s.inEt ? '/ET' : ''}`).join(', '));
   }
 
+  let failure = null;
+
+  // --- group sets ----------------------------------------------------------
   const fresh = deployable.filter((d) => !processed.has(d.key));
   if (!fresh.length) {
-    log(`  no new finished sets.${deployable.length ? ` (${deployable.length} already processed)` : ''}`);
+    log(`  no new finished group sets.${deployable.length ? ` (${deployable.length} already processed)` : ''}`);
   }
-
-  let failure = null;
   for (const set of fresh) {
     if (live) {
       try {
@@ -148,6 +192,27 @@ async function main() {
     }
     if (set.partial) failure = (failure ? failure + '; ' : '') + `partial set: ${set.flag}`;
     processed.add(set.key);
+  }
+
+  // --- knockout matches (each its own deploy) ------------------------------
+  const freshKo = (koDeployable || []).filter((d) => !processed.has(d.key));
+  if (koDeployable && koDeployable.length && !freshKo.length) {
+    log(`  no new finished KO matches. (${koDeployable.length} already processed)`);
+  }
+  for (const d of freshKo) {
+    if (live) {
+      try {
+        log(`  DEPLOYING KO: ${koLine(d)}`);
+        await deployLiveKo(d, now);
+      } catch (e) {
+        failure = (failure ? failure + '; ' : '') + `KO deploy failed for ${d.key}: ${e.message || e}`;
+        break;   // leave it UNprocessed so the next tick retries
+      }
+    } else {
+      describeDryRunKo(d, log);
+    }
+    if (d.partial) failure = (failure ? failure + '; ' : '') + `partial KO: ${d.flag}`;
+    processed.add(d.key);
   }
 
   // FAILURE-ONLY notification (spoiler-safe). Success = silence.

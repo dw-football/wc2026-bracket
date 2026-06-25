@@ -20,6 +20,11 @@ import { dirname, join } from 'node:path';
 import { toGroups, fetchRaw } from './adapter.js';
 import { resolveThirdPlaceSlots } from './allocation.js';
 import { monteCarlo, venueCountryOf } from './model.js';
+import {
+  knockoutResultsFromRaw,
+  knockoutResultsFromManual,
+  mergeKnockoutResults,
+} from './bracket-labels.mjs';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const readText = (f) => readFile(join(__dirname, f), 'utf8');
@@ -210,6 +215,16 @@ async function main() {
   const groups = toGroups(raw, teams);
   const freshness = computeFreshness(raw);
 
+  // Knockout RESULTS, merged into the shared shape and baked for the renderer:
+  // manual/auto (manual-ko-results.json) FIRST, the openfootball feed LAST so a
+  // published feed result supersedes the near-real-time entry (mirrors the group
+  // flow). Keyed by matchNo (73-104) -> {winner,loser,home,away,score,decider,pens}.
+  const manualKo = await loadJSON('manual-ko-results.json').catch(() => []);
+  const koResults = mergeKnockoutResults(
+    knockoutResultsFromManual(manualKo),
+    knockoutResultsFromRaw(raw, teams),
+  );
+
   // Build the bundle: engine first (no deps), then allocation (patched), then
   // model (depends on engine functions, now in-scope).
   const engineBundle = stripModuleSyntax(engineSrc);
@@ -266,7 +281,7 @@ async function main() {
   const mcMs = Date.now() - mcT0;
   console.log(`Bake done in ${(mcMs / 1000).toFixed(1)}s  (${(mcMs / BAKE_N * 1000).toFixed(1)} µs/sim)`);
 
-  const data = { teams, bracket, allocation, groups, freshness, bakedMc, koSchedule, koVenueCountry };
+  const data = { teams, bracket, allocation, groups, freshness, bakedMc, koSchedule, koVenueCountry, koResults };
 
   const html = renderHTML(logicBundle, data);
 
@@ -339,7 +354,8 @@ var __APP_DATA__ = {
   groups: ${embed(data.groups)},
   freshness: ${embed(data.freshness)},
   bakedMc: ${embed(data.bakedMc)},
-  koSchedule: ${embed(data.koSchedule)}
+  koSchedule: ${embed(data.koSchedule)},
+  koResults: ${embed(data.koResults)}
 };
 
 /* ============================================================================
