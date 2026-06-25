@@ -491,6 +491,58 @@ export function knockoutResultsFromRaw(raw, teams) {
 }
 
 /**
+ * Normalize hand-/auto-entered knockout results (manual-ko-results.json) into the
+ * shared KO-result shape, keyed by matchNo. Each input entry:
+ *   { match, home, away, score:[h,a], decider?:'reg'|'aet'|'pens', pens?:[h,a] }
+ * home/away are TEAM CODES; winner/loser are derived. A level score is only
+ * resolved when a valid (unequal) shootout is supplied. Pure (no fs). Unlike the
+ * feed, a manual entry CAN assert AET (`decider:'aet'`) — the ESPN poller and a
+ * human both know when 90' didn't settle it, so the manual path is authoritative
+ * on the decider until the (AET-blind) feed eventually supersedes it.
+ */
+export function knockoutResultsFromManual(entries = []) {
+  const byMatch = {};
+  for (const e of entries || []) {
+    if (!e || e.match == null || !e.home || !e.away) continue;
+    const ft = e.score;
+    if (!Array.isArray(ft) || ft.length !== 2 || ft[0] == null || ft[1] == null) continue;
+    const pens = Array.isArray(e.pens) && e.pens.length === 2 ? e.pens : null;
+    let homeWins, decider;
+    if (ft[0] === ft[1]) {
+      if (!pens || pens[0] === pens[1]) continue; // level with no decisive shootout -> unresolved
+      homeWins = pens[0] > pens[1];
+      decider = 'pens';
+    } else {
+      homeWins = ft[0] > ft[1];
+      decider = e.decider === 'aet' ? 'aet' : 'reg'; // a decided score can't be 'pens'
+    }
+    byMatch[e.match] = {
+      winner: homeWins ? e.home : e.away,
+      loser: homeWins ? e.away : e.home,
+      home: e.home, away: e.away,
+      score: [ft[0], ft[1]],
+      decider,
+      pens: decider === 'pens' ? [pens[0], pens[1]] : null,
+    };
+  }
+  return byMatch;
+}
+
+/**
+ * Merge knockout-result maps; LATER sources win per matchNo. Call order
+ * mirrors the group-stage flow — manual/auto FIRST, the openfootball feed LAST —
+ * so once the feed publishes a match it supersedes the near-real-time manual
+ * entry (self-correcting a typo on the next refresh), exactly like the group path.
+ */
+export function mergeKnockoutResults(...sources) {
+  const out = {};
+  for (const src of sources) {
+    for (const [k, v] of Object.entries(src || {})) out[k] = v;
+  }
+  return out;
+}
+
+/**
  * DETERMINISTIC knockout fixture resolution. Given the current groups + bracket +
  * any played knockout results, returns { [matchNo]: {home, away, round} } (team
  * CODES) for every knockout match whose BOTH sides are now FIXED. A match is

@@ -36,6 +36,8 @@ import {
   r32SlotCode,
   groupSlotCode,
   resolveKnockoutFixtures,
+  knockoutResultsFromManual,
+  mergeKnockoutResults,
   DOMINANT_THRESHOLD,
   HIGHLIGHTED_TEAMS,
 } from './bracket-labels.mjs';
@@ -337,4 +339,57 @@ test('resolveKnockoutFixtures: matches live feed — M73 is the two complete-gro
     assert.ok(fx[73], 'M73 resolved (A & B complete)');
     assert.equal(fx[73].round, 'R32');
   }
+});
+
+// ---------------------------------------------------------------------------
+// knockoutResultsFromManual + mergeKnockoutResults — the manual/auto KO source
+// and the feed-wins merge that produces the baked koResults map.
+// ---------------------------------------------------------------------------
+
+test('knockoutResultsFromManual: regulation win derives winner/loser', () => {
+  const r = knockoutResultsFromManual([{ match: 73, home: 'RSA', away: 'CAN', score: [1, 2] }]);
+  assert.deepEqual(r[73], { winner: 'CAN', loser: 'RSA', home: 'RSA', away: 'CAN', score: [1, 2], decider: 'reg', pens: null });
+});
+
+test('knockoutResultsFromManual: AET tag is honored on a decided score', () => {
+  const r = knockoutResultsFromManual([{ match: 74, home: 'USA', away: 'ITA', score: [2, 1], decider: 'aet' }]);
+  assert.equal(r[74].decider, 'aet');
+  assert.equal(r[74].winner, 'USA');
+  assert.equal(r[74].pens, null);
+});
+
+test('knockoutResultsFromManual: level score resolves ONLY via a decisive shootout', () => {
+  const pens = knockoutResultsFromManual([{ match: 81, home: 'USA', away: 'GER', score: [1, 1], decider: 'pens', pens: [4, 3] }]);
+  assert.deepEqual(pens[81], { winner: 'USA', loser: 'GER', home: 'USA', away: 'GER', score: [1, 1], decider: 'pens', pens: [4, 3] });
+  // level, no shootout -> unresolved (skipped)
+  assert.equal(knockoutResultsFromManual([{ match: 82, home: 'A', away: 'B', score: [0, 0] }])[82], undefined);
+  // level, tied shootout (bad data) -> unresolved
+  assert.equal(knockoutResultsFromManual([{ match: 82, home: 'A', away: 'B', score: [0, 0], pens: [3, 3] }])[82], undefined);
+});
+
+test('knockoutResultsFromManual: a decided score can never be tagged pens', () => {
+  const r = knockoutResultsFromManual([{ match: 73, home: 'A', away: 'B', score: [2, 0], decider: 'pens', pens: [5, 4] }]);
+  assert.equal(r[73].decider, 'reg');
+  assert.equal(r[73].pens, null);
+});
+
+test('knockoutResultsFromManual: skips incomplete entries', () => {
+  const r = knockoutResultsFromManual([
+    { home: 'A', away: 'B', score: [1, 0] },      // no match
+    { match: 75, away: 'B', score: [1, 0] },       // no home
+    { match: 76, home: 'A', away: 'B' },           // no score
+    { match: 77, home: 'A', away: 'B', score: [3] }, // bad score
+  ]);
+  assert.deepEqual(r, {});
+});
+
+test('mergeKnockoutResults: later source wins (feed supersedes manual), gaps preserved', () => {
+  const manual = knockoutResultsFromManual([
+    { match: 73, home: 'RSA', away: 'CAN', score: [0, 1], decider: 'aet' }, // typo'd manual
+    { match: 74, home: 'USA', away: 'ITA', score: [2, 1] },                  // feed not in yet
+  ]);
+  const feed = { 73: { winner: 'CAN', loser: 'RSA', home: 'RSA', away: 'CAN', score: [1, 2], decider: 'reg', pens: null } };
+  const merged = mergeKnockoutResults(manual, feed); // manual first, feed last
+  assert.deepEqual(merged[73].score, [1, 2], 'feed corrects the manual typo');
+  assert.equal(merged[74].winner, 'USA', 'manual-only match preserved where feed is silent');
 });
