@@ -9,6 +9,13 @@ calendar-sync-plan.json
 # Node
 node_modules/
 
+# Unattended auto-sync local state (processed set tracker) + tick log
+autosync-state.json
+autosync.log
+
+# Machine-specific launcher (real paths + OAuth env); use run-autosync.example.cmd
+run-autosync.cmd
+
 # Build artifacts / cached API pulls
 data/raw/
 dist/exports/
