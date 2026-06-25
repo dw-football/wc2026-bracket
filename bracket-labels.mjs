@@ -446,8 +446,13 @@ export function computeMatchLabels(engineState, opts = {}) {
 
 /**
  * Resolve any PLAYED knockout matches from an openfootball-style raw feed into
- * { [matchNo]: {winner, loser} } team-code pairs. Helper for callers that have the
- * raw feed; pure (no fs). Unplayed KO matches (still slot placeholders) are skipped.
+ * { [matchNo]: {winner, loser, home, away, score, decider, pens} } records. Pure
+ * (no fs). Unplayed KO matches (still slot placeholders) are skipped.
+ *   score   = [home, away] after 90'/ET   decider = 'reg' | 'aet' | 'pens'
+ *   pens    = [home, away] shootout (null unless decider==='pens')
+ * (winner/loser kept for back-compat with existing callers.) The feed can't always
+ * distinguish AET from regulation, so decider defaults 'reg' unless score.et is
+ * present; the ESPN poller supplies the authoritative decider for the live path.
  */
 export function knockoutResultsFromRaw(raw, teams) {
   const codeByName = new Map((teams || []).map((t) => [t.name, t.code]));
@@ -461,16 +466,26 @@ export function knockoutResultsFromRaw(raw, teams) {
     const h = codeByName.get(m.team1);
     const a = codeByName.get(m.team2);
     if (!h || !a) continue; // still a placeholder, not real team names
+    const p = m.score.p; // penalty shootout [home, away], if any
+    const hasPens = Array.isArray(p) && p.length === 2 && p[0] !== p[1];
+    let homeWins, decider, pens = null;
     if (ft[0] === ft[1]) {
-      const p = m.score.p; // penalties
-      if (Array.isArray(p) && p.length === 2 && p[0] !== p[1]) {
-        const homeWins = p[0] > p[1];
-        byMatch[num] = { winner: homeWins ? h : a, loser: homeWins ? a : h };
-      }
-      continue;
+      if (!hasPens) continue; // level with no shootout data yet -> not resolved
+      homeWins = p[0] > p[1];
+      decider = 'pens';
+      pens = [p[0], p[1]];
+    } else {
+      homeWins = ft[0] > ft[1];
+      decider = m.score.et ? 'aet' : 'reg';
     }
-    const homeWins = ft[0] > ft[1];
-    byMatch[num] = { winner: homeWins ? h : a, loser: homeWins ? a : h };
+    byMatch[num] = {
+      winner: homeWins ? h : a,
+      loser: homeWins ? a : h,
+      home: h, away: a,
+      score: [ft[0], ft[1]],
+      decider,
+      pens,
+    };
   }
   return byMatch;
 }
