@@ -111,6 +111,7 @@ function isPlayed(m) {
 export function toGroups(raw, teamsTable) {
   const codeOf = nameToCode(teamsTable);
   const eloOf = new Map(teamsTable.map((t) => [t.code, t.elo]));
+  const worldRankOf = new Map(teamsTable.map((t) => [t.code, t.worldRank]));
 
   const resolve = (name) => {
     const code = codeOf.get(name);
@@ -153,6 +154,7 @@ export function toGroups(raw, teamsTable) {
       code,
       name: nameOf.get(code),
       elo: eloOf.get(code),
+      worldRank: worldRankOf.get(code),
     }));
     return { name, teams, matches: g.matches };
   });
