@@ -696,8 +696,23 @@ const APP_JS = String.raw`
   });
 
   // deterministic-ish color accent per team code (subtle, no flags)
+  // Primary national-flag color per FIFA code (the accent bar beside each team).
+  // Replaces the old arbitrary hashed hue. Hash fallback for any code not listed.
+  var FLAG_ACCENT = {
+    ARG:'#6CACE4', BRA:'#009C3B', ESP:'#AA151B', FRA:'#0055A4', ENG:'#CF142B',
+    GER:'#111111', NED:'#F36C21', POR:'#006600', BEL:'#C8102E', ITA:'#008C45',
+    USA:'#3C3B6E', MEX:'#006847', CAN:'#D80621', KOR:'#CD2E3A', JPN:'#BC002D',
+    MAR:'#C1272D', CRO:'#FF0000', COL:'#FCD116', URU:'#0038A8', SUI:'#D52B1E',
+    CIV:'#F77F00', NOR:'#BA0C2F', SEN:'#00853F', SWE:'#006AA7', GHA:'#006B3F',
+    COD:'#00A2DE', ALG:'#006233', AUT:'#ED2939', AUS:'#00247D', PAR:'#D52B1E',
+    IRN:'#239F40', EGY:'#CE1126', NZL:'#1B3A6B', ECU:'#FFD100', HAI:'#00209F',
+    CPV:'#003893', QAT:'#8A1538', BIH:'#002395', CZE:'#11457E', SCO:'#005EB8',
+    TUN:'#E70013', UZB:'#0099B5', IRQ:'#CE1126', JOR:'#007A3D', CUW:'#002B7F',
+    PAN:'#005293', SAU:'#006C35', CRC:'#002B7F'
+  };
   function accentFor(code){
     if(!code) return '#878f9c';
+    if(FLAG_ACCENT[code]) return FLAG_ACCENT[code];
     var h=0; for(var i=0;i<code.length;i++) h=(h*31+code.charCodeAt(i))>>>0;
     var hue=h%360; return 'hsl('+hue+',58%,40%)';
   }
@@ -1049,6 +1064,37 @@ const APP_JS = String.raw`
         }
         return { home: side(m&&m.home, s.home), away: side(m&&m.away, s.away) };
       }
+
+      // EXACT chained head-to-head reach distribution for any knockout slot,
+      // conditioned on the played R32 results. A slot is filled by the winner of
+      // its feeder match; winnerDist() folds P(each team wins a match) up the tree
+      // using the SAME H2H model the pairs use. A played R32 collapses to its actual
+      // winner (prob 1), so eliminated teams carry 0 probability everywhere and can
+      // neither appear nor distort the survivors. Replaces the renormalized-MC guess.
+      var KOIDX={}; Object.keys(BRACKET.rounds).forEach(function(rd){ (BRACKET.rounds[rd]||[]).forEach(function(mm){ KOIDX[mm.match]=mm; }); });
+      var _sdCache={};
+      function winnerDist(matchNo){
+        var ck='W'+matchNo; if(_sdCache[ck]) return _sdCache[ck];
+        var r=KO_RESULTS[matchNo]||KO_RESULTS[String(matchNo)];
+        if(r && r.winner){ return (_sdCache[ck]=[{code:r.winner,p:1}]); } // played -> fixed
+        var hd=slotDist(matchNo,'home'), ad=slotDist(matchNo,'away');
+        var win={};
+        hd.forEach(function(x){ ad.forEach(function(y){
+          var pxy=x.p*y.p, px=h2hAdvanceProb(x.code,y.code,matchNo);
+          win[x.code]=(win[x.code]||0)+pxy*px;
+          win[y.code]=(win[y.code]||0)+pxy*(1-px);
+        }); });
+        var arr=Object.keys(win).map(function(c){return {code:c,p:win[c]};}).sort(function(a,b){return b.p-a.p;});
+        return (_sdCache[ck]=arr);
+      }
+      function slotDist(matchNo, sideName){
+        var sk=matchNo+':'+sideName; if(_sdCache[sk]) return _sdCache[sk];
+        var m=KOIDX[matchNo]; if(!m) return (_sdCache[sk]=[]);
+        var def=m[sideName], dist;
+        if(def && def.type==='winnerOf'){ dist=winnerDist(def.match); }
+        else { var c=sideCodesOf(matchNo)[sideName]; dist = c ? [{code:c,p:1}] : []; } // group-fed R32 occupant
+        return (_sdCache[sk]=dist);
+      }
       // (a) played R32
       BRACKET.rounds.R32.forEach(function(m){
         var r=KO_RESULTS[m.match]||KO_RESULTS[String(m.match)]; if(!r) return;
@@ -1078,14 +1124,36 @@ const APP_JS = String.raw`
               var known = sc[sideName];
               if(known){ inf[sideName]=Object.assign({}, inf[sideName], { code:known, official:true }); return; }
               var def=m[sideName];
+              // ONE-AHEAD (R16 fed by an unplayed R32) and TWO-AHEAD (QF fed by a
+              // fully-decided R16) are treated IDENTICALLY: show the two REAL
+              // contenders + the H2H odds of THAT feeder game = P(reach this slot).
+              // Eliminated teams cannot appear (they're in no feeder). A slot whose
+              // feeder is NOT a clean 2-team tie (>2 still possible) falls through to
+              // occupancy (which is now eliminated-team-filtered above).
               if(def && def.type==='winnerOf'){
                 var fc=sideCodesOf(def.match);
                 if(fc.home && fc.away){
-                  inf[sideName]=Object.assign({}, inf[sideName], { pair:[fc.home, fc.away] });
+                  var pp=h2hAdvanceProb(fc.home, fc.away, def.match);
+                  inf[sideName]=Object.assign({}, inf[sideName], { pair:[fc.home, fc.away], pairOdds:[pp, 1-pp] });
                 }
               }
             });
           }
+        });
+      });
+      // Drive every non-R32 slot's candidate list off the EXACT chained-H2H
+      // distribution (sums to 100, eliminated teams excluded). Powers the popover
+      // everywhere and the on-bracket modal for deeper (non-pair/official) slots.
+      ['R16','QF','SF','ThirdPlace','Final'].forEach(function(rd){
+        (BRACKET.rounds[rd]||[]).forEach(function(m){
+          ['home','away'].forEach(function(sideName){
+            var s=info[m.match] && info[m.match][sideName]; if(!s) return;
+            var dist=slotDist(m.match, sideName);
+            if(dist && dist.length){
+              s.cands=dist;
+              if(!s.pair && !s.official && !s.h2hLocked){ s.code=(dist[0]||{}).code||null; s.p=(dist[0]||{}).p||0; }
+            }
+          });
         });
       });
     } else {
@@ -1441,9 +1509,13 @@ const APP_JS = String.raw`
     } else {
       var codeX=x+Math.round(13*_PS), nameX=x+Math.round(44*_PS);
       if(si.pair && si.pair.length===2){
-        // contender pair "X/Y" (slot fed by an undecided match, both contenders known)
-        g.appendChild(svgText(codeX, midY, si.pair[0]+'/'+si.pair[1],
-          { fill:'#3a4350','font-size':String(FS(11.5)),'font-weight':'700' }));
+        // ONE-AHEAD contender pair with H2H odds, NO parens: "AUS 43% / BEL 57%"
+        // (repeats the exact odds shown in that R32 box to the left).
+        var po=si.pairOdds;
+        var pairStr = po ? (si.pair[0]+' '+pct(po[0])+' / '+si.pair[1]+' '+pct(po[1]))
+                         : (si.pair[0]+'/'+si.pair[1]);
+        g.appendChild(svgText(codeX, midY, pairStr,
+          { fill:'#3a4350','font-size':String(FS(11)),'font-weight':'700' }));
       } else {
         // code (normal weight even when locked)
         g.appendChild(svgText(codeX, midY, code||'—',
