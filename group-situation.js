@@ -39,7 +39,7 @@
 //             matches:[{home,away,homeGoals,awayGoals,played,date,time}] }
 //   home/away are team CODES. A match "key" is `${home}-${away}`.
 
-import { computeGroupStanding } from './engine.js';
+import { computeGroupStanding, compareThirdPlace } from './engine.js';
 
 const TOP_N = 2; // top 2 advance directly
 
@@ -870,6 +870,72 @@ export function thirdFloors(allGroups) {
     if (L) m.set(L, minThirdPoints(g));
   }
   return m;
+}
+
+/** The fixed 3rd-place standing of a DONE group, else null. */
+function doneThirdOf(group) {
+  if (!group.matches.every((m) => m.played)) return null;
+  return computeGroupStanding(group).find((s) => s.rank === 3) || null;
+}
+
+/**
+ * TIEBREAKER-AWARE third-place outlook for one group — the deterministic answer
+ * the third-place RACE panel needs ("QUALIFIED" / "OUT" / still live). Supersedes
+ * the points-only thirdOnPointsClinches/Eliminated, which were tiebreak-blind: they
+ * counted any group that could MATCH a points total as a threat, so e.g. Sweden
+ * (4 pts, GD +0, GF 7) was wrongly held short of clinching by Bosnia/Ecuador, who
+ * are done on the SAME 4 points but rank strictly BELOW on GD/GF and can never pass.
+ *
+ * Returns 'qualified' | 'eliminated' | null.
+ *
+ *  - QUALIFIED (clinched a top-8 third place): only decidable once THIS group is
+ *    done (its 3rd is then a fixed standing T). T is locked top-8 iff AT MOST 7
+ *    other groups can still field a third ranking strictly ABOVE T —
+ *      • other DONE group: its actual 3rd outranks T   (exact, full FIFA cascade)
+ *      • other LIVE group: maxThirdPoints >= T.points  (conservative: a points tie
+ *        MIGHT win the GD/GF tiebreak, so we count it as a possible passer)
+ *    Groups are independent, so all of them hitting their ceiling at once is the
+ *    real worst case; <= 7 possible passers ⇒ T can finish no worse than 8th.
+ *
+ *  - ELIMINATED: even this group's BEST-possible third (maxThirdPoints) is beaten
+ *    for sure by AT LEAST 8 other groups —
+ *      • other DONE group: its 3rd has strictly MORE points than our max
+ *      • other LIVE group: minThirdPoints strictly MORE than our max
+ *    (strictly-more points always outranks regardless of tiebreak ⇒ no false call).
+ */
+export function thirdPlaceOutlook(group, allGroups) {
+  const ownL = groupLetter(group);
+  const others = allGroups.filter((g) => groupLetter(g) !== ownL);
+
+  // --- CLINCH (own group must be done so its 3rd is a fixed standing) ---
+  const T = doneThirdOf(group);
+  if (T) {
+    let possiblePassers = 0;
+    for (const g of others) {
+      const their = doneThirdOf(g);
+      if (their) {
+        if (compareThirdPlace(their, T) < 0) possiblePassers++; // strictly above
+      } else if (maxThirdPoints(g) >= T.points) {
+        possiblePassers++; // live group could match-or-beat T's points
+      }
+    }
+    if (possiblePassers <= 7) return 'qualified';
+  }
+
+  // --- ELIMINATION (best-case third still beaten for sure by >= 8 groups) ---
+  const ownMax = maxThirdPoints(group);
+  let beatenForSure = 0;
+  for (const g of others) {
+    const their = doneThirdOf(g);
+    if (their) {
+      if (their.points > ownMax) beatenForSure++;
+    } else if (minThirdPoints(g) > ownMax) {
+      beatenForSure++;
+    }
+  }
+  if (beatenForSure >= 8) return 'eliminated';
+
+  return null;
 }
 
 /**

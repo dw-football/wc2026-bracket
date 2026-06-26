@@ -317,6 +317,21 @@ export function computeGroupStanding(group) {
  *          `group` (group name), `rank` (1-based), `qualifies` (true for top 8),
  *          and possibly `tiedByLots:true`.
  */
+/**
+ * Cross-group THIRD-PLACE comparator (negative => `a` ranks ABOVE `b`).
+ * Third-place teams come from different groups and never met, so there is NO
+ * head-to-head step. FIFA 2026 order: points -> overall GD -> overall GF ->
+ * fair play -> FIFA World Ranking (drawing of lots abolished). Operates on
+ * computeGroupStanding entries (which carry points/gd/gf/fairPlay/worldRank/elo).
+ */
+export function compareThirdPlace(a, b) {
+  const o = cmpOverall(a, b); // points -> GD -> GF
+  if (o !== 0) return o;
+  const fp = cmpFairPlay(a, b);
+  if (fp !== 0) return fp;
+  return cmpWorldRank(a, b);
+}
+
 export function rankThirdPlaceTeams(groups) {
   const thirds = groups.map((g) => {
     const standing = computeGroupStanding(g);
@@ -324,19 +339,8 @@ export function rankThirdPlaceTeams(groups) {
     return { ...third, group: g.name };
   });
 
-  // Sort with the full cascade. Note: there is no head-to-head among
-  // third-place teams (they're from different groups), so the sequence is
-  // overall -> fair-play -> lots.
-  // Third-place teams come from different groups and never met, so there is no
-  // head-to-head step. FIFA 2026 order: points -> overall GD -> overall GF ->
-  // fair play -> FIFA World Ranking (drawing of lots abolished).
-  thirds.sort((a, b) => {
-    const o = cmpOverall(a, b); // points -> GD -> GF
-    if (o !== 0) return o;
-    const fp = cmpFairPlay(a, b);
-    if (fp !== 0) return fp;
-    return cmpWorldRank(a, b);
-  });
+  // Sort with the full cascade (see compareThirdPlace).
+  thirds.sort(compareThirdPlace);
 
   return thirds.map((t, idx) => ({
     ...t,

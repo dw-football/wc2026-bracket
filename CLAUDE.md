@@ -15,6 +15,21 @@ result vs. swap in Mark2), ASSUME ROUTINE and confirm before the huge thing.
 (2026-06-23: misread "push out the new model with ALG's win" as deploy-Mark2; David
 halted it. Mark2 stays parked on its `model-mark2` branch until explicit go-ahead.)
 
+## SHIPPED 2026-06-26 — Deterministic 3rd-place QUALIFIED/OUT badge + clinch-math bug fix
+Third-place RACE panel: once a group's 3rd has MATHEMATICALLY clinched a top-8 place it now drops the
+% + bar and shows a green **QUALIFIED** badge (red **OUT** when eliminated); still-live rows keep the
+model %. We deliberately do NOT fake the % to 100% — % is the Elo estimate (capped ">99%"), the badge
+is the deterministic fact. **Bug fixed:** the old `thirdOnPointsClinches`/`thirdOnPointsEliminated`
+were TIEBREAKER-BLIND (counted any group that could MATCH the points as a threat), so Sweden was held
+short of clinching by Bosnia/Ecuador — level on 4 pts but ranked BELOW on GD/GF and unable to pass.
+New `thirdPlaceOutlook(group, allGroups)` (group-situation.js) counts only groups that can STRICTLY
+OUTRANK (done groups: exact FIFA cascade via new `compareThirdPlace` export in engine.js; live groups:
+conservative `maxThirdPoints >= P`). Now SWE **and** ECU read QUALIFIED (only 6 live groups can field a
+≥4-pt third — Grp I capped at 3 by FRA/NOR — so ≤7 can pass ECU); BIH correctly still live (8 can pass).
+75/75 tests green (added a tiebreaker-aware regression test). Old points-only fns kept (still used by
+advanceClinchInfo/scenario prose — same blind spot there is a conservative UNDER-report; follow-up to
+route that through thirdPlaceOutlook too).
+
 ## SHIPPED 2026-06-25 — Reverse 3rd-place opponent view
 On the Group Stage Tables → third-place race panel, each row now shows a sub-line
 "if 3rd & through, R32 vs <winner code> %…": the conditional distribution of WHICH GROUP WINNER

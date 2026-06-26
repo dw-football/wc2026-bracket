@@ -15,7 +15,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import { fetchRaw, toGroups } from './adapter.js';
-import { groupSituation } from './group-situation.js';
+import { groupSituation, thirdPlaceOutlook } from './group-situation.js';
 
 const VALID_STATUS = new Set(['won-group', 'qualified', 'advanced', 'contention', 'eliminated']);
 
@@ -424,6 +424,56 @@ function decidedGroup(letter) {
     ],
   };
 }
+
+function hiThirdGroup(letter) {
+  // Fully played; third (T2) ends on 3 pts but with a BIG goals-for (beat T3 9-0),
+  // so it ranks strictly ABOVE a decidedGroup third (3 pts, GF 1) on the GF tiebreak.
+  const T = [letter + '1', letter + '2', letter + '3', letter + '4'];
+  return {
+    name: 'Group ' + letter,
+    teams: T.map((c) => team(c)),
+    matches: [
+      mk(T[0], T[1], 1, 0, '2026-06-10', '12:00'), mk(T[0], T[2], 1, 0, '2026-06-10', '12:00'),
+      mk(T[0], T[3], 1, 0, '2026-06-10', '12:00'), mk(T[1], T[2], 1, 0, '2026-06-10', '12:00'),
+      mk(T[1], T[3], 1, 0, '2026-06-10', '12:00'), mk(T[2], T[3], 9, 0, '2026-06-10', '12:00'),
+    ],
+  };
+}
+
+function weakGroup(letter) {
+  // Fully played; the bottom two draw 0-0, so the third finishes on just 1 pt
+  // (third-place floor and ceiling both = 1).
+  const T = [letter + '1', letter + '2', letter + '3', letter + '4'];
+  return {
+    name: 'Group ' + letter,
+    teams: T.map((c) => team(c)),
+    matches: [
+      mk(T[0], T[1], 1, 0, '2026-06-10', '12:00'), mk(T[0], T[2], 1, 0, '2026-06-10', '12:00'),
+      mk(T[0], T[3], 1, 0, '2026-06-10', '12:00'), mk(T[1], T[2], 1, 0, '2026-06-10', '12:00'),
+      mk(T[1], T[3], 1, 0, '2026-06-10', '12:00'), mk(T[2], T[3], 0, 0, '2026-06-10', '12:00'),
+    ],
+  };
+}
+
+// thirdPlaceOutlook: tiebreaker-aware deterministic clinch/elimination. REGRESSION
+// for the Sweden bug — the old points-only test counted any group that could MATCH
+// the points as a threat, so a high-GF third tied on points with several others was
+// wrongly held short of clinching. Here group A's third (3 pts, GF 9) sits strictly
+// above eight decidedGroup thirds (3 pts, GF 1): zero of them can actually pass it,
+// so it has CLINCHED — even though all eight "match" on points.
+test('thirdPlaceOutlook: a high-GF third clinches over equal-points-but-lower thirds (tiebreaker-aware)', () => {
+  const focal = hiThirdGroup('A');                                   // A3: 3 pts, GF 9
+  const below = ['B', 'C', 'D', 'E', 'F', 'G', 'H', 'I'].map(decidedGroup); // 3 pts, GF 1 (below A3)
+  const weak = ['J', 'K', 'L'].map(weakGroup);                       // thirds on 1 pt
+  const allGroups = [focal, ...below, ...weak];
+
+  // A's third has clinched: no other group can field a third that outranks 3 pts/GF 9.
+  assert.equal(thirdPlaceOutlook(focal, allGroups), 'qualified');
+
+  // A weak group's best-possible third (1 pt) is beaten for sure by the nine 3-pt
+  // thirds (focal + eight below) — at least 8 above it => mathematically eliminated.
+  assert.equal(thirdPlaceOutlook(weak[0], allGroups), 'eliminated');
+});
 
 function openGroup(letter) {
   // No games played -> a 6-6-6-0 finish is still reachable -> third ceiling = 6.
