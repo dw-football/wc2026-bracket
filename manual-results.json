@@ -208,5 +208,25 @@
       0
     ],
     "note": "Full time 0-0, auto-synced from ESPN fifa.world FT on 2026-06-26."
+  },
+  {
+    "group": "Group I",
+    "team1": "Norway",
+    "team2": "France",
+    "ft": [
+      1,
+      4
+    ],
+    "note": "Full time 1-4, auto-synced from ESPN fifa.world FT on 2026-06-26."
+  },
+  {
+    "group": "Group I",
+    "team1": "Senegal",
+    "team2": "Iraq",
+    "ft": [
+      5,
+      0
+    ],
+    "note": "Full time 5-0, auto-synced from ESPN fifa.world FT on 2026-06-26."
   }
 ]
