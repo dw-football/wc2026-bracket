@@ -1640,7 +1640,10 @@ const APP_JS = String.raw`
       if(outlook==='qualified') advHtml='<span class="adv"><span class="qbadge in">QUALIFIED</span></span>';
       else if(outlook==='eliminated') advHtml='<span class="adv"><span class="qbadge out">OUT</span></span>';
       else {
-        var pctTxt = p==null?'—':(p>=0.9995?'>99%':(p<0.0005?'<1%':Math.round(p*100)+'%'));
+        // Never print a misleading "100%"/"0%" from a sampled estimate: anything
+        // that would round to an extreme shows ">99%"/"<1%" instead. True certainty
+        // is reserved for the deterministic QUALIFIED/OUT badge above.
+        var pctTxt = p==null?'—':(p>=0.995?'>99%':(p<0.005?'<1%':Math.round(p*100)+'%'));
         var bar = p==null?'':'<span class="advbar"><i style="width:'+Math.max(2,Math.round((p||0)*100))+'%"></i></span>';
         advHtml='<span class="adv">'+pctTxt+bar+'</span>';
       }
