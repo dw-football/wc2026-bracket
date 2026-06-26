@@ -1656,14 +1656,17 @@ const APP_JS = String.raw`
       // sim. Only shown when the team has a real shot at sneaking through 3rd, so the
       // line doesn't clutter clearly-eliminated rows.
       var od = (dist && dist[t.code]) ? dist[t.code].thirdOpponents : null;
-      if(od && od.length && (p==null || p>=0.05)){
+      if(od && od.length && (outlook==='qualified' || p==null || p>=0.05)){
         var top = od.filter(function(o){ return (o.p||0)>=0.02; }).slice(0,6);
         if(top.length){
           var parts = top.map(function(o){
             return '<span class="oc" style="color:'+accentFor(o.code)+'">'+o.code+'</span> '+Math.round(o.p*100)+'%';
           }).join(' · ');
+          // QUALIFIED team has already finished 3rd & advanced -> flat "R32 opponent"
+          // (only WHICH group winner is still open); a live team stays conditional.
+          var opplbl = (outlook==='qualified') ? 'R32 opponent:' : 'if 3rd &amp; through, R32 vs';
           var opp=document.createElement('div'); opp.className='topp';
-          opp.innerHTML='<span class="opplbl">if 3rd &amp; through, R32 vs</span> '+parts;
+          opp.innerHTML='<span class="opplbl">'+opplbl+'</span> '+parts;
           item.appendChild(opp);
         }
       }
