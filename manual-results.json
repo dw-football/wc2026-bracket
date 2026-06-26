@@ -168,5 +168,25 @@
       1
     ],
     "note": "Full time 2-1, auto-synced from ESPN fifa.world FT on 2026-06-25."
+  },
+  {
+    "group": "Group F",
+    "team1": "Japan",
+    "team2": "Sweden",
+    "ft": [
+      1,
+      1
+    ],
+    "note": "Full time 1-1, auto-synced from ESPN fifa.world FT on 2026-06-26."
+  },
+  {
+    "group": "Group F",
+    "team1": "Tunisia",
+    "team2": "Netherlands",
+    "ft": [
+      1,
+      3
+    ],
+    "note": "Full time 1-3, auto-synced from ESPN fifa.world FT on 2026-06-26."
   }
 ]
