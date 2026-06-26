@@ -486,6 +486,11 @@ tr.q3 td:first-child{box-shadow:inset 3px 0 0 var(--qual3line)}
 .thirds .cut{border-top:2px dashed var(--warn);margin:5px 0;position:relative}
 .thirds .cut span{position:absolute;right:0;top:-9px;background:var(--panel);
   color:var(--warn);font-size:10px;padding:0 4px}
+.thirds .titem{border-bottom:1px solid var(--line)}
+.thirds .titem .trow{border-bottom:none}
+.thirds .topp{font-size:11px;color:var(--dim);padding:0 6px 5px 50px;display:flex;flex-wrap:wrap;gap:2px 8px;align-items:center;line-height:1.5}
+.thirds .topp .opplbl{opacity:.8}
+.thirds .topp .oc{font-weight:700}
 .thirds .trow{display:flex;align-items:center;gap:8px;padding:4px 6px;font-size:12.5px;border-bottom:1px solid var(--line);border-radius:4px}
 .thirds .trow.qual{border-left:3px solid var(--warn);padding-left:5px}
 .thirds .trow.clinch{background:rgba(18,122,66,.16);border-left:3px solid var(--good)}
@@ -1599,6 +1604,7 @@ const APP_JS = String.raw`
     var gByLetter={}; gs.forEach(function(g){ var L=(/Group\s+([A-L])/i.exec(g.name||'')||[])[1]; if(L) gByLetter[L.toUpperCase()]=g; });
     var lg=document.createElement('div'); lg.className='thlegend muted tiny';
     lg.innerHTML='Each row = a group’s 3rd-place team. <b>% = model chance that group’s 3rd advances</b> (open the Scenario tab for detail). '+
+      'The sub-line shows <b>which group winner they’d meet in the Round of 32 if they sneak through 3rd</b> (Annex C allocation). '+
       '<span class="sw clinch"></span> through · <span class="sw elim"></span> out.';
     panel.appendChild(lg);
     // ORDER BY P(advance) desc — the forward-looking race order (so through floats
@@ -1620,6 +1626,7 @@ const APP_JS = String.raw`
       var g0=gl0?gByLetter[gl0]:null;
       if(gl0 && done && thirdOnPointsClinches(t.points, gl0, ceilings)) band=' clinch';
       else if(gl0 && g0 && thirdOnPointsEliminated(maxThirdPoints(g0), gl0, floors)) band=' elim';
+      var item=document.createElement('div'); item.className='titem';
       var row=document.createElement('div'); row.className='trow'+(prov?' qual':'')+band;
       var lots=t.tiedByLots?' ⚖':'';
       var gl=(/Group\s+([A-L])/i.exec(t.group)||[])[1]||t.group;
@@ -1631,7 +1638,24 @@ const APP_JS = String.raw`
         '<span class="pl">'+(done?'done':t.played+'/3')+'</span>'+
         '<span class="pp">'+t.points+' pts · GD '+(t.gd>0?'+':'')+t.gd+'</span>'+
         '<span class="adv">'+pctTxt+bar+'</span>';
-      panel.appendChild(row);
+      item.appendChild(row);
+      // REVERSE opponent view: if this team finishes 3rd AND advances, which group
+      // winner does it meet in the R32? Conditional distribution from the same baked
+      // sim. Only shown when the team has a real shot at sneaking through 3rd, so the
+      // line doesn't clutter clearly-eliminated rows.
+      var od = (dist && dist[t.code]) ? dist[t.code].thirdOpponents : null;
+      if(od && od.length && (p==null || p>=0.05)){
+        var top = od.filter(function(o){ return (o.p||0)>=0.02; }).slice(0,6);
+        if(top.length){
+          var parts = top.map(function(o){
+            return '<span class="oc" style="color:'+accentFor(o.code)+'">'+o.code+'</span> '+Math.round(o.p*100)+'%';
+          }).join(' · ');
+          var opp=document.createElement('div'); opp.className='topp';
+          opp.innerHTML='<span class="opplbl">if 3rd &amp; through, R32 vs</span> '+parts;
+          item.appendChild(opp);
+        }
+      }
+      panel.appendChild(item);
     });
     return panel;
   }
