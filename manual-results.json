@@ -228,5 +228,25 @@
       0
     ],
     "note": "Full time 5-0, auto-synced from ESPN fifa.world FT on 2026-06-26."
+  },
+  {
+    "group": "Group H",
+    "team1": "Cape Verde",
+    "team2": "Saudi Arabia",
+    "ft": [
+      0,
+      0
+    ],
+    "note": "Full time 0-0, auto-synced from ESPN fifa.world FT on 2026-06-27."
+  },
+  {
+    "group": "Group H",
+    "team1": "Uruguay",
+    "team2": "Spain",
+    "ft": [
+      0,
+      1
+    ],
+    "note": "Full time 0-1, auto-synced from ESPN fifa.world FT on 2026-06-27."
   }
 ]
