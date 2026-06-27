@@ -1904,5 +1904,54 @@
    }
   ],
   "pens": []
+ },
+ "g:PAN-ENG": {
+  "home": "PAN",
+  "away": "ENG",
+  "events": [
+   {
+    "min": 3686,
+    "minLabel": "62",
+    "type": "goal",
+    "team": "away",
+    "who": "Jude Bellingham"
+   },
+   {
+    "min": 3997,
+    "minLabel": "67",
+    "type": "goal",
+    "team": "away",
+    "who": "Harry Kane"
+   }
+  ],
+  "pens": []
+ },
+ "g:CRO-GHA": {
+  "home": "CRO",
+  "away": "GHA",
+  "events": [
+   {
+    "min": 1852,
+    "minLabel": "31",
+    "type": "goal",
+    "team": "home",
+    "who": "Petar Sucic"
+   },
+   {
+    "min": 4349,
+    "minLabel": "73",
+    "type": "goal",
+    "team": "away",
+    "who": "Derrick Luckassen"
+   },
+   {
+    "min": 4929,
+    "minLabel": "83",
+    "type": "goal",
+    "team": "home",
+    "who": "Nikola Vlasic"
+   }
+  ],
+  "pens": []
  }
 }
