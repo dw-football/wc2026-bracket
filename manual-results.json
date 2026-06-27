@@ -248,5 +248,25 @@
       1
     ],
     "note": "Full time 0-1, auto-synced from ESPN fifa.world FT on 2026-06-27."
+  },
+  {
+    "group": "Group G",
+    "team1": "Egypt",
+    "team2": "Iran",
+    "ft": [
+      1,
+      1
+    ],
+    "note": "Full time 1-1, auto-synced from ESPN fifa.world FT on 2026-06-27."
+  },
+  {
+    "group": "Group G",
+    "team1": "New Zealand",
+    "team2": "Belgium",
+    "ft": [
+      1,
+      5
+    ],
+    "note": "Full time 1-5, auto-synced from ESPN fifa.world FT on 2026-06-27."
   }
 ]
