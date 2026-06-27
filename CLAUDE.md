@@ -30,6 +30,12 @@ pipeline + 54-game group backfill, failure-only Gmail notify) PLUS a rendering r
 Advance %s use analytic `h2hAdvanceProb` = `0.5+λ(E−0.5)` (λ=0.6, intentional favorite-squeeze) → differs
 a few pts from the MC Poisson+shootout (GER 61 analytic vs 64 MC). David chose to LEAVE the analytic
 squeeze (it chains cleanly into the SF/Final reach math). Reconciling to the MC = parked option.
+**ALSO shipped 2026-06-27:** (a) fixed a live popup bug David caught — the events cache was stale at 54/66, so
+the 12 final-round games of groups D-I had no match-detail popup; backfilled all 66 (`a57b213`). (b) Made the
+auto-sync SELF-HEAL events on a TAPE-DELAYED, decoupled pass (`264b3a3`, `deployEventsCatchUp`): the score path
+is unchanged (immediate, NO ESPN events call), and a separate post-deploy pass backfills events + rebuilds/pushes
+a SEPARATE commit ONLY when a new match is cached (key-count gate), fully non-fatal — a game whose ESPN summary
+isn't ready at FT is caught on a later tick. So new group + KO games self-populate popups going forward.
 
 **MODEL NOTE — dead-rubber / mutual-draw blind spot (David vindicated on SCO).** The Elo→Poisson model has
 NO representation of mutually-beneficial DRAWS / dead-rubber non-aggression, nor the cross-group info edge
@@ -83,11 +89,11 @@ commit before the KO merge.
 Cleanup DONE: `wc2026-ko` + `wc2026-demo` + the stray agent worktree removed; local `ko-build`,
 `demo-mid-r32-backup`, `worktree-agent-*` branches deleted (all backed up on origin). `model-mark2-ko` (local)
 is fully merged into main — redundant, deletable anytime.
-⚠️ **KNOWN BUG (2026-06-27, investigating): match-detail popups missing for the FINAL-ROUND group games of
-groups D-I** (first 4 of 6 have them, A/B/C all 6). Root cause = `data/match-events.json` is a STATIC committed
-cache and the auto-sync does NOT regenerate it, so games played after the last `build-events.mjs` run have no
-events. Fix = re-run `build-events.mjs` (backfill all 66) + redeploy; FOLLOW-UP = wire event-fetch into the
-auto-sync so new games (and KO) self-populate.
+✅ **Popups FIXED + auto-sync now self-heals events (2026-06-27).** Backfilled the 12 missing D-I final-round
+games (66/66 cached, `a57b213`), AND the auto-sync now runs a TAPE-DELAYED `build-events` pass AFTER each score
+deploy (`264b3a3`): scores ship IMMEDIATELY with NO ESPN call in the score path; popups follow a tick later when
+ESPN's summary is ready (rebuild+push only when a NEW match is cached; fully non-fatal). So tonight's group
+finals + Sunday's KO games self-populate their popups without intervention.
 Open code TODO (Claude-autonomous, low risk): guard `build-teams.mjs` so an Elo re-scrape preserves
 `team.worldRank` (the bigger `adapter.js toGroups` worldRank gap is FIXED + LIVE @ `cdfeeea`).
 Model follow-up (parked, future tournaments): the dead-rubber/mutual-draw blind spot — see SHIPPED 2026-06-27
@@ -483,3 +489,18 @@ State as of 2026-06-24. **50/104** (added COL 1-0 COD, SUI 2-1 CAN, BIH 3-1 QAT 
   push the `ko-build` branch NOW as backup (done), MERGE+go-live Sunday Jun 28 ~noon ET via a dated task +
   Sports-calendar event; let the **KO auto-deploy run UNATTENDED Sunday** (David watching M73); revert path
   captured in the task. Git-teaching thread on branch-push vs merge vs live (Pages serves `main:/docs`).
+- 2026-06-27 — **Merged the KO build → main + LIVE, 2 days early** (`74c8246`, fast-forward; verified
+  `renderCandSpans` on the production site). Then reworked the bracket slot rendering on David's call:
+  per-candidate display — LOCKED slot → full team NAME (no %; the demo wrongly showed advance % on
+  determined R32 matchups), 2 contenders → "GER 61% / PAR 39%", >2 → top-by-width + "…". The "…" is gated
+  on REAL (≥0.5%) contenders, so COD's 0.26% K2 runner-up tail no longer triggers it while ECU 99% / SCO <1%
+  still shows both. R32 keeps its structural chip (`K2`; per-team `3E/3F` for thirds); look-aheads stay clean.
+  Fixed a LIVE popup bug David caught (12 D-I final-round games missing events; cache stale 54→66; `a57b213`)
+  and made the auto-sync self-heal events on a TAPE-DELAYED decoupled pass (`264b3a3`) — scores immediate, NO
+  ESPN in the score path, popups follow a tick later, non-fatal. Long MODEL thread (David VINDICATED on SCO):
+  Elo has no dead-rubber / mutual-draw model nor cross-group info edge → over-prices cheap 3-pt thirds (KOR
+  44%); throwaway experiment showed forcing the J/L mutual draws to 50% + COD-beats-UZB drops KOR 44%→20% —
+  logged as a fork-forward design note (state-dependent scoring intensity), MOOT this tournament. Cleanup:
+  removed the `wc2026-ko`/`wc2026-demo`/agent worktrees + deleted `ko-build`/`demo-mid-r32-backup` branches
+  (backed up on origin); updated CLAUDE.md + marked the Sunday Obsidian task done + repointed the noon Sports
+  calendar event. Sunday = WATCH M73 (RSA-CAN, 3pm EDT); KO auto-deploy runs unattended. 100/100 tests green.
