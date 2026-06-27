@@ -268,5 +268,25 @@
       5
     ],
     "note": "Full time 1-5, auto-synced from ESPN fifa.world FT on 2026-06-27."
+  },
+  {
+    "group": "Group L",
+    "team1": "Panama",
+    "team2": "England",
+    "ft": [
+      0,
+      2
+    ],
+    "note": "Full time 0-2, auto-synced from ESPN fifa.world FT on 2026-06-27."
+  },
+  {
+    "group": "Group L",
+    "team1": "Croatia",
+    "team2": "Ghana",
+    "ft": [
+      2,
+      1
+    ],
+    "note": "Full time 2-1, auto-synced from ESPN fifa.world FT on 2026-06-27."
   }
 ]
