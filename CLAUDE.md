@@ -15,6 +15,33 @@ result vs. swap in Mark2), ASSUME ROUTINE and confirm before the huge thing.
 (2026-06-23: misread "push out the new model with ALG's win" as deploy-Mark2; David
 halted it. Mark2 stays parked on its `model-mark2` branch until explicit go-ahead.)
 
+## SHIPPED 2026-06-27 — KO build merged LIVE (early) + per-candidate slot rendering
+Merged `ko-build` → `main` (FAST-FORWARD) and pushed LIVE 2 days ahead of the Sunday plan — David wanted
+the R16 contender %s visible now. **Live + verified** (`renderCandSpans` confirmed on the production site).
+100/100 tests green. Shipped the full KO feature (KO result handling, demo rendering port, ESPN events
+pipeline + 54-game group backfill, failure-only Gmail notify) PLUS a rendering rework David asked for:
+- **Per-candidate slot rendering, by candidate count** (replaces the demo's next-up special-case): LOCKED
+  slot (1 team) → full team NAME, no % (the demo wrongly showed advance % on DETERMINED R32 matchups);
+  2 contenders → "GER 61% / PAR 39%"; >2 → top-by-width + "…" (click-for-all).
+- **"…" gated on REAL contenders (≥0.5%)**: a sub-0.5% tail (e.g. COD's 0.26% K2 runner-up path) no longer
+  triggers it, but the genuine 2nd team still shows (ECU 99% / SCO <1%, no "…").
+- **R32 keeps its structural chip** (K2 winner/runner-up; per-team 3E/3F for third-place slots); look-ahead
+  rounds (R16→Final) stay clean (no chips).
+Advance %s use analytic `h2hAdvanceProb` = `0.5+λ(E−0.5)` (λ=0.6, intentional favorite-squeeze) → differs
+a few pts from the MC Poisson+shootout (GER 61 analytic vs 64 MC). David chose to LEAVE the analytic
+squeeze (it chains cleanly into the SF/Final reach math). Reconciling to the MC = parked option.
+
+**MODEL NOTE — dead-rubber / mutual-draw blind spot (David vindicated on SCO).** The Elo→Poisson model has
+NO representation of mutually-beneficial DRAWS / dead-rubber non-aggression, nor the cross-group info edge
+of later-kicking-off groups → it under-prices draws in semi-dead final-round games and OVER-prices cheap
+3-pt thirds. Empirics: JPN 1-1 SWE (model draw 24%, JPN a 54% fav), PAR 0-0 AUS (26%), CPV 0-0 KSA (26%) —
+the mutual-interest games all drew (joint ~6% under the model). Throwaway experiment (harness deleted):
+forcing ALG-AUT & CRO-GHA to 50% draw drops KOR's 3rd-place qualify 44%→31%; +COD beats UZB 60% → 20% (and
+IRN 92→73 purely via cutoff inflation). KOR's 44% sits on the cutoff knife-edge; honest number ~20-30%. The
+dynamic is STATE-DEPENDENT (level + late → both shift to preserve/no-risk; an early goal voids it), so it's
+hard to model and MOOT this tournament (group stage ends 6-27). **Logged as a fork-forward design note**
+(Euro 2028 / WC 2030): a state-dependent scoring intensity that decays on a mutually-sufficient late scoreline.
+
 ## SHIPPED 2026-06-26 — Deterministic 3rd-place QUALIFIED/OUT badge + clinch-math bug fix
 Third-place RACE panel: once a group's 3rd has MATHEMATICALLY clinched a top-8 place it now drops the
 % + bar and shows a green **QUALIFIED** badge (red **OUT** when eliminated); still-live rows keep the
@@ -42,10 +69,29 @@ deployed the feature inside score commit `c5652bc` BEFORE the source was committ
 makes git source-of-truth match the already-live artifacts (no rebuild needed; dist == HEAD == live).
 
 ## RESUME
-Next action (on **520 / NYWDWARREN2**, where the worktrees + armed auto-sync live): **merge the FINISHED KO build to main + push LIVE.** The dated Obsidian task (`Personal/tech/Claude setup.md`, 📅 2026-06-28) + the Sports-calendar event (Sun Jun 28, 12pm ET) carry the exact steps. The **`ko-build` branch is DONE and BACKED UP on GitHub** (11 commits): #1 KO result handling (deterministic fixture resolver, manual/feed/auto merge, ESPN KO poller w/ AET/pens, autosync `deployLiveKo`), #2 rendering port (flag accents, completed-KO score+pens/AET tag, greyed losers, chained-H2H reach %, match-detail popover), #3 ESPN events pipeline + group backfill (54 group games cached) + group-table popovers, #4 failure-only Gmail-REST notify. **99/99 tests green.** Backward-compatible — dormant until KO games have results. **KO auto-deploy runs UNATTENDED Sunday** (David's call; he'll watch M73 = RSA v CAN, LA, 3pm EDT). The merge must **resolve the CLAUDE.md conflict by taking THIS (main) file + folding in ko-build's BUILD STATUS notes.** After merge: clean up the `wc2026-demo` + `wc2026-ko` worktrees + delete throwaway `demo-mid-r32-backup` + `ko-build` branches.
-Then read: **Session Notes 2026-06-25 (KO build)**; the BUILD STATUS block below (now historical — the group-stage auto-sync is LIVE/validated, 54/104).
-⚠️ Repo is **local + GitHub only** (not Drive-synced) — on another machine `git fetch && git checkout ko-build`. **Revert path if a deploy misbehaves:** site wrong → `git revert -m 1 <merge-sha>` + push (old site back ~1 min) and/or pause the `WC2026-autosync` Task Scheduler task on 520; bad KO score → edit/remove the line in `manual-ko-results.json` + rebuild (the feed self-corrects it next day).
-Open code TODO (Claude-autonomous, low risk): guard `build-teams.mjs` so an Elo re-scrape preserves `team.worldRank` (the bigger `adapter.js toGroups` worldRank gap is FIXED + LIVE @ `cdfeeea`).
+**KO build is MERGED + LIVE on `main` (2026-06-27, FAST-FORWARD), 2 days early.** Site verified live with the
+new per-candidate rendering (see SHIPPED 2026-06-27). Group stage finishes TONIGHT (6-27); R32 starts Sun
+6-28 (M73 = RSA v CAN, LA, 3pm EDT).
+**SUNDAY = WATCH, don't merge.** The merge is done. The `WC2026-autosync` task on 520 auto-deploys R32 results
+UNATTENDED as they go FT (the KO poller came in with the merge; inert until KO games exist). David watches M73.
+Nothing to do unless a deploy misbehaves.
+⚠️ **Revert path (CHANGED — the merge was a FAST-FORWARD, so `git revert -m 1` does NOT apply):** roll back the
+live site by restoring the prior artifacts → `git checkout 20effd5 -- docs/index.html dist/index.html && git
+commit && git push` (old site back ~1 min); and/or pause the `WC2026-autosync` task on 520. Bad KO score →
+edit/remove the line in `manual-ko-results.json` + rebuild (feed self-corrects next day). `20effd5` = last
+commit before the KO merge.
+Cleanup DONE: `wc2026-ko` + `wc2026-demo` + the stray agent worktree removed; local `ko-build`,
+`demo-mid-r32-backup`, `worktree-agent-*` branches deleted (all backed up on origin). `model-mark2-ko` (local)
+is fully merged into main — redundant, deletable anytime.
+⚠️ **KNOWN BUG (2026-06-27, investigating): match-detail popups missing for the FINAL-ROUND group games of
+groups D-I** (first 4 of 6 have them, A/B/C all 6). Root cause = `data/match-events.json` is a STATIC committed
+cache and the auto-sync does NOT regenerate it, so games played after the last `build-events.mjs` run have no
+events. Fix = re-run `build-events.mjs` (backfill all 66) + redeploy; FOLLOW-UP = wire event-fetch into the
+auto-sync so new games (and KO) self-populate.
+Open code TODO (Claude-autonomous, low risk): guard `build-teams.mjs` so an Elo re-scrape preserves
+`team.worldRank` (the bigger `adapter.js toGroups` worldRank gap is FIXED + LIVE @ `cdfeeea`).
+Model follow-up (parked, future tournaments): the dead-rubber/mutual-draw blind spot — see SHIPPED 2026-06-27
+MODEL NOTE.
 
 **PARKED WIP — knockout-rendering UI (2026-06-24 night; reviewed+approved by David; NOT on main):** A throwaway demo built the new knockout bracket rendering. Lives on branch **`demo-mid-r32-backup` @ `5144b3b`** (on top of `f714df1`), worktree **`C:\Users\dwarren\src\wc2026-demo`**, served on **localhost:8008** (disk backup: scratchpad `RECOVERED/demo-latest.html`). **KEEPABLE rendering:** completed-KO **score + AET/`x–y pens` tag**; **greyed losers** in place (no strikethrough); **retired bold-as-confirmed**; **flag-color accent bars** (`FLAG_ACCENT` map + hash fallback); **head-to-head pairs** for next-up / one-ahead (R16) / two-ahead (QF) slots = P(reach this slot), sum 100, NO parens; **exact chained-H2H reach distribution** for deeper slots (SF/Final) — a played R32 collapses to its winner so eliminated teams carry 0 and never distort, sums to 100 (`slotDist`/`winnerDist` recursion); **match-detail popover** (goals/scorers/cards/pens) — currently **FAKE** data. **THROWAWAY (strip before any port):** 20 fake group results in `manual-results.json` + the hardcoded `koResults` object (12 fabricated R32 results + invented scorers). **DECISIONS:** no parens; deep-slot %s via chained H2H (NOT renormalized MC); flag colors; cosmetic changes (flag colors + un-bolded teams) GO LIVE as soon as we port (David's "yes on a"). **ESPN match-event pipeline = NOW IN SCOPE** (David reversed the defer — wants it wired "over the next day or so", PLUS **backfill all events to the completed GROUP-STAGE matches too**). Feasibility CONFIRMED 2026-06-24: `site.api.espn.com/.../fifa.world/summary?event={id}` returns full `keyEvents` (goals w/ scorer + exact minute incl `45'+7'`, cards, subs) + a dedicated `shootout` field; map ESPN `team.id`→FIFA code via the scoreboard competitors.
 **PUBLISH PLAN (next 72h, before R32 on Jun 28) — the new rendering is backward-compatible (dormant w/ no KO results + incomplete groups → draws today's projected bracket), so port EARLY and it activates progressively. Two pieces must land, plus the events pipeline:**

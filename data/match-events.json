@@ -1563,5 +1563,346 @@
    }
   ],
   "pens": []
+ },
+ "g:TUR-USA": {
+  "home": "TUR",
+  "away": "USA",
+  "events": [
+   {
+    "min": 133,
+    "minLabel": "3",
+    "type": "goal",
+    "team": "away",
+    "who": "Auston Trusty"
+   },
+   {
+    "min": 586,
+    "minLabel": "10",
+    "type": "goal",
+    "team": "home",
+    "who": "Arda Güler"
+   },
+   {
+    "min": 1829,
+    "minLabel": "31",
+    "type": "goal",
+    "team": "home",
+    "who": "Baris Alper Yilmaz"
+   },
+   {
+    "min": 2885,
+    "minLabel": "49",
+    "type": "goal",
+    "team": "away",
+    "who": "Sebastian Berhalter"
+   },
+   {
+    "min": 5400,
+    "minLabel": "90'+8",
+    "type": "goal",
+    "team": "home",
+    "who": "Kaan Ayhan"
+   }
+  ],
+  "pens": []
+ },
+ "g:PAR-AUS": {
+  "home": "PAR",
+  "away": "AUS",
+  "events": [],
+  "pens": []
+ },
+ "g:CUW-CIV": {
+  "home": "CUW",
+  "away": "CIV",
+  "events": [
+   {
+    "min": 364,
+    "minLabel": "7",
+    "type": "goal",
+    "team": "away",
+    "who": "Nicolas Pépé"
+   },
+   {
+    "min": 3792,
+    "minLabel": "64",
+    "type": "goal",
+    "team": "away",
+    "who": "Nicolas Pépé"
+   }
+  ],
+  "pens": []
+ },
+ "g:ECU-GER": {
+  "home": "ECU",
+  "away": "GER",
+  "events": [
+   {
+    "min": 109,
+    "minLabel": "2",
+    "type": "goal",
+    "team": "away",
+    "who": "Leroy Sané"
+   },
+   {
+    "min": 506,
+    "minLabel": "9",
+    "type": "goal",
+    "team": "home",
+    "who": "Nilson Angulo"
+   },
+   {
+    "min": 4619,
+    "minLabel": "77",
+    "type": "goal",
+    "team": "home",
+    "who": "Gonzalo Plata"
+   }
+  ],
+  "pens": []
+ },
+ "g:JPN-SWE": {
+  "home": "JPN",
+  "away": "SWE",
+  "events": [
+   {
+    "min": 3313,
+    "minLabel": "56",
+    "type": "goal",
+    "team": "home",
+    "who": "Daizen Maeda"
+   },
+   {
+    "min": 3669,
+    "minLabel": "62",
+    "type": "goal",
+    "team": "away",
+    "who": "Anthony Elanga"
+   }
+  ],
+  "pens": []
+ },
+ "g:TUN-NED": {
+  "home": "TUN",
+  "away": "NED",
+  "events": [
+   {
+    "min": 141,
+    "minLabel": "3",
+    "type": "goal",
+    "team": "away",
+    "who": "Ellyes Skhiri (OG)"
+   },
+   {
+    "min": 384,
+    "minLabel": "7",
+    "type": "goal",
+    "team": "away",
+    "who": "Brian Brobbey"
+   },
+   {
+    "min": 3207,
+    "minLabel": "54",
+    "type": "goal",
+    "team": "home",
+    "who": "Hazem Mastouri"
+   },
+   {
+    "min": 3677,
+    "minLabel": "62",
+    "type": "goal",
+    "team": "away",
+    "who": "Jan Paul van Hecke"
+   }
+  ],
+  "pens": []
+ },
+ "g:EGY-IRN": {
+  "home": "EGY",
+  "away": "IRN",
+  "events": [
+   {
+    "min": 266,
+    "minLabel": "5",
+    "type": "goal",
+    "team": "home",
+    "who": "Mahmoud Saber"
+   },
+   {
+    "min": 793,
+    "minLabel": "14",
+    "type": "goal",
+    "team": "away",
+    "who": "Ramin Rezaeian"
+   }
+  ],
+  "pens": []
+ },
+ "g:NZL-BEL": {
+  "home": "NZL",
+  "away": "BEL",
+  "events": [
+   {
+    "min": 1636,
+    "minLabel": "28",
+    "type": "goal",
+    "team": "away",
+    "who": "Leandro Trossard"
+   },
+   {
+    "min": 2982,
+    "minLabel": "50",
+    "type": "goal",
+    "team": "away",
+    "who": "Leandro Trossard"
+   },
+   {
+    "min": 3958,
+    "minLabel": "66",
+    "type": "goal",
+    "team": "away",
+    "who": "Kevin De Bruyne"
+   },
+   {
+    "min": 5006,
+    "minLabel": "84",
+    "type": "goal",
+    "team": "home",
+    "who": "Elijah Just"
+   },
+   {
+    "min": 5120,
+    "minLabel": "86",
+    "type": "goal",
+    "team": "away",
+    "who": "Romelu Lukaku"
+   },
+   {
+    "min": 5400,
+    "minLabel": "90'+4",
+    "type": "goal",
+    "team": "away",
+    "who": "Alexis Saelemaekers"
+   }
+  ],
+  "pens": []
+ },
+ "g:CPV-KSA": {
+  "home": "CPV",
+  "away": "KSA",
+  "events": [],
+  "pens": []
+ },
+ "g:URU-ESP": {
+  "home": "URU",
+  "away": "ESP",
+  "events": [
+   {
+    "min": 2467,
+    "minLabel": "42",
+    "type": "goal",
+    "team": "away",
+    "who": "Álex Baena"
+   },
+   {
+    "min": 5400,
+    "minLabel": "90'+5",
+    "type": "red",
+    "team": "home",
+    "who": "Agustín Canobbio"
+   }
+  ],
+  "pens": []
+ },
+ "g:NOR-FRA": {
+  "home": "NOR",
+  "away": "FRA",
+  "events": [
+   {
+    "min": 369,
+    "minLabel": "7",
+    "type": "goal",
+    "team": "away",
+    "who": "Ousmane Dembélé"
+   },
+   {
+    "min": 1155,
+    "minLabel": "20",
+    "type": "goal",
+    "team": "away",
+    "who": "Ousmane Dembélé"
+   },
+   {
+    "min": 1235,
+    "minLabel": "21",
+    "type": "goal",
+    "team": "home",
+    "who": "Thelo Aasgaard"
+   },
+   {
+    "min": 1906,
+    "minLabel": "32",
+    "type": "goal",
+    "team": "away",
+    "who": "Ousmane Dembélé"
+   },
+   {
+    "min": 5400,
+    "minLabel": "90'+4",
+    "type": "goal",
+    "team": "away",
+    "who": "Désiré Doué"
+   }
+  ],
+  "pens": []
+ },
+ "g:SEN-IRQ": {
+  "home": "SEN",
+  "away": "IRQ",
+  "events": [
+   {
+    "min": 202,
+    "minLabel": "4",
+    "type": "goal",
+    "team": "home",
+    "who": "Habib Diarra"
+   },
+   {
+    "min": 759,
+    "minLabel": "13",
+    "type": "red",
+    "team": "away",
+    "who": "Rebin Sulaka"
+   },
+   {
+    "min": 3321,
+    "minLabel": "56",
+    "type": "goal",
+    "team": "home",
+    "who": "Ismaïla Sarr"
+   },
+   {
+    "min": 3501,
+    "minLabel": "59",
+    "type": "goal",
+    "team": "home",
+    "who": "Pape Gueye"
+   },
+   {
+    "min": 4245,
+    "minLabel": "71",
+    "type": "goal",
+    "team": "home",
+    "who": "Pape Gueye"
+   },
+   {
+    "min": 4900,
+    "minLabel": "82",
+    "type": "goal",
+    "team": "home",
+    "who": "Iliman Ndiaye"
+   }
+  ],
+  "pens": []
  }
 }
