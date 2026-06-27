@@ -578,6 +578,11 @@ export function monteCarlo(groups, bracket, opts = {}) {
         winGroup: 0, runnerUp: 0, thirdQualify: 0,
         g1: 0, g2: 0, g3: 0, g4: 0, // full final group-position distribution
         reachR32: 0, reachR16: 0, reachQF: 0, reachSF: 0, reachFinal: 0, winCup: 0,
+        // R32 opponent tally CONDITIONAL on this team qualifying as a 3rd-place
+        // team: opponentCode -> count. A 3rd always faces a group WINNER (Annex C),
+        // so this answers "if X sneaks through 3rd, who does X play?". Denominator
+        // is thirdQualify (the sims X qualified as a third), so the p's sum to 1.
+        thirdOppTally: new Map(),
         // conditional-advancement: keyed by final group points value ->
         //   { finishes, advances, thirds, thirdAdvances }
         //     finishes      = sims the team finished on exactly this points total
@@ -666,6 +671,11 @@ export function monteCarlo(groups, bracket, opts = {}) {
     for (const fx of r.r32) {
       inc(slotTally[fx.match].home, fx.home);
       inc(slotTally[fx.match].away, fx.away);
+      // Reverse opponent view: when a 3rd-place qualifier fills a side, tally the
+      // OTHER side (always a group winner) against that third's counter. The
+      // bracket always seats the third as `away`, but check both sides to be safe.
+      if (r.qualifiedAs[fx.away] === 'third' && fx.home) inc(C[fx.away].thirdOppTally, fx.home);
+      if (r.qualifiedAs[fx.home] === 'third' && fx.away) inc(C[fx.home].thirdOppTally, fx.away);
     }
 
     // ALL knockout matches: true per-round occupancy for each side.
@@ -704,9 +714,17 @@ export function monteCarlo(groups, bracket, opts = {}) {
           pQualIfThird: b.thirds ? b.thirdAdvances / b.thirds : 0,
         };
       }
+      // thirdOpponents: P(this team's R32 opponent = code | it qualified as a 3rd).
+      // Opponent is always a group winner; entries sum to 1 over qualifying-third
+      // sims. Empty for teams that essentially never sneak through 3rd. Drives the
+      // reverse "who would this 3rd-place team face?" line in the third-place race.
+      const thirdOpponents = [...c.thirdOppTally.entries()]
+        .map(([code, count]) => ({ code, p: c.thirdQualify ? count / c.thirdQualify : 0 }))
+        .sort((a, b) => b.p - a.p);
       return {
         code: c.code,
         name: c.name,
+        thirdOpponents,
         pWinGroup: c.winGroup / n,
         pRunnerUp: c.runnerUp / n,
         pThirdQualify: c.thirdQualify / n,
