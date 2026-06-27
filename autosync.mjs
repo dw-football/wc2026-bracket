@@ -24,7 +24,7 @@
 // ============================================================================
 
 import { readFile, writeFile } from 'node:fs/promises';
-import { existsSync, copyFileSync } from 'node:fs';
+import { existsSync, copyFileSync, readFileSync } from 'node:fs';
 import { execFileSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
@@ -36,6 +36,7 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 const STATE_FILE = join(__dirname, 'autosync-state.json');
 const MANUAL_FILE = join(__dirname, 'manual-results.json');
 const MANUAL_KO_FILE = join(__dirname, 'manual-ko-results.json');
+const EVENTS_CACHE = join(__dirname, 'data', 'match-events.json');
 
 async function loadState() {
   if (!existsSync(STATE_FILE)) return { processedSetKeys: [], lastRun: null };
@@ -118,6 +119,35 @@ async function deployLiveKo(d, now) {
   sh('git', ['push', 'origin', 'main']);
   sh('node', ['sync-calendar.mjs']);
   sh('node', ['calendar-apply.mjs', '--apply']);
+}
+
+/** Number of matches in the events cache (keys); -1 if unreadable. */
+function eventCacheKeyCount() {
+  try { return Object.keys(JSON.parse(readFileSync(EVENTS_CACHE, 'utf8'))).length; }
+  catch { return -1; }
+}
+
+/** TAPE-DELAYED match-event popovers. Runs ONLY after the score path has already
+ *  pushed, so a SCORE IS NEVER DELAYED by an ESPN events call. Fully best-effort +
+ *  non-fatal: backfill events for any played match not yet cached, and ONLY if NEW
+ *  matches were actually added does it rebuild + push a SEPARATE commit. A finished
+ *  game whose ESPN summary isn't ready yet is simply picked up on a later tick
+ *  (true tape-delay). When the cache is already complete it does nothing (build-
+ *  events makes zero network calls and key-count is unchanged -> no rebuild/push). */
+function deployEventsCatchUp(log) {
+  const before = eventCacheKeyCount();
+  try { sh('node', ['build-events.mjs']); }
+  catch (e) { log(`  events: backfill skipped (non-fatal): ${e.message || e}`); return; }
+  const after = eventCacheKeyCount();
+  if (after <= before) { log('  events: cache up to date.'); return; }
+  try {
+    sh('node', ['build-html.mjs']);   // no --refresh: the score path already pulled the feed
+    copyFileSync(join(__dirname, 'dist', 'index.html'), join(__dirname, 'docs', 'index.html'));
+    sh('git', ['add', 'data/match-events.json', 'docs/index.html', 'dist/index.html']);
+    sh('git', ['commit', '-m', `Auto-sync: match-event popovers (+${after - before})`]);
+    sh('git', ['push', 'origin', 'main']);
+    log(`  events: popovers deployed (+${after - before} match${after - before > 1 ? 'es' : ''}).`);
+  } catch (e) { log(`  events: deploy failed (non-fatal): ${e.message || e}`); }
 }
 
 function describeDryRun(set, log) {
@@ -235,6 +265,15 @@ async function main() {
         log(`  !! notify FAILED too: ${e.message || e}`);   // last resort — only the log has it
       }
     }
+  }
+
+  // --- TAPE-DELAYED match-event popovers (runs AFTER scores; never blocks them) ---
+  // Skipped on a tick that hit a deploy failure/partial flag — the next clean tick
+  // catches up. In dry-run we only describe it (it would write the cache + hit ESPN).
+  if (live && !failure) {
+    deployEventsCatchUp(log);
+  } else if (!live) {
+    log('  WOULD: node build-events.mjs; if NEW matches cached -> rebuild + push "match-event popovers" (separate commit, after scores)');
   }
 
   state = { processedSetKeys: [...processed], lastRun: now.toISOString() };
