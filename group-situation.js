@@ -922,7 +922,28 @@ export function thirdPlaceOutlook(group, allGroups) {
     if (possiblePassers <= 7) return 'qualified';
   }
 
-  // --- ELIMINATION (best-case third still beaten for sure by >= 8 groups) ---
+  // --- ELIMINATION (this group's best-possible third still beaten for sure by
+  //     >= 8 other groups) ---
+  // (a) Own group DONE -> its 3rd is the fixed standing T: tiebreaker-AWARE,
+  //     symmetric with the clinch test above. A finished other-group is a sure
+  //     passer when its actual 3rd strictly OUTRANKS T on the FULL FIFA cascade
+  //     (points -> GD -> GF), NOT points alone — the points-only test missed a
+  //     goal-difference elimination (e.g. SCO 3pts/-3 is buried by IRN 3/0,
+  //     KOR 3/-1, SEN 3/+2, who tie on points but win on GD). A live group counts
+  //     only if its MINIMUM third already has strictly more points (can't lose).
+  if (T) {
+    let beaten = 0;
+    for (const g of others) {
+      const their = doneThirdOf(g);
+      if (their) { if (compareThirdPlace(their, T) < 0) beaten++; }
+      else if (minThirdPoints(g) > T.points) beaten++;
+    }
+    if (beaten >= 8) return 'eliminated';
+  }
+
+  // (b) Own group still LIVE -> no fixed third yet, so fall back to a points-only
+  //     best-case bound (can't apply GD/GF to a team that doesn't exist yet).
+  //     Conservative: only strictly-more-points counts, so never a false call.
   const ownMax = maxThirdPoints(group);
   let beatenForSure = 0;
   for (const g of others) {

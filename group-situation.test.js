@@ -475,6 +475,20 @@ test('thirdPlaceOutlook: a high-GF third clinches over equal-points-but-lower th
   assert.equal(thirdPlaceOutlook(weak[0], allGroups), 'eliminated');
 });
 
+// REGRESSION for the Scotland bug — ELIMINATION must be tiebreaker-aware too, not
+// just points. Focal third (A3: 3 pts, GD -1, GF 1) is beaten by EIGHT thirds that
+// TIE it on points (3) but rank strictly above on goal difference / goals-for. The
+// old points-only elimination counted 0 teams with strictly-MORE points and wrongly
+// left it "live" (the <1% MC sliver); the full FIFA cascade sees all 8 above it, so
+// it is mathematically OUT. (Mirror of the high-GF clinch test above.)
+test('thirdPlaceOutlook: a third beaten only on the GD/GF tiebreak by 8 equal-points thirds is eliminated', () => {
+  const focal = decidedGroup('A');                                   // A3: 3 pts, GD -1, GF 1
+  const above = ['B', 'C', 'D', 'E', 'F', 'G', 'H', 'I'].map(hiThirdGroup); // each 3 pts but GD +7/GF 9 -> strictly above on tiebreak
+  const weak = ['J', 'K', 'L'].map(weakGroup);                       // 1 pt, below focal
+  const allGroups = [focal, ...above, ...weak];
+  assert.equal(thirdPlaceOutlook(focal, allGroups), 'eliminated');
+});
+
 function openGroup(letter) {
   // No games played -> a 6-6-6-0 finish is still reachable -> third ceiling = 6.
   const T = [letter + '1', letter + '2', letter + '3', letter + '4'];
