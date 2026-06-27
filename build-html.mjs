@@ -1120,11 +1120,11 @@ const APP_JS = String.raw`
           var sc=sideCodesOf(m.match);
           var bothKnown = sc.home && sc.away;
           if(bothKnown){
-            // (b) next-up tie: BOTH teams known -> H2H odds (R32-unplayed & fully-fed
-            //     R16 are identical here -> the parity David asked for).
-            var pA=h2hAdvanceProb(sc.home, sc.away, m.match);
-            inf.home=Object.assign({}, inf.home, { code:sc.home, official:true, h2h:pA, h2hLocked:true });
-            inf.away=Object.assign({}, inf.away, { code:sc.away, official:true, h2h:1-pA, h2hLocked:true });
+            // BOTH teams known -> a DETERMINED matchup: show the actual team NAMES
+            // (no advance %). The "who advances" odds live one column to the right,
+            // on the look-ahead slot fed by this match (its 2-candidate list).
+            inf.home=Object.assign({}, inf.home, { code:sc.home, official:true });
+            inf.away=Object.assign({}, inf.away, { code:sc.away, official:true });
           } else {
             // per-side: official if its team is known; else if its feeder match has
             // BOTH contenders known, show the contender PAIR "X/Y" (c).
@@ -1404,6 +1404,43 @@ const APP_JS = String.raw`
     return null;
   }
 
+  // Unlocked-slot candidate list -> spans "C1 p1% / C2 p2% …", capped by width.
+  // The 1-candidate (locked) case is handled by callers (name, no %). With more
+  // than fit, as many "CODE %" tokens as the width allows are shown, then "…"
+  // hints the user to click the cell for the full distribution. Appends to the
+  // caller's <text> via its span(txt,attrs) fn.
+  // opts (R32 only): {seed:"K2"} prefixes the structural slot once (winner/
+  // runner-up = one group); {perGroupTag:true} tags each candidate with its own
+  // "3E"/"3F" (a third-place slot spans groups). Look-ahead rounds pass neither.
+  function renderCandSpans(span, cands, maxW, opts){
+    opts=opts||{};
+    var per=5.8*_PS;            // glyph-width estimate (~matches truncName)
+    var EPS=0.005;              // <0.5% = not a real contender (won't trigger "…")
+    cands=(cands||[]).filter(function(c){return c&&c.code;});
+    // "Real" contenders are >=0.5%. A sub-0.5% tail (e.g. COD's 0.26% runner-up
+    // path) must NOT add a "…". But always keep the top 2 so a lone favorite still
+    // names the genuine other team (ECU 99% / SCO <1%, no "…").
+    var real=cands.filter(function(c){return c.p>=EPS;});
+    var list = real.length>=2 ? real : cands.slice(0,2);
+    var shown=0, used=0;
+    if(opts.seed){ span(opts.seed+' ', { fill:'#878f9c','font-size':String(FS(9.5)),'font-weight':'700' }); used += (opts.seed.length+1)*per; }
+    for(var i=0;i<list.length;i++){
+      var c=list[i];
+      var sep = shown>0 ? ' / ' : '';
+      var gtag = opts.perGroupTag ? (groupTag(c.code)+' ') : '';
+      var codeTxt = c.code+' ', pctTxt = pct(c.p);
+      var tokW = (sep.length+gtag.length+codeTxt.length+pctTxt.length)*per;
+      var reserve = (i < list.length-1) ? 3*per : 0;   // room for a trailing " …"
+      if(shown>0 && used+tokW+reserve > maxW) break;
+      if(sep) span(sep, { fill:'#3a4350','font-size':String(FS(11)),'font-weight':'700' });
+      if(gtag) span(gtag, { fill:'#878f9c','font-size':String(FS(9.5)),'font-weight':'700' });
+      span(codeTxt, { fill:'#3a4350','font-size':String(FS(11)),'font-weight':'700' });
+      span(pctTxt,  { fill:'#1565d8','font-size':String(FS(11)),'font-weight':'600' });
+      used += tokW; shown++;
+    }
+    if(shown < list.length) span(' …', { fill:'#878f9c','font-size':String(FS(11)),'font-weight':'700' });
+  }
+
   // R32-ONLY compact inline label. Builds a single <text> with tspans:
   //   - winner/runnerup: seed chip ("D1") + code + %  ; if modal<50% and not
   //     clinched, append a second candidate "· EGY 26%".
@@ -1443,45 +1480,29 @@ const APP_JS = String.raw`
       g.appendChild(t); return;
     }
 
-    // ---- (b) NEXT-UP TIE: both teams known -> code + H2H advance % (sum 100%) ----
-    if(si.h2hLocked && si.code){
+    // ---- LOCKED occupant: a single determined team -> seed/group chip + code +
+    //      full name, NO % (covers an official next-up team and a clinched slot). ----
+    var lockedTeam = (si.official && si.code) ? si.code : (clinched ? modal.code : null);
+    if(lockedTeam){
       seedSpan('#878f9c');
-      span(si.code+' ', { fill:'#171a20','font-size':String(FS(12)),'font-weight':'700' });
-      span(pct(si.h2h), { fill:'#0b4fb0','font-size':String(FS(11)),'font-weight':'700' });
+      span(lockedTeam, { fill:'#171a20','font-size':String(FS(12)),'font-weight':'700' });
+      span('  '+truncName(nameByCode[lockedTeam]||'', COL_W-Math.round(70*_PS)), { fill:'#56606e','font-size':String(FS(10)),'font-weight':'400' });
       g.appendChild(t); return;
     }
 
-    // ---- (c) CONTENDER PAIR: slot fed by an undecided match, both contenders
-    //      known -> "X/Y" (the "next round" look). ----
-    if(si.pair && si.pair.length===2){
-      span(si.pair[0]+'/'+si.pair[1], { fill:'#3a4350','font-size':String(FS(11.5)),'font-weight':'700' });
+    // ---- UNLOCKED slot: candidate list "C1 p1% / C2 p2% …" (>2 -> trailing "…"
+    //      hints click-for-all). R32 keeps its structural group chip: "K2" once for
+    //      a winner/runner-up slot, per-candidate "3E/3F" for a third-place slot. ----
+    if(state.mode==='projected' && cands.length){
+      renderCandSpans(span, cands, COL_W-Math.round(14*_PS),
+        { seed: isThird ? null : r32SeedPrefix(slotDef), perGroupTag: isThird });
       g.appendChild(t); return;
     }
 
-    // ---- seed / group prefix (projection paths) ----
+    // ---- fallback (picks mode / no distribution): single modal code + name ----
     seedSpan('#878f9c');
-
-    // ---- official locked occupant / projected modal ----
-    if(si.official && si.code){
-      // concrete team in the slot: code + name, NO %, NORMAL weight (bold retired).
-      span(si.code, { fill:'#171a20','font-size':String(FS(12)),'font-weight':'700' });
-      span('  '+truncName(nameByCode[si.code]||'', COL_W-Math.round(70*_PS)), { fill:'#56606e','font-size':String(FS(10)),'font-weight':'400' });
-    } else if(clinched){
-      span(modal.code||'—', { fill:'#171a20','font-size':String(FS(12)),'font-weight':'700' });
-      span('  '+(modal.code?truncName(nameByCode[modal.code]||'', COL_W-Math.round(70*_PS)):''), { fill:'#56606e','font-size':String(FS(10)),'font-weight':'400' });
-    } else if(state.mode==='projected' && modal.code){
-      span(modal.code, { fill:'#171a20','font-size':String(FS(12)),'font-weight':'700' });
-      span(' '+pct(modal.p), { fill:'#1565d8','font-size':String(FS(11)) });
-      if(showTwo){
-        span(' · ', { fill:'#aab0ba','font-size':String(FS(10)) });
-        if(isThird){ span(groupTag(second.code)+' ', { fill:'#878f9c','font-size':String(FS(9)),'font-weight':'700' }); }
-        span(second.code, { fill:'#3a4350','font-size':String(FS(11)),'font-weight':'700' });
-        span(' '+pct(second.p), { fill:'#5b7da0','font-size':String(FS(10)) });
-      }
-    } else {
-      span(modal.code||'—', { fill: modal.code?'#171a20':'#878f9c', 'font-size':String(FS(12)),'font-weight':'700' });
-      if(modal.code){ span('  '+truncName(nameByCode[modal.code]||'', COL_W-Math.round(70*_PS)), { fill:'#56606e','font-size':String(FS(10)) }); }
-    }
+    span(modal.code||'—', { fill: modal.code?'#171a20':'#878f9c', 'font-size':String(FS(12)),'font-weight':'700' });
+    if(modal.code){ span('  '+truncName(nameByCode[modal.code]||'', COL_W-Math.round(70*_PS)), { fill:'#56606e','font-size':String(FS(10)) }); }
     g.appendChild(t);
   }
 
@@ -1516,31 +1537,27 @@ const APP_JS = String.raw`
       renderR32Inline(g, m[side], si, x, midY, clinched);
     } else {
       var codeX=x+Math.round(13*_PS), nameX=x+Math.round(44*_PS);
-      if(si.pair && si.pair.length===2){
-        // ONE-AHEAD contender pair with H2H odds, NO parens: "AUS 43% / BEL 57%"
-        // (repeats the exact odds shown in that R32 box to the left).
-        var po=si.pairOdds;
-        var pairStr = po ? (si.pair[0]+' '+pct(po[0])+' / '+si.pair[1]+' '+pct(po[1]))
-                         : (si.pair[0]+'/'+si.pair[1]);
-        g.appendChild(svgText(codeX, midY, pairStr,
-          { fill:'#3a4350','font-size':String(FS(11)),'font-weight':'700' }));
+      var ncands=(si.cands||[]).filter(function(c){return c&&c.code;});
+      var nLocked = (si.official && code) || clinched || (ncands.length===1) || (ncands[0]&&ncands[0].p>=0.9995);
+      if(nLocked && (code||(ncands[0]&&ncands[0].code))){
+        // LOCKED: a determined team -> code + full name, NO % ("what it did before").
+        var lc=code||ncands[0].code;
+        g.appendChild(svgText(codeX, midY, lc,
+          { fill:'#171a20','font-size':String(FS(12)),'font-weight':'700' }));
+        g.appendChild(svgText(nameX, midY, truncName(nameByCode[lc]||'', COL_W-(nameX-x)-Math.round(14*_PS)),
+          { fill:'#56606e','font-size':String(FS(10)),'font-weight':'400' }));
+      } else if(state.mode==='projected' && ncands.length){
+        // UNLOCKED look-ahead: candidate list "C1 p1% / C2 p2% …".
+        var tt=svgEl('text',{ x:codeX, y:midY });
+        var nspan=function(txt,attrs){ var s=svgEl('tspan',attrs||{}); s.textContent=txt; tt.appendChild(s); };
+        renderCandSpans(nspan, ncands, COL_W-Math.round(22*_PS));
+        g.appendChild(tt);
       } else {
-        // code (normal weight even when locked)
+        // fallback: TBD / picks-mode single picked code + name
         g.appendChild(svgText(codeX, midY, code||'—',
           { fill: code? '#171a20':'#878f9c', 'font-size':String(FS(12)),'font-weight':'700' }));
-        // name
-        var nm=code?(nameByCode[code]||''):'TBD';
-        var nameMaxW=COL_W-(nameX-x)-Math.round(40*_PS);
-        g.appendChild(svgText(nameX, midY, truncName(nm, nameMaxW),
-          { fill:'#56606e','font-size':String(FS(10)),'font-weight':'400' }));
-        // right-side number: H2H advance odds (next-up tie) else occupancy % (locked drops it)
-        if(state.mode==='projected' && code && h2hLocked){
-          g.appendChild(svgText(x+COL_W-pad, midY, pct(si.h2h),
-            { fill:'#0b4fb0','font-size':String(FS(11)),'font-weight':'700','text-anchor':'end' }));
-        } else if(state.mode==='projected' && code && !clinched && !si.official){
-          g.appendChild(svgText(x+COL_W-pad, midY, pct(si.p),
-            { fill:'#1565d8','font-size':String(FS(11)),'text-anchor':'end' }));
-        }
+        if(code){ g.appendChild(svgText(nameX, midY, truncName(nameByCode[code]||'', COL_W-(nameX-x)-Math.round(14*_PS)),
+          { fill:'#56606e','font-size':String(FS(10)),'font-weight':'400' })); }
       }
     }
 
