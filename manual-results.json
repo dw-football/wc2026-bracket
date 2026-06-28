@@ -288,5 +288,25 @@
       1
     ],
     "note": "Full time 2-1, auto-synced from ESPN fifa.world FT on 2026-06-27."
+  },
+  {
+    "group": "Group K",
+    "team1": "Colombia",
+    "team2": "Portugal",
+    "ft": [
+      0,
+      0
+    ],
+    "note": "Full time 0-0, auto-synced from ESPN fifa.world FT on 2026-06-28."
+  },
+  {
+    "group": "Group K",
+    "team1": "DR Congo",
+    "team2": "Uzbekistan",
+    "ft": [
+      3,
+      1
+    ],
+    "note": "Full time 3-1, auto-synced from ESPN fifa.world FT on 2026-06-28."
   }
 ]
