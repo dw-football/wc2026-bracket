@@ -39,6 +39,7 @@
 
 import { computeGroupStanding, rankThirdPlaceTeams, scenarioGrid } from './engine.js';
 import { monteCarlo } from './model.js';
+import { makeKoSlotDist } from './ko-slot-dist.mjs';
 // (koStructuralCode is defined below and used within this module.)
 
 // ----------------------------------------------------------------------------
@@ -434,6 +435,27 @@ export function computeMatchLabels(engineState, opts = {}) {
 
   const koSideSets = buildKnockoutCandidateSets(bracket, r32AliveByMatch, koResults);
 
+  // KNOCKOUT contender distribution — the SAME chained head-to-head the bracket page
+  // renders (shared ko-slot-dist.mjs), so the calendar's KO %s are IDENTICAL to the
+  // site's, not the Monte-Carlo occupancy (which differs by a few points). Leaves are
+  // the LOCKED R32 occupants (deterministic, from r32AliveByMatch when a side is a
+  // singleton); a played KO match collapses to its winner.
+  const eloByCode = {};
+  for (const t of (teams || [])) eloByCode[t.code] = t.elo;
+  const koDist = makeKoSlotDist({
+    bracket,
+    eloByCode,
+    koLambda: opts.koLambda ?? DEFAULT_KO_LAMBDA,
+    hosts: new Set(opts.hosts || DEFAULT_HOSTS),
+    koVenueCountry: engineState.koVenueCountry || {},
+    r32Occupant: (matchNo, side) => {
+      const al = r32AliveByMatch[matchNo];
+      const s = al && al[side];
+      return s && s.size === 1 ? [...s][0] : null;
+    },
+    koWinner: (matchNo) => (koResults[matchNo] ? koResults[matchNo].winner : null),
+  });
+
   // Resolve every match.
   const out = new Map();
   const r32Matches = new Set(bracket.rounds.R32.map((m) => m.match));
@@ -445,8 +467,8 @@ export function computeMatchLabels(engineState, opts = {}) {
       awayRes = renderR32Side(occOf(m.match, 'away'), r32SlotCode(m.away), fullName, { dominantThreshold });
     } else {
       isKo = true;
-      homeRes = renderKoSide(occOf(m.match, 'home'), koStructuralLabel(m.home, matchByNo), fullName, { mode: koLabelMode });
-      awayRes = renderKoSide(occOf(m.match, 'away'), koStructuralLabel(m.away, matchByNo), fullName, { mode: koLabelMode });
+      homeRes = renderKoSide(koDist.slotDist(m.match, 'home'), koStructuralLabel(m.home, matchByNo), fullName, { mode: koLabelMode });
+      awayRes = renderKoSide(koDist.slotDist(m.match, 'away'), koStructuralLabel(m.away, matchByNo), fullName, { mode: koLabelMode });
     }
     const home = homeRes.label;
     const away = awayRes.label;

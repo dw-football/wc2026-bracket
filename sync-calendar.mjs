@@ -24,6 +24,7 @@ import { dirname, join } from 'node:path';
 
 import { toGroups, fetchRaw } from './adapter.js';
 import { rankThirdPlaceTeams } from './engine.js';
+import { venueCountryOf } from './model.js';
 import { resolveThirdPlaceSlots } from './allocation.js';
 import {
   computeMatchLabels,
@@ -84,6 +85,14 @@ async function loadBakedMc() {
 export async function buildPlan(opts = {}) {
   const teams = await loadJSON('teams.json');
   const bracket = await loadJSON('bracket.json');
+  // Venue-aware host bonus map (matchNo -> 'USA'|'MEX'|'CAN'|null) — built the SAME
+  // way build-html does, so the shared KO slot-distribution applies the identical
+  // bonus and the calendar %s match the page exactly.
+  const koSchedule = await loadJSON('knockout-schedule.json');
+  const koVenueCountry = {};
+  for (const k of Object.keys(koSchedule)) {
+    koVenueCountry[k] = venueCountryOf(koSchedule[k].venue || koSchedule[k].ground);
+  }
   const { map, source } = await loadCalendarMap();
   const raw = await fetchRaw({ refresh: !!opts.refresh });
   const groups = toGroups(raw, teams);
@@ -99,7 +108,7 @@ export async function buildPlan(opts = {}) {
 
   const labels = computeMatchLabels(
     { groups, bracket, teams, koResults, resolveThirdPlaceSlots, rankThirdPlaceTeams,
-      mc: bakedMc || undefined, mcN: opts.mcN },
+      koVenueCountry, mc: bakedMc || undefined, mcN: opts.mcN },
     { watchedTeams: map.watchedTeams || [], maxPreview: opts.maxPreview }
   );
   if (!bakedMc) {
