@@ -240,22 +240,50 @@ export function renderR32Side(occ, slotCode, fullName, opts = {}) {
 }
 
 /**
- * Render one KNOCKOUT slot: name ONLY highlighted teams (>= KO_SHOW_FLOOR), each
- * "CODE (NN%)" favorite-first, then "/…". A single occupant >= LOCKED_THRESHOLD is
- * the locked team (full name). If no highlighted team clears the floor, the side is
- * "structural" (its feeder code) and adds nothing new — a KO event with BOTH sides
- * structural stays unchanged.
+ * Render one KNOCKOUT slot to MIRROR THE BRACKET — the real contender pair, NOT a
+ * highlighted-teams-only preview. Consumes the per-slot occupancy [{code,p}]:
+ *   - occupant >= LOCKED_THRESHOLD            -> that team's full name (played/locked)
+ *   - else the realistic contenders (p >= floor), favorite-first, "CODE NN%/CODE NN%",
+ *     capped at `cap` (default 2, like the bracket) with a trailing "/…" if more
+ *     real contenders exist. Always names at least the top 2, so an R16 slot fed by
+ *     a DECIDED R32 reads as its two teams (e.g. "BRA 57%/JPN 43%").
+ *   - genuinely no candidates (feeder unknowable) -> the structural feeder code.
+ * Matches build-html's per-candidate rendering so the calendar can't disagree with
+ * the site. (Old behavior named only HIGHLIGHTED teams + a reach %, else a bare
+ * structural code — which diverged from the bracket once the R32 was set.)
  * @param {Array<{code:string,p:number}>} occ per-slot occupancy for this side
  * @returns {{label:string, structural:boolean}}
  */
 export function renderKoSide(occ, structuralCode, fullName, opts = {}) {
-  const highlighted = opts.highlighted || new Set(HIGHLIGHTED_TEAMS);
-  const showFloor = opts.showFloor ?? KO_SHOW_FLOOR;
+  const mode = opts.mode ?? 'contenders';   // 'contenders' (bracket-mirror) | 'highlighted' (group-stage preview)
   const a = (occ || []).slice().sort((x, y) => y.p - x.p);
-  if (a[0] && a[0].p >= LOCKED_THRESHOLD) return { label: fullName(a[0].code), structural: false };
-  const hi = a.filter((c) => highlighted.has(c.code) && c.p >= showFloor);
-  if (!hi.length) return { label: structuralCode, structural: true };
-  return { label: hi.map((c) => `${c.code} (${pct(c.p)})`).join('/') + '/…', structural: false };
+  if (!a.length) return { label: structuralCode, structural: true };          // genuinely unknown
+  if (a[0].p >= LOCKED_THRESHOLD) return { label: fullName(a[0].code), structural: false }; // locked winner
+
+  if (mode === 'highlighted') {
+    // PRESERVED GROUP-STAGE PREVIEW (toggle): name ONLY highlighted/iconic teams,
+    // each "CODE (NN%)" favorite-first, then "/…"; if none clears the floor the side
+    // is structural (its feeder code). Useful EARLY, when a KO slot's field is wide —
+    // it surfaces David's teams on the path rather than two arbitrary leaders. This is
+    // the original behavior; opt in with computeMatchLabels({ koLabelMode:'highlighted' }).
+    const highlighted = opts.highlighted || new Set(HIGHLIGHTED_TEAMS);
+    const showFloor = opts.showFloor ?? KO_SHOW_FLOOR;
+    const hi = a.filter((c) => highlighted.has(c.code) && c.p >= showFloor);
+    if (!hi.length) return { label: structuralCode, structural: true };
+    return { label: hi.map((c) => `${c.code} (${pct(c.p)})`).join('/') + '/…', structural: false };
+  }
+
+  // DEFAULT 'contenders' — MIRROR THE BRACKET: the realistic contenders favorite-first,
+  // "CODE NN%/CODE NN%", top `cap` (default 2) + "/…" if more. Always names the top 2,
+  // so an R16 slot fed by a DECIDED R32 reads as its two teams ("BRA 57%/JPN 43%").
+  const floor = opts.floor ?? R32_REALISTIC_FLOOR;   // drop GD-swing longshots (~impossible)
+  const cap = opts.cap ?? 2;
+  const real = a.filter((c) => c.p >= floor);
+  const list = real.length >= 2 ? real : a.slice(0, 2);
+  const shown = list.slice(0, cap);
+  let label = shown.map((c) => `${c.code} ${pct(c.p)}`).join('/');
+  if (list.length > shown.length) label += '/…';
+  return { label, structural: false };
 }
 
 /** Terse structural feeder code for a knockout side, e.g. "W82" / "L102". */
@@ -356,6 +384,10 @@ export function computeMatchLabels(engineState, opts = {}) {
   const watchedSet = new Set(opts.watchedTeams || []);
   const maxPreview = opts.maxPreview ?? DEFAULT_MAX_PREVIEW;
   const dominantThreshold = opts.dominantThreshold ?? DOMINANT_THRESHOLD;
+  // KO-slot label style: 'contenders' (default) mirrors the bracket — the real
+  // contender pair with %. 'highlighted' restores the group-stage preview (iconic
+  // teams + reach %, else structural). Toggle for next tournament's wide-open phase.
+  const koLabelMode = opts.koLabelMode ?? 'contenders';
 
   const nameByCode = new Map((teams || []).map((t) => [t.code, t.name]));
   const fullName = (c) => nameByCode.get(c) || c;
@@ -413,8 +445,8 @@ export function computeMatchLabels(engineState, opts = {}) {
       awayRes = renderR32Side(occOf(m.match, 'away'), r32SlotCode(m.away), fullName, { dominantThreshold });
     } else {
       isKo = true;
-      homeRes = renderKoSide(occOf(m.match, 'home'), koStructuralLabel(m.home, matchByNo), fullName, { highlighted: highlightedSet });
-      awayRes = renderKoSide(occOf(m.match, 'away'), koStructuralLabel(m.away, matchByNo), fullName, { highlighted: highlightedSet });
+      homeRes = renderKoSide(occOf(m.match, 'home'), koStructuralLabel(m.home, matchByNo), fullName, { mode: koLabelMode });
+      awayRes = renderKoSide(occOf(m.match, 'away'), koStructuralLabel(m.away, matchByNo), fullName, { mode: koLabelMode });
     }
     const home = homeRes.label;
     const away = awayRes.label;

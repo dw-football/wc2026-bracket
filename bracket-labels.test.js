@@ -53,7 +53,10 @@ const mcMap = (obj) => new Map(Object.entries(obj));
 const occ = (obj) => Object.entries(obj).map(([code, p]) => ({ code, p }));
 const HI = new Set(HIGHLIGHTED_TEAMS);
 const r32 = (o, slot, opts) => renderR32Side(occ(o), slot, fullName, opts).label;
-const ko = (o, structural) => renderKoSide(occ(o), structural, fullName, { highlighted: HI }).label;
+// Old group-stage preview format lives under the 'highlighted' toggle now.
+const ko = (o, structural) => renderKoSide(occ(o), structural, fullName, { highlighted: HI, mode: 'highlighted' }).label;
+// Default (bracket-mirror) contender-pair format.
+const koC = (o, structural) => renderKoSide(occ(o), structural, fullName).label;
 
 // ---------------------------------------------------------------------------
 // R32 GROUP SLOT — n-based tiers on the realistic (>=0.5%) set
@@ -118,15 +121,36 @@ test('KO: names ONLY highlighted teams, favorite-first, with "/…"', () => {
 
 test('KO: a highlighted team below the 5% floor is NOT shown', () => {
   // USA 3% < floor -> no highlighted clears it -> structural.
-  const r = renderKoSide(occ({ JPN: 0.4, USA: 0.03, NED: 0.2 }), 'W82', fullName, { highlighted: HI });
+  const r = renderKoSide(occ({ JPN: 0.4, USA: 0.03, NED: 0.2 }), 'W82', fullName, { highlighted: HI, mode: 'highlighted' });
   assert.equal(r.label, 'W82');
   assert.equal(r.structural, true);
 });
 
 test('KO: no highlighted team at all -> structural feeder code (adds nothing)', () => {
-  const r = renderKoSide(occ({ JPN: 0.3, NED: 0.25, BIH: 0.15 }), 'G1/?3', fullName, { highlighted: HI });
+  const r = renderKoSide(occ({ JPN: 0.3, NED: 0.25, BIH: 0.15 }), 'G1/?3', fullName, { highlighted: HI, mode: 'highlighted' });
   assert.equal(r.label, 'G1/?3');
   assert.equal(r.structural, true);
+});
+
+// ---------------------------------------------------------------------------
+// KO contender-pair labels — DEFAULT mode, mirrors the bracket
+// ---------------------------------------------------------------------------
+
+test('KO contenders (default): a 2-team slot names BOTH with %, favorite-first', () => {
+  assert.equal(koC({ BRA: 0.57, JPN: 0.43 }, 'W76'), 'BRA 57%/JPN 43%');
+});
+
+test('KO contenders (default): >2 contenders -> top 2 + "/…"', () => {
+  assert.equal(koC({ FRA: 0.52, GER: 0.28, NED: 0.12, CAN: 0.08 }, 'W97'), 'FRA 52%/GER 28%/…');
+});
+
+test('KO contenders (default): sub-floor longshot dropped; top 2 named, no "/…"', () => {
+  // COL 0.3% < 0.5% floor -> not a contender; ESP/POR named, no ellipsis.
+  assert.equal(koC({ ESP: 0.6, POR: 0.397, COL: 0.003 }, 'W93'), 'ESP 60%/POR 40%');
+});
+
+test('KO contenders (default): a locked occupant still shows the full name', () => {
+  assert.equal(koC({ USA: 1 }, 'W81'), 'United States');
 });
 
 // ---------------------------------------------------------------------------
@@ -180,25 +204,50 @@ test('computeMatchLabels (live data): R32 fully labeled, knockout obeys the rule
   assert.match(labels.get(74).full, /^Germany v /, 'M74 home = Germany locked');
   assert.match(labels.get(86).full, /^Argentina v /, 'M86 home = Argentina locked');
 
-  // Knockout sides are highlighted-team breadcrumbs now: a side that LISTS teams
-  // ends with "/…" and every named segment carries a "(NN%)"; otherwise it is a
-  // structural feeder code ("G1/?3") or a single locked name. No bare name walls.
+  // Knockout sides now MIRROR THE BRACKET (default 'contenders' mode): a side that
+  // lists teams shows "CODE NN%" segments, favorite-first, capped at 2 with a trailing
+  // "/…" if more contenders exist. (A locked side is a full name; a never-ready side
+  // is a structural feeder code.) No bare "(NN%)" parens, no name walls.
   for (let m = 89; m <= 103; m++) {
     const lab = labels.get(m);
     if (!lab || lab.full == null) continue; // unchanged is fine
     for (const side of [lab.home, lab.away]) {
-      if (side == null || !side.includes('/…')) continue;
+      if (side == null || !/\d%/.test(side)) continue; // skip locked names / structural codes
       for (const seg of side.replace('/…', '').split('/')) {
-        assert.match(seg, /\(\d+%\)$/, `M${m} highlighted segment carries a %: "${seg}" in "${side}"`);
+        assert.match(seg, /^[A-Z]{2,4} \d+%$/, `M${m} contender segment is "CODE NN%": "${seg}" in "${side}"`);
       }
     }
   }
 
-  // USA breadcrumb: USA dominates M94 home (its R32 feeder M81), so M94 home names
-  // USA with its reach-% and trails "/…".
+  // R32 is set, so M94 home (fed by the decided M81 = USA v BIH) mirrors the bracket:
+  // its two contenders with %, USA favorite-first — NOT a "/…" breadcrumb.
   const m94 = labels.get(94);
   assert.ok(m94 && m94.full, 'M94 carries a label');
-  assert.match(m94.home, /^USA \(\d+%\)/, `M94 home shows USA breadcrumb with %: ${m94.home}`);
+  assert.match(m94.home, /^USA \d+%\/[A-Z]{2,4} \d+%$/, `M94 home is the USA contender pair: ${m94.home}`);
+});
+
+test('computeMatchLabels: koLabelMode "highlighted" restores the iconic-team preview (toggle preserved for next tournament)', async () => {
+  const teams = JSON.parse(await readFile(new URL('./teams.json', import.meta.url), 'utf8'));
+  const bracket = JSON.parse(await readFile(new URL('./bracket.json', import.meta.url), 'utf8'));
+  const raw = await fetchRaw();
+  const groups = toGroups(raw, teams);
+  const labels = computeMatchLabels(
+    { groups, bracket, teams, koResults: {}, resolveThirdPlaceSlots, rankThirdPlaceTeams, mcN: 8000 },
+    { watchedTeams: ['USA'], koLabelMode: 'highlighted' }
+  );
+  // In highlighted mode a KO side that lists teams uses the "(NN%)" parens format + "/…".
+  let sawHi = false;
+  for (let m = 89; m <= 103; m++) {
+    const lab = labels.get(m); if (!lab || lab.full == null) continue;
+    for (const side of [lab.home, lab.away]) {
+      if (side == null || !side.includes('/…')) continue;
+      sawHi = true;
+      for (const seg of side.replace('/…', '').split('/')) {
+        assert.match(seg, /\(\d+%\)$/, `highlighted-mode segment carries "(NN%)": "${seg}"`);
+      }
+    }
+  }
+  assert.ok(sawHi, 'highlighted mode produced at least one "(NN%)/…" KO side');
 });
 
 // ---------------------------------------------------------------------------
