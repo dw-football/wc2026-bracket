@@ -1994,5 +1994,89 @@
    }
   ],
   "pens": []
+ },
+ "g:ALG-AUT": {
+  "home": "ALG",
+  "away": "AUT",
+  "events": [
+   {
+    "min": 1660,
+    "minLabel": "28",
+    "type": "goal",
+    "team": "away",
+    "who": "Marko Arnautovic"
+   },
+   {
+    "min": 2642,
+    "minLabel": "45",
+    "type": "goal",
+    "team": "home",
+    "who": "Rafik Belghali"
+   },
+   {
+    "min": 3269,
+    "minLabel": "55",
+    "type": "goal",
+    "team": "away",
+    "who": "Marcel Sabitzer"
+   },
+   {
+    "min": 3558,
+    "minLabel": "60",
+    "type": "goal",
+    "team": "home",
+    "who": "Riyad Mahrez"
+   },
+   {
+    "min": 5400,
+    "minLabel": "90'+3",
+    "type": "goal",
+    "team": "home",
+    "who": "Riyad Mahrez"
+   },
+   {
+    "min": 5400,
+    "minLabel": "90'+6",
+    "type": "goal",
+    "team": "away",
+    "who": "Sasa Kalajdzic"
+   }
+  ],
+  "pens": []
+ },
+ "g:JOR-ARG": {
+  "home": "JOR",
+  "away": "ARG",
+  "events": [
+   {
+    "min": 1094,
+    "minLabel": "19",
+    "type": "goal",
+    "team": "away",
+    "who": "Giovani Lo Celso"
+   },
+   {
+    "min": 1810,
+    "minLabel": "31",
+    "type": "red",
+    "team": "away",
+    "who": "Lautaro Martínez"
+   },
+   {
+    "min": 3253,
+    "minLabel": "55",
+    "type": "goal",
+    "team": "home",
+    "who": "Mousa Al Tamari"
+   },
+   {
+    "min": 4752,
+    "minLabel": "80",
+    "type": "goal",
+    "team": "away",
+    "who": "Lionel Messi"
+   }
+  ],
+  "pens": []
  }
 }
