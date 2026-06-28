@@ -196,12 +196,13 @@ function bakeMonteCarlo(groups, bracket, koVenueCountry) {
 async function main() {
   const refresh = process.argv.includes('--refresh');
 
-  const [engineSrc, allocationSrc, modelSrc, scenarioSummarySrc, groupSituationSrc] = await Promise.all([
+  const [engineSrc, allocationSrc, modelSrc, scenarioSummarySrc, groupSituationSrc, koSlotDistSrc] = await Promise.all([
     readText('engine.js'),
     readText('allocation.js'),
     readText('model.js'),
     readText('scenario-summary.js'),
     readText('group-situation.js'),
+    readText('ko-slot-dist.mjs'),
   ]);
 
   const [teams, bracket, allocation, koSchedule] = await Promise.all([
@@ -248,6 +249,7 @@ async function main() {
   // with engine/model; only their public exports are hoisted to the bundle scope.
   const scenarioSummaryBundle = wrapModuleIIFE(scenarioSummarySrc, ['summarizeGroup', '__test'], '__scnSummaryMod');
   const groupSituationBundle = wrapModuleIIFE(groupSituationSrc, ['groupSituation', 'maxThirdPoints', 'minThirdPoints', 'thirdCeilings', 'thirdFloors', 'thirdOnPointsClinches', 'thirdOnPointsEliminated', 'thirdPlaceOutlook'], '__grpSituationMod');
+  const koSlotDistBundle = wrapModuleIIFE(koSlotDistSrc, ['makeKoSlotDist'], '__koSlotDistMod');
 
   const logicBundle = [
     '/* ===== engine.js ===== */',
@@ -260,6 +262,8 @@ async function main() {
     scenarioSummaryBundle,
     '/* ===== group-situation.js (groupSituation; pre-final analyzer) ===== */',
     groupSituationBundle,
+    '/* ===== ko-slot-dist.js (makeKoSlotDist; shared KO contender distribution) ===== */',
+    koSlotDistBundle,
   ].join('\n\n');
 
   // Sanity: no leftover module tokens in the bundled LOGIC.
@@ -724,18 +728,9 @@ const APP_JS = String.raw`
     var hue=h%360; return 'hsl('+hue+',58%,40%)';
   }
 
-  // Head-to-head single-game advance probability for A over B, using the SAME
-  // knockout model the Monte-Carlo uses: Elo expected score shrunk toward a coin
-  // flip by KO_LAMBDA, plus the venue-aware host bonus. Returns P(A adv) in [0,1];
-  // P(B adv)=1-that, so a pair sums to 100%.
-  function h2hAdvanceProb(codeA, codeB, matchNo){
-    var vc = KO_VC ? (KO_VC[matchNo] || KO_VC[String(matchNo)] || null) : null;
-    var host=new Set(HOSTS);
-    function hb(c){ if(!host.has(c)) return 0; if(vc!=null && c!==vc) return 0; return 80; }
-    var eA=(eloByCode[codeA]||1500)+hb(codeA), eB=(eloByCode[codeB]||1500)+hb(codeB);
-    var E=1/(1+Math.pow(10,-(eA-eB)/400));
-    return 0.5 + KO_LAMBDA*(E-0.5);
-  }
+  // (Head-to-head single-game advance probability now lives in the SHARED
+  // ko-slot-dist module — see the koDist object built in buildSlotInfo — so the
+  // bracket and the calendar compute KO contender %s from one identical source.)
 
   // ---- working state ----
   // groups: deep clone we may mutate in My Picks mode (manual scores).
@@ -1073,36 +1068,21 @@ const APP_JS = String.raw`
         return { home: side(m&&m.home, s.home), away: side(m&&m.away, s.away) };
       }
 
-      // EXACT chained head-to-head reach distribution for any knockout slot,
-      // conditioned on the played R32 results. A slot is filled by the winner of
-      // its feeder match; winnerDist() folds P(each team wins a match) up the tree
-      // using the SAME H2H model the pairs use. A played R32 collapses to its actual
-      // winner (prob 1), so eliminated teams carry 0 probability everywhere and can
-      // neither appear nor distort the survivors. Replaces the renormalized-MC guess.
-      var KOIDX={}; Object.keys(BRACKET.rounds).forEach(function(rd){ (BRACKET.rounds[rd]||[]).forEach(function(mm){ KOIDX[mm.match]=mm; }); });
-      var _sdCache={};
-      function winnerDist(matchNo){
-        var ck='W'+matchNo; if(_sdCache[ck]) return _sdCache[ck];
-        var r=KO_RESULTS[matchNo]||KO_RESULTS[String(matchNo)];
-        if(r && r.winner){ return (_sdCache[ck]=[{code:r.winner,p:1}]); } // played -> fixed
-        var hd=slotDist(matchNo,'home'), ad=slotDist(matchNo,'away');
-        var win={};
-        hd.forEach(function(x){ ad.forEach(function(y){
-          var pxy=x.p*y.p, px=h2hAdvanceProb(x.code,y.code,matchNo);
-          win[x.code]=(win[x.code]||0)+pxy*px;
-          win[y.code]=(win[y.code]||0)+pxy*(1-px);
-        }); });
-        var arr=Object.keys(win).map(function(c){return {code:c,p:win[c]};}).sort(function(a,b){return b.p-a.p;});
-        return (_sdCache[ck]=arr);
-      }
-      function slotDist(matchNo, sideName){
-        var sk=matchNo+':'+sideName; if(_sdCache[sk]) return _sdCache[sk];
-        var m=KOIDX[matchNo]; if(!m) return (_sdCache[sk]=[]);
-        var def=m[sideName], dist;
-        if(def && def.type==='winnerOf'){ dist=winnerDist(def.match); }
-        else { var c=sideCodesOf(matchNo)[sideName]; dist = c ? [{code:c,p:1}] : []; } // group-fed R32 occupant
-        return (_sdCache[sk]=dist);
-      }
+      // EXACT chained head-to-head reach distribution for any knockout slot — the
+      // SHARED ko-slot-dist module (the SAME code the calendar resolver uses, so the
+      // bracket and the calendar can never disagree on a KO slot's odds). Leaves are
+      // the locked R32 occupants (sideCodesOf); a played KO collapses to its winner
+      // (prob 1) so eliminated teams carry 0 everywhere; deeper slots fold P(win) up
+      // the feeder tree. koDist.slotDist / .winnerDist / .h2hAdvanceProb.
+      var koDist = makeKoSlotDist({
+        bracket: BRACKET,
+        eloByCode: eloByCode,
+        koLambda: KO_LAMBDA,
+        hosts: new Set(HOSTS),
+        koVenueCountry: KO_VC,
+        r32Occupant: function(mNo, side){ return sideCodesOf(mNo)[side]; },
+        koWinner: function(mNo){ var r=KO_RESULTS[mNo]||KO_RESULTS[String(mNo)]; return (r && r.winner) || null; }
+      });
       // (a) played R32
       BRACKET.rounds.R32.forEach(function(m){
         var r=KO_RESULTS[m.match]||KO_RESULTS[String(m.match)]; if(!r) return;
@@ -1141,7 +1121,7 @@ const APP_JS = String.raw`
               if(def && def.type==='winnerOf'){
                 var fc=sideCodesOf(def.match);
                 if(fc.home && fc.away){
-                  var pp=h2hAdvanceProb(fc.home, fc.away, def.match);
+                  var pp=koDist.h2hAdvanceProb(fc.home, fc.away, def.match);
                   inf[sideName]=Object.assign({}, inf[sideName], { pair:[fc.home, fc.away], pairOdds:[pp, 1-pp] });
                 }
               }
@@ -1156,7 +1136,7 @@ const APP_JS = String.raw`
         (BRACKET.rounds[rd]||[]).forEach(function(m){
           ['home','away'].forEach(function(sideName){
             var s=info[m.match] && info[m.match][sideName]; if(!s) return;
-            var dist=slotDist(m.match, sideName);
+            var dist=koDist.slotDist(m.match, sideName);
             if(dist && dist.length){
               s.cands=dist;
               if(!s.pair && !s.official && !s.h2hLocked){ s.code=(dist[0]||{}).code||null; s.p=(dist[0]||{}).p||0; }
