@@ -1953,5 +1953,46 @@
    }
   ],
   "pens": []
+ },
+ "g:COL-POR": {
+  "home": "COL",
+  "away": "POR",
+  "events": [],
+  "pens": []
+ },
+ "g:COD-UZB": {
+  "home": "COD",
+  "away": "UZB",
+  "events": [
+   {
+    "min": 562,
+    "minLabel": "10",
+    "type": "goal",
+    "team": "away",
+    "who": "Eldor Shomurodov"
+   },
+   {
+    "min": 4055,
+    "minLabel": "68",
+    "type": "red",
+    "team": "home",
+    "who": "Yoane Wissa"
+   },
+   {
+    "min": 4626,
+    "minLabel": "78",
+    "type": "goal",
+    "team": "home",
+    "who": "Fiston Mayele"
+   },
+   {
+    "min": 5400,
+    "minLabel": "90'+1",
+    "type": "goal",
+    "team": "home",
+    "who": "Yoane Wissa"
+   }
+  ],
+  "pens": []
  }
 }
