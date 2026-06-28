@@ -1,4 +1,18 @@
 {
+ "73": {
+  "home": "RSA",
+  "away": "CAN",
+  "events": [
+   {
+    "min": 5400,
+    "minLabel": "90'+2",
+    "type": "goal",
+    "team": "away",
+    "who": "Stephen Eustaquio"
+   }
+  ],
+  "pens": []
+ },
  "g:MEX-RSA": {
   "home": "MEX",
   "away": "RSA",
