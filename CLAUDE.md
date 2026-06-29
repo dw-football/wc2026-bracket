@@ -74,6 +74,26 @@ advance p≥5%). 74/74 tests green. NOTE: the live auto-sync rebuilt with this w
 deployed the feature inside score commit `c5652bc` BEFORE the source was committed — this commit just
 makes git source-of-truth match the already-live artifacts (no rebuild needed; dist == HEAD == live).
 
+## SHIPPED 2026-06-29 (pm) — Two autosync edge-bug fixes (M76 BRA 2-1 JPN post-mortem)
+First R32 game watched in real time exposed TWO narrow edge bugs (core pipeline — detection/model/calendar —
+worked perfectly; the score commit `a1eced2` + calendar were correct). THREE symptoms, TWO root causes:
+- **#1 GitHub Pages deploy FLAKED (external, transient).** Push succeeded, GitHub's *build* job succeeded, its
+  *deploy* job failed (23s) → Pages kept serving the PRIOR artifact. Calendar (a separate REST sink) updated fine
+  → the "calendar knows, site doesn't" weirdness. David got GitHub's OWN "Run failed" email — our autosync never
+  knew (git push returned 0). **FIX (`verifyPagesPublished` in autosync.mjs):** after each score push, poll the
+  live site for the artifact's unique `builtAtISO` stamp; if Pages flaked, re-trigger with an empty commit
+  (bounded, 2 attempts, ~108s window each); on exhaustion surface via the failure-only email. Never throws / never
+  re-runs the deploy (can't double-append a result); a network blip → "assume ok" (no empty-commit spam).
+- **#2 KO goal-popover was FEED-GATED (our latent bug since the KO build).** `build-events.mjs` built its
+  worklist of "played matches" from `raw.matches` (the openfootball feed, ~a day late) → a just-deployed KO
+  score's goal-by-goal popover lagged a full feed-day. The quiet-tick catch-up ran every 5 min but reported
+  "73 played; 0 to fetch" because the feed hadn't listed M76 yet. **FIX:** KO worklist now drives off `koResults`
+  (manual + feed merged) keyed by matchNo, date from `knockout-schedule.json` → events backfill same-day once
+  ESPN's timeline is ready. Also fixed a latent `ReferenceError` (out-of-scope `ymd`) in the no-event warning.
+Both live + verified (`0eeb240`; M76 popover live: Sano 29' / Casemiro 56' / Martinelli 90'+5'). 106/106 green.
+NOTE: because the cache was already populated by hand-running build-events, the catch-up's key-count gate won't
+re-push it — the M76 popover was baked + deployed manually in `0eeb240`. Going forward both fixes are automatic.
+
 ## RESUME
 **KO stage is LIVE and auto-deploying — NOTHING TO DO MANUALLY.** The `WC2026-autosync` task on 520 deploys each
 R32/KO result UNATTENDED ~5 min after full time: score + winner slotted by name + calendar labels + goal-scorer
@@ -85,7 +105,11 @@ bracket position, NOT kickoff order. Autosync OFF 4-11am ET; per-match poll open
 (`fetchEventsInline`, 20s-timeboxed + non-fatal → a slow ESPN never blocks the score), so ONE push per game —
 this killed the GitHub-Pages concurrency race that had fired a "deploy failed" email per game (my earlier
 two-push tape-delay caused it). A standalone catch-up now runs ONLY on a QUIET tick (no new score) to backfill a
-game whose ESPN summary wasn't ready at deploy time.
+game whose ESPN summary wasn't ready at deploy time. **Two hardening fixes 6-29 pm (`0eeb240`, see SHIPPED above):**
+(a) `verifyPagesPublished` — every score push now confirms the live site actually published (by `builtAtISO`)
+and self-heals a flaked GitHub Pages deploy by re-triggering, else escalates to the failure email (closes the
+"calendar updated, site silently stale" blind spot); (b) `build-events.mjs` KO worklist drives off `koResults`
+(not the ~day-late feed) so KO goal-popovers backfill SAME-DAY, not a feed-day later.
 **Site == calendar:** KO contender %s come from ONE shared module `ko-slot-dist.mjs` (analytic chained-H2H,
 `0.5+λ(E−0.5)`); both build-html (bracket) and bracket-labels (calendar) import it → no drift. Calendar KO labels
 mirror the bracket (contender pairs, e.g. `GER 61%/PAR 39%`); group-stage preview preserved behind
