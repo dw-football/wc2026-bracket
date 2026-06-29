@@ -10,5 +10,17 @@
     "decider": "reg",
     "pens": null,
     "note": "M73 RSA 0-1 CAN -> CAN, auto-synced from ESPN fifa.world FT on 2026-06-28."
+  },
+  {
+    "match": 76,
+    "home": "BRA",
+    "away": "JPN",
+    "score": [
+      2,
+      1
+    ],
+    "decider": "reg",
+    "pens": null,
+    "note": "M76 BRA 2-1 JPN -> BRA, auto-synced from ESPN fifa.world FT on 2026-06-29."
   }
 ]
