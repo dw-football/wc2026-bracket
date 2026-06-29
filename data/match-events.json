@@ -13,6 +13,34 @@
   ],
   "pens": []
  },
+ "76": {
+  "home": "BRA",
+  "away": "JPN",
+  "events": [
+   {
+    "min": 1727,
+    "minLabel": "29",
+    "type": "goal",
+    "team": "away",
+    "who": "Kaishu Sano"
+   },
+   {
+    "min": 3306,
+    "minLabel": "56",
+    "type": "goal",
+    "team": "home",
+    "who": "Casemiro"
+   },
+   {
+    "min": 5400,
+    "minLabel": "90'+5",
+    "type": "goal",
+    "team": "home",
+    "who": "Gabriel Martinelli"
+   }
+  ],
+  "pens": []
+ },
  "g:MEX-RSA": {
   "home": "MEX",
   "away": "RSA",
