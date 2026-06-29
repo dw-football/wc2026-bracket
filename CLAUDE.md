@@ -344,6 +344,12 @@ Per-group "what each result means" prose. TWO renderers by # unplayed in the gro
 - [ ] (Optional) Real FIFA World Ranking data for the step-7 tiebreaker (Elo proxy now).
 - [ ] (Cosmetic) Visual-design polish pass; tighten the widest R32 3rd-place
       two-candidate lines; title/freshness-stamp crowding at top.
+- [ ] (PARKED, David's call — "maybe in the future", 2026-06-29) LIVE in-match goal-by-goal
+      popover build-up: poll ESPN's in-progress `summary` (keyEvents populate mid-match) and
+      deploy goals incrementally as scored, instead of the current single post-full-time pull.
+      Decided NOT needed now — would mean frequent in-match pushes + give up the spoiler-safe
+      "silent until FT" posture. (NOTE: today's events are already auto + same-day-at-FT; this
+      is purely about populating DURING the match.)
 
 ## DATA SOURCE
 PRIMARY: openfootball/worldcup.json (public domain, no key):
