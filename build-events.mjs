@@ -79,6 +79,25 @@ async function main() {
     }
   }
 
+  // KO matches drive off koResults (manual + feed), NOT just the feed: the auto-sync
+  // records a KO result in manual-ko-results.json at full time, but the openfootball
+  // feed (raw.matches above) only lists that game ~a day later — so without this, a
+  // just-deployed KO game's goal-by-goal popover lagged a full feed-day behind its
+  // score. Add any recorded KO match the feed hasn't surfaced yet (deduped by key);
+  // its events backfill on the next quiet tick once ESPN's timeline is ready.
+  const seenKeys = new Set(work.map((w) => w.key));
+  for (const numStr of Object.keys(koResults)) {
+    const num = Number(numStr);
+    const key = String(num);
+    if (seenKeys.has(key)) continue;
+    const fx = fixtures[num] || { home: koResults[num].home, away: koResults[num].away };
+    const date = koSchedule[num] && koSchedule[num].date;
+    if (fx && fx.home && fx.away && date) {
+      work.push({ key, date, home: fx.home, away: fx.away });
+      seenKeys.add(key);
+    }
+  }
+
   const cache = existsSync(CACHE) ? await loadJSON('data/match-events.json') : {};
   const todo = work.filter((w) => all || !cache[w.key]);
   console.log(`${work.length} played match(es); ${todo.length} to fetch${all ? ' (--all)' : ''}.`);
@@ -108,7 +127,7 @@ async function main() {
     for (const w of items) {
       const want = new Set([norm(w.home), norm(w.away)]);
       const ev = board.find((e) => { const s = new Set(e.codes); return [...want].every((c) => s.has(c)); });
-      if (!ev) { console.warn(`  no ESPN event for ${w.key} (${w.home} v ${w.away}) on ${ymd}`); missed++; continue; }
+      if (!ev) { console.warn(`  no ESPN event for ${w.key} (${w.home} v ${w.away}) on ${w.date}`); missed++; continue; }
       try {
         const parsed = orientTo(await fetchMatchEvents(ev.id), w.home);
         cache[w.key] = { home: w.home, away: w.away, events: parsed.events, pens: parsed.pens };

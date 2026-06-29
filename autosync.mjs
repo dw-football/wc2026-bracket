@@ -124,10 +124,89 @@ function fetchEventsInline(log) {
   return Math.max(0, eventCacheKeyCount()) - before;
 }
 
+// --- Pages publish verification + self-heal ---------------------------------
+// GitHub's Pages "deploy" job occasionally FLAKES: the build job succeeds and our
+// `git push` is happy, but the deploy job fails and Pages keeps serving the PRIOR
+// artifact — so the live site goes stale while the calendar (a separate REST sink)
+// is correctly updated. git can't see this. So after each score push we VERIFY the
+// live site actually carries the artifact we just built (matched by its unique
+// builtAtISO stamp); if not, we RE-TRIGGER Pages with an empty commit (bounded). On
+// exhaustion we return an error string so David gets the failure email — never a
+// silent stale site. (First observed 2026-06-29, M76 BRA 2-1 JPN.)
+const LIVE_URL = 'https://dw-football.github.io/wc2026-bracket/';
+const VERIFY_POLL_MS = 12000;       // gap between live-site checks
+const VERIFY_WINDOW_MS = 108000;    // how long to wait for ONE deploy to publish (~9 checks)
+const VERIFY_MAX_TRIGGERS = 2;      // empty-commit re-triggers before giving up
+
+const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+
+/** The builtAtISO stamp baked into the artifact we just pushed (unique per build). */
+function builtStamp() {
+  try {
+    const m = readFileSync(join(__dirname, 'docs', 'index.html'), 'utf8')
+      .match(/"builtAtISO":"([^"]+)"/);
+    return m ? m[1] : null;
+  } catch { return null; }
+}
+
+/** Fetch the live site (cache-busted) and report whether it carries `stamp`.
+ *  true=yes, false=reachable but stale, null=network error (can't tell). */
+async function liveHasStamp(stamp) {
+  try {
+    const res = await fetch(`${LIVE_URL}?cb=${encodeURIComponent(stamp)}`,
+      { cache: 'no-store', headers: { 'Cache-Control': 'no-cache' } });
+    if (!res.ok) return false;
+    return (await res.text()).includes(stamp);
+  } catch { return null; }
+}
+
+/** Poll the live site up to VERIFY_WINDOW_MS for `stamp`.
+ *  true=published, false=window elapsed while reachable, null=never reachable. */
+async function awaitPublish(stamp) {
+  const deadline = Date.now() + VERIFY_WINDOW_MS;
+  let everReachable = false;
+  while (Date.now() < deadline) {
+    await sleep(VERIFY_POLL_MS);
+    const hit = await liveHasStamp(stamp);
+    if (hit === true) return true;
+    if (hit !== null) everReachable = true;
+  }
+  return everReachable ? false : null;
+}
+
+/** After a successful push, confirm Pages actually PUBLISHED our artifact; if the
+ *  deploy job flaked, re-trigger with an empty commit (bounded). Returns null on
+ *  success, or an error string (-> failure email) if it never published. Treats a
+ *  network/unreachable result as "assume ok" so our own connectivity blips never
+ *  spam empty re-trigger commits. Does NOT throw — the score is already live in git;
+ *  we never want to re-run the whole deploy (that would double-append the result). */
+async function verifyPagesPublished(log) {
+  const stamp = builtStamp();
+  if (!stamp) { log('  verify: no builtAtISO stamp found — skipping live check.'); return null; }
+  for (let trigger = 0; trigger <= VERIFY_MAX_TRIGGERS; trigger++) {
+    const ok = await awaitPublish(stamp);
+    if (ok === true) { log(`  verify: live site published build ${stamp}.`); return null; }
+    if (ok === null) { log('  verify: live site unreachable from 520 — assuming ok (no re-trigger).'); return null; }
+    if (trigger < VERIFY_MAX_TRIGGERS) {
+      log(`  verify: live site STILL STALE after ${VERIFY_WINDOW_MS / 1000}s — GitHub Pages deploy flaked; re-triggering (attempt ${trigger + 1}/${VERIFY_MAX_TRIGGERS}).`);
+      try {
+        sh('git', ['commit', '--allow-empty', '-m',
+          `Re-trigger Pages deploy: deploy job flaked; artifact ${stamp} is correct, re-publishing`]);
+        sh('git', ['push', 'origin', 'main']);
+      } catch (e) {
+        return `Pages re-trigger push failed: ${e.message || e} (live site stale on build ${stamp})`;
+      }
+    }
+  }
+  return `GitHub Pages deploy kept failing — live site still does not show build ${stamp} ` +
+         `after ${VERIFY_MAX_TRIGGERS} re-trigger(s). Re-run the Pages workflow or push manually.`;
+}
+
 /** The LIVE deploy chain. Runs ONLY behind the double gate. Events are folded in:
  *  fetch goal-scorer popovers INLINE, then a SINGLE bake + push carries both score
- *  and popovers. Returns the count of event-matches captured (0 => a catch-up is
- *  still owed and the next quiet tick backfills it). */
+ *  and popovers. Returns { got, verifyError }: got = count of event-matches captured
+ *  (0 => a catch-up is still owed); verifyError = null, or a string if Pages never
+ *  published (the caller surfaces it as a failure-email problem). */
 async function deployLive(matches, now, log) {
   await appendManualResults(matches, now);
   const got = fetchEventsInline(log);
@@ -142,7 +221,8 @@ async function deployLive(matches, now, log) {
   sh('git', ['push', 'origin', 'main']);
   sh('node', ['sync-calendar.mjs']);
   sh('node', ['calendar-apply.mjs', '--apply']);
-  return got;
+  const verifyError = await verifyPagesPublished(log);   // self-heal a flaked Pages deploy
+  return { got, verifyError };
 }
 
 /** The LIVE KO deploy chain — same as deployLive but stages manual-ko-results.json. */
@@ -156,7 +236,8 @@ async function deployLiveKo(d, now, log) {
   sh('git', ['push', 'origin', 'main']);
   sh('node', ['sync-calendar.mjs']);
   sh('node', ['calendar-apply.mjs', '--apply']);
-  return got;
+  const verifyError = await verifyPagesPublished(log);   // self-heal a flaked Pages deploy
+  return { got, verifyError };
 }
 
 /** FALLBACK catch-up for match-event popovers. Events are normally folded INLINE
@@ -193,6 +274,7 @@ function describeDryRun(set, log) {
   log('    WOULD: cp dist/index.html docs/index.html');
   log('    WOULD: git add manual-results.json data/match-events.json docs/ dist/ && commit && push   (ONE LIVE deploy)');
   log('    WOULD: node sync-calendar.mjs && node calendar-apply.mjs --apply   (LIVE calendar)');
+  log('    WOULD: verify the live site published this build (by builtAtISO); re-trigger Pages on a flaked deploy');
   log('    WOULD: notify David — failure-only, so SILENT on this success (no spoiler)');
 }
 
@@ -204,6 +286,7 @@ function describeDryRunKo(d, log) {
   log('    WOULD: cp dist/index.html docs/index.html');
   log('    WOULD: git add manual-ko-results.json data/match-events.json docs/ dist/ && commit && push   (ONE LIVE deploy)');
   log('    WOULD: node sync-calendar.mjs && node calendar-apply.mjs --apply   (LIVE calendar)');
+  log('    WOULD: verify the live site published this build (by builtAtISO); re-trigger Pages on a flaked deploy');
   log('    WOULD: notify David — failure-only, so SILENT on this success (no spoiler)');
 }
 
@@ -250,10 +333,11 @@ async function main() {
     if (live) {
       try {
         log(`  DEPLOYING: ${set.matches.map((m) => `${m.team1} ${m.ft[0]}-${m.ft[1]} ${m.team2}`).join('; ')}`);
-        const got = await deployLive(set.matches, now, log);
+        const { got, verifyError } = await deployLive(set.matches, now, log);
         didDeploy = true;
         log(got ? `  events: +${got} popover(s) folded into this deploy.`
                 : `  events: not ready at deploy — a quiet tick will backfill.`);
+        if (verifyError) failure = (failure ? failure + '; ' : '') + verifyError;
       } catch (e) {
         failure = `deploy failed for set ${set.key}: ${e.message || e}`;
         break;   // leave it UNprocessed so the next tick retries
@@ -274,10 +358,11 @@ async function main() {
     if (live) {
       try {
         log(`  DEPLOYING KO: ${koLine(d)}`);
-        const got = await deployLiveKo(d, now, log);
+        const { got, verifyError } = await deployLiveKo(d, now, log);
         didDeploy = true;
         log(got ? `  events: +${got} popover(s) folded into this deploy.`
                 : `  events: not ready at deploy — a quiet tick will backfill.`);
+        if (verifyError) failure = (failure ? failure + '; ' : '') + verifyError;
       } catch (e) {
         failure = (failure ? failure + '; ' : '') + `KO deploy failed for ${d.key}: ${e.message || e}`;
         break;   // leave it UNprocessed so the next tick retries
