@@ -13,6 +13,27 @@
   ],
   "pens": []
  },
+ "74": {
+  "home": "GER",
+  "away": "PAR",
+  "events": [
+   {
+    "min": 2480,
+    "minLabel": "42",
+    "type": "goal",
+    "team": "away",
+    "who": "Julio Enciso"
+   },
+   {
+    "min": 3223,
+    "minLabel": "54",
+    "type": "goal",
+    "team": "home",
+    "who": "Kai Havertz"
+   }
+  ],
+  "pens": []
+ },
  "76": {
   "home": "BRA",
   "away": "JPN",

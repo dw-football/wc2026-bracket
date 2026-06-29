@@ -22,5 +22,20 @@
     "decider": "reg",
     "pens": null,
     "note": "M76 BRA 2-1 JPN -> BRA, auto-synced from ESPN fifa.world FT on 2026-06-29."
+  },
+  {
+    "match": 74,
+    "home": "GER",
+    "away": "PAR",
+    "score": [
+      1,
+      1
+    ],
+    "decider": "pens",
+    "pens": [
+      3,
+      4
+    ],
+    "note": "M74 GER 1-1 PAR (3-4 pens) -> PAR, auto-synced from ESPN fifa.world FT on 2026-06-29."
   }
 ]
