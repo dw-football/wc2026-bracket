@@ -94,46 +94,80 @@ async function appendKnockoutResult(d, now) {
 const sh = (cmd, args) =>
   execFileSync(cmd, args, { cwd: __dirname, stdio: 'inherit', shell: false });
 
-/** The LIVE deploy chain. Runs ONLY behind the double gate. */
-async function deployLive(matches, now) {
-  await appendManualResults(matches, now);
-  sh('node', ['build-html.mjs', '--refresh']);
-  copyFileSync(join(__dirname, 'dist', 'index.html'), join(__dirname, 'docs', 'index.html'));
-  // Stage ONLY the score-deploy files — never `git add -A` (which would sweep the
-  // unpushed auto-sync feature code + log + state into a live public push).
-  sh('git', ['add', 'manual-results.json', 'docs/index.html', 'dist/index.html']);
-  sh('git', ['commit', '-m', `Auto-sync: ${matches.map((m) => `${m.team1} ${m.ft[0]}-${m.ft[1]} ${m.team2}`).join('; ')}`]);
-  // push uses the headless git credential (Windows Credential Manager / gh auth)
-  sh('git', ['push', 'origin', 'main']);
-  sh('node', ['sync-calendar.mjs']);
-  sh('node', ['calendar-apply.mjs', '--apply']);
-}
-
-/** The LIVE KO deploy chain — same as deployLive but stages manual-ko-results.json. */
-async function deployLiveKo(d, now) {
-  await appendKnockoutResult(d, now);
-  sh('node', ['build-html.mjs', '--refresh']);
-  copyFileSync(join(__dirname, 'dist', 'index.html'), join(__dirname, 'docs', 'index.html'));
-  sh('git', ['add', 'manual-ko-results.json', 'docs/index.html', 'dist/index.html']);
-  sh('git', ['commit', '-m', `Auto-sync KO: ${koLine(d)}`]);
-  sh('git', ['push', 'origin', 'main']);
-  sh('node', ['sync-calendar.mjs']);
-  sh('node', ['calendar-apply.mjs', '--apply']);
-}
-
 /** Number of matches in the events cache (keys); -1 if unreadable. */
 function eventCacheKeyCount() {
   try { return Object.keys(JSON.parse(readFileSync(EVENTS_CACHE, 'utf8'))).length; }
   catch { return -1; }
 }
 
-/** TAPE-DELAYED match-event popovers. Runs ONLY after the score path has already
- *  pushed, so a SCORE IS NEVER DELAYED by an ESPN events call. Fully best-effort +
- *  non-fatal: backfill events for any played match not yet cached, and ONLY if NEW
- *  matches were actually added does it rebuild + push a SEPARATE commit. A finished
- *  game whose ESPN summary isn't ready yet is simply picked up on a later tick
- *  (true tape-delay). When the cache is already complete it does nothing (build-
- *  events makes zero network calls and key-count is unchanged -> no rebuild/push). */
+// How long we'll wait on the INLINE ESPN events fetch before deploying the score
+// without it. The fetch is normally a few seconds (3 scoreboard days + 1 summary);
+// the 200k bake that follows is ~90s, so a fast fetch is effectively free. If ESPN
+// is slow/hung we kill it here and let the catch-up fallback backfill on a later
+// tick — a score is NEVER materially delayed by events.
+const EVENTS_TIMEOUT_MS = 20000;
+
+/** INLINE, time-boxed, non-fatal events fetch folded into the score deploy. Pulls
+ *  the just-finished match's goal scorers into the cache BEFORE the single bake, so
+ *  the score + popover ship in ONE deploy. Returns the count of NEW matches cached
+ *  (0 = not ready / skipped / errored — never throws, score still deploys). */
+function fetchEventsInline(log) {
+  const before = Math.max(0, eventCacheKeyCount());
+  try {
+    execFileSync('node', ['build-events.mjs'], {
+      cwd: __dirname, stdio: 'inherit', shell: false, timeout: EVENTS_TIMEOUT_MS,
+    });
+  } catch (e) {
+    log(`  events: inline fetch skipped (non-fatal, score still deploys): ${e.message || e}`);
+    return 0;
+  }
+  return Math.max(0, eventCacheKeyCount()) - before;
+}
+
+/** The LIVE deploy chain. Runs ONLY behind the double gate. Events are folded in:
+ *  fetch goal-scorer popovers INLINE, then a SINGLE bake + push carries both score
+ *  and popovers. Returns the count of event-matches captured (0 => a catch-up is
+ *  still owed and the next quiet tick backfills it). */
+async function deployLive(matches, now, log) {
+  await appendManualResults(matches, now);
+  const got = fetchEventsInline(log);
+  sh('node', ['build-html.mjs', '--refresh']);
+  copyFileSync(join(__dirname, 'dist', 'index.html'), join(__dirname, 'docs', 'index.html'));
+  // Stage ONLY the score-deploy files (incl. the events cache) — never `git add -A`
+  // (which would sweep the unpushed auto-sync feature code + log + state into a live
+  // public push). An unchanged events cache adds nothing; the commit still proceeds.
+  sh('git', ['add', 'manual-results.json', 'data/match-events.json', 'docs/index.html', 'dist/index.html']);
+  sh('git', ['commit', '-m', `Auto-sync: ${matches.map((m) => `${m.team1} ${m.ft[0]}-${m.ft[1]} ${m.team2}`).join('; ')}${got ? ` (+${got} popover${got > 1 ? 's' : ''})` : ''}`]);
+  // push uses the headless git credential (Windows Credential Manager / gh auth)
+  sh('git', ['push', 'origin', 'main']);
+  sh('node', ['sync-calendar.mjs']);
+  sh('node', ['calendar-apply.mjs', '--apply']);
+  return got;
+}
+
+/** The LIVE KO deploy chain — same as deployLive but stages manual-ko-results.json. */
+async function deployLiveKo(d, now, log) {
+  await appendKnockoutResult(d, now);
+  const got = fetchEventsInline(log);
+  sh('node', ['build-html.mjs', '--refresh']);
+  copyFileSync(join(__dirname, 'dist', 'index.html'), join(__dirname, 'docs', 'index.html'));
+  sh('git', ['add', 'manual-ko-results.json', 'data/match-events.json', 'docs/index.html', 'dist/index.html']);
+  sh('git', ['commit', '-m', `Auto-sync KO: ${koLine(d)}${got ? ` (+${got} popover${got > 1 ? 's' : ''})` : ''}`]);
+  sh('git', ['push', 'origin', 'main']);
+  sh('node', ['sync-calendar.mjs']);
+  sh('node', ['calendar-apply.mjs', '--apply']);
+  return got;
+}
+
+/** FALLBACK catch-up for match-event popovers. Events are normally folded INLINE
+ *  into the score deploy (fetchEventsInline -> single bake + push). This pass now
+ *  runs ONLY on a QUIET tick (no new score this tick), to backfill the rare game
+ *  whose ESPN summary wasn't ready at score-deploy time — it gets picked up on a
+ *  later tick (true tape-delay). Fully best-effort + non-fatal: it rebuilds + pushes
+ *  a SEPARATE commit ONLY if NEW matches were actually cached. When the cache is
+ *  already complete it does nothing (build-events makes zero network calls and the
+ *  key-count is unchanged -> no rebuild/push). Gating it to quiet ticks also avoids
+ *  a same-tick second deploy (which would re-create the Pages concurrency race). */
 function deployEventsCatchUp(log) {
   const before = eventCacheKeyCount();
   try { sh('node', ['build-events.mjs']); }
@@ -154,9 +188,10 @@ function describeDryRun(set, log) {
   const line = set.matches.map((m) => `${m.team1} ${m.ft[0]}-${m.ft[1]} ${m.team2} (${m.group})`).join('  |  ');
   log(`  NEW SET READY: ${line}${set.partial ? `   [PARTIAL — ${set.flag}]` : ''}`);
   log('    WOULD: append above to manual-results.json');
-  log('    WOULD: node build-html.mjs --refresh   (re-bake 200k)');
+  log('    WOULD: node build-events.mjs   (INLINE, time-boxed — fold goal-scorer popovers into this build)');
+  log('    WOULD: node build-html.mjs --refresh   (single re-bake 200k: score + popovers)');
   log('    WOULD: cp dist/index.html docs/index.html');
-  log('    WOULD: git add -A && git commit && git push origin main   (LIVE site)');
+  log('    WOULD: git add manual-results.json data/match-events.json docs/ dist/ && commit && push   (ONE LIVE deploy)');
   log('    WOULD: node sync-calendar.mjs && node calendar-apply.mjs --apply   (LIVE calendar)');
   log('    WOULD: notify David — failure-only, so SILENT on this success (no spoiler)');
 }
@@ -164,9 +199,10 @@ function describeDryRun(set, log) {
 function describeDryRunKo(d, log) {
   log(`  NEW KO RESULT READY: ${koLine(d)}${d.partial ? `   [PARTIAL — ${d.flag}]` : ''}`);
   log('    WOULD: append above to manual-ko-results.json');
-  log('    WOULD: node build-html.mjs --refresh   (re-bake 200k)');
+  log('    WOULD: node build-events.mjs   (INLINE, time-boxed — fold goal-scorer popovers into this build)');
+  log('    WOULD: node build-html.mjs --refresh   (single re-bake 200k: score + popovers)');
   log('    WOULD: cp dist/index.html docs/index.html');
-  log('    WOULD: git add manual-ko-results.json docs/ dist/ && commit && push   (LIVE site)');
+  log('    WOULD: git add manual-ko-results.json data/match-events.json docs/ dist/ && commit && push   (ONE LIVE deploy)');
   log('    WOULD: node sync-calendar.mjs && node calendar-apply.mjs --apply   (LIVE calendar)');
   log('    WOULD: notify David — failure-only, so SILENT on this success (no spoiler)');
 }
@@ -203,6 +239,7 @@ async function main() {
   }
 
   let failure = null;
+  let didDeploy = false;   // a score shipped this tick -> events were folded in inline
 
   // --- group sets ----------------------------------------------------------
   const fresh = deployable.filter((d) => !processed.has(d.key));
@@ -213,7 +250,10 @@ async function main() {
     if (live) {
       try {
         log(`  DEPLOYING: ${set.matches.map((m) => `${m.team1} ${m.ft[0]}-${m.ft[1]} ${m.team2}`).join('; ')}`);
-        await deployLive(set.matches, now);
+        const got = await deployLive(set.matches, now, log);
+        didDeploy = true;
+        log(got ? `  events: +${got} popover(s) folded into this deploy.`
+                : `  events: not ready at deploy — a quiet tick will backfill.`);
       } catch (e) {
         failure = `deploy failed for set ${set.key}: ${e.message || e}`;
         break;   // leave it UNprocessed so the next tick retries
@@ -234,7 +274,10 @@ async function main() {
     if (live) {
       try {
         log(`  DEPLOYING KO: ${koLine(d)}`);
-        await deployLiveKo(d, now);
+        const got = await deployLiveKo(d, now, log);
+        didDeploy = true;
+        log(got ? `  events: +${got} popover(s) folded into this deploy.`
+                : `  events: not ready at deploy — a quiet tick will backfill.`);
       } catch (e) {
         failure = (failure ? failure + '; ' : '') + `KO deploy failed for ${d.key}: ${e.message || e}`;
         break;   // leave it UNprocessed so the next tick retries
@@ -267,13 +310,17 @@ async function main() {
     }
   }
 
-  // --- TAPE-DELAYED match-event popovers (runs AFTER scores; never blocks them) ---
-  // Skipped on a tick that hit a deploy failure/partial flag — the next clean tick
-  // catches up. In dry-run we only describe it (it would write the cache + hit ESPN).
-  if (live && !failure) {
+  // --- match-event popovers ------------------------------------------------
+  // Events are folded INLINE into each score deploy (single bake + push). The
+  // standalone catch-up now runs ONLY on a QUIET tick (no new score this tick) to
+  // backfill a game whose ESPN summary wasn't ready at deploy time — this avoids a
+  // same-tick second deploy (the Pages concurrency race). Skipped on a failure tick.
+  if (live && !failure && !didDeploy) {
     deployEventsCatchUp(log);
+  } else if (live && didDeploy) {
+    log('  events: folded into the score deploy(s) this tick — no separate pass.');
   } else if (!live) {
-    log('  WOULD: node build-events.mjs; if NEW matches cached -> rebuild + push "match-event popovers" (separate commit, after scores)');
+    log('  WOULD: fetch events INLINE with each score (single deploy); a separate catch-up runs only on a quiet tick if an event was missing.');
   }
 
   state = { processedSetKeys: [...processed], lastRun: now.toISOString() };
