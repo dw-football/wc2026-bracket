@@ -93,6 +93,12 @@ worked perfectly; the score commit `a1eced2` + calendar were correct). THREE sym
 Both live + verified (`0eeb240`; M76 popover live: Sano 29' / Casemiro 56' / Martinelli 90'+5'). 106/106 green.
 NOTE: because the cache was already populated by hand-running build-events, the catch-up's key-count gate won't
 re-push it — the M76 popover was baked + deployed manually in `0eeb240`. Going forward both fixes are automatic.
+**KNOWN GAP (parked, David's "no need" 6-29) — event popovers do NOT self-heal overnight corrections.** SCORES
+self-heal (the openfootball feed supersedes `manual-results.json` on `--refresh`), but the goal-scorer POPOVERS do
+NOT: `build-events.mjs` is incremental (skips any key already in `data/match-events.json`), so an overnight FIFA/ESPN
+own-goal or VAR reclassification is NEVER re-fetched without `--all`. (David caught me overstating "events self-heal
+next day" — true for scores, false for popovers.) Parked fix if ever wanted: a **freshness-window** re-fetch (events
+for matches played within the last ~2-3 days each run) to catch corrections, while still skipping the settled backlog.
 
 ## RESUME
 **KO stage is LIVE and auto-deploying — NOTHING TO DO MANUALLY.** The `WC2026-autosync` task on 520 deploys each
