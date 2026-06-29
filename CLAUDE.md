@@ -75,27 +75,26 @@ deployed the feature inside score commit `c5652bc` BEFORE the source was committ
 makes git source-of-truth match the already-live artifacts (no rebuild needed; dist == HEAD == live).
 
 ## RESUME
-**KO build is MERGED + LIVE on `main` (2026-06-27, FAST-FORWARD), 2 days early.** Site verified live with the
-new per-candidate rendering (see SHIPPED 2026-06-27). Group stage finishes TONIGHT (6-27); R32 starts Sun
-6-28 (M73 = RSA v CAN, LA, 3pm EDT).
-**SUNDAY = WATCH, don't merge.** The merge is done. The `WC2026-autosync` task on 520 auto-deploys R32 results
-UNATTENDED as they go FT (the KO poller came in with the merge; inert until KO games exist). David watches M73.
-Nothing to do unless a deploy misbehaves.
-⚠️ **Revert path (CHANGED — the merge was a FAST-FORWARD, so `git revert -m 1` does NOT apply):** roll back the
-live site by restoring the prior artifacts → `git checkout 20effd5 -- docs/index.html dist/index.html && git
-commit && git push` (old site back ~1 min); and/or pause the `WC2026-autosync` task on 520. Bad KO score →
-edit/remove the line in `manual-ko-results.json` + rebuild (feed self-corrects next day). `20effd5` = last
-commit before the KO merge.
-Cleanup DONE: `wc2026-ko` + `wc2026-demo` + the stray agent worktree removed; local `ko-build`,
-`demo-mid-r32-backup`, `worktree-agent-*` branches deleted (all backed up on origin). `model-mark2-ko` (local)
-is fully merged into main — redundant, deletable anytime.
-✅ **Popups FIXED + auto-sync now self-heals events (2026-06-27).** Backfilled the 12 missing D-I final-round
-games (66/66 cached, `a57b213`), AND the auto-sync now runs a TAPE-DELAYED `build-events` pass AFTER each score
-deploy (`264b3a3`): scores ship IMMEDIATELY with NO ESPN call in the score path; popups follow a tick later when
-ESPN's summary is ready (rebuild+push only when a NEW match is cached; fully non-fatal). So tonight's group
-finals + Sunday's KO games self-populate their popups without intervention.
-Open code TODO (Claude-autonomous, low risk): guard `build-teams.mjs` so an Elo re-scrape preserves
-`team.worldRank` (the bigger `adapter.js toGroups` worldRank gap is FIXED + LIVE @ `cdfeeea`).
+**KO stage is LIVE and auto-deploying — NOTHING TO DO MANUALLY.** The `WC2026-autosync` task on 520 deploys each
+R32/KO result UNATTENDED ~5 min after full time: score + winner slotted by name + calendar labels + goal-scorer
+popover, in ONE clean commit/push per game. First KO (M73 **RSA 0-1 CAN**) deployed flawlessly 2026-06-28
+(FT 4:57 → live 5:02). Group stage complete (72/72); 1 KO recorded. Today **6-29 R32 (kickoff order, ET):**
+M76 BRA-JPN (Houston 1pm), M74 GER-PAR (Boston 4:30pm), M75 NED-MAR (Monterrey 9pm) — ⚠️ FIFA numbers matches by
+bracket position, NOT kickoff order. Autosync OFF 4-11am ET; per-match poll opens at KO+115.
+**Auto-sync design (current, `96e4f3b` 6-29):** events folded INLINE into the single score deploy
+(`fetchEventsInline`, 20s-timeboxed + non-fatal → a slow ESPN never blocks the score), so ONE push per game —
+this killed the GitHub-Pages concurrency race that had fired a "deploy failed" email per game (my earlier
+two-push tape-delay caused it). A standalone catch-up now runs ONLY on a QUIET tick (no new score) to backfill a
+game whose ESPN summary wasn't ready at deploy time.
+**Site == calendar:** KO contender %s come from ONE shared module `ko-slot-dist.mjs` (analytic chained-H2H,
+`0.5+λ(E−0.5)`); both build-html (bracket) and bracket-labels (calendar) import it → no drift. Calendar KO labels
+mirror the bracket (contender pairs, e.g. `GER 61%/PAR 39%`); group-stage preview preserved behind
+`koLabelMode:'highlighted'` for next tournament. 3rd-place OUT badge is tiebreaker-aware (GD), not points-only.
+⚠️ **Revert path (FF merges → `git revert -m 1` does NOT apply):** restore prior artifacts → `git checkout
+<good-sha> -- docs/index.html dist/index.html && git commit && git push`, and/or pause `WC2026-autosync` on 520.
+Bad KO score → edit/remove the line in `manual-ko-results.json` + rebuild (feed self-corrects next day). 106/106 green.
+Open code TODOs (Claude-autonomous, low risk): (1) guard `build-teams.mjs` so an Elo re-scrape preserves
+`team.worldRank`; (2) the dead-rubber/mutual-draw model blind spot — fork-forward design note (see SHIPPED 2026-06-27).
 Model follow-up (parked, future tournaments): the dead-rubber/mutual-draw blind spot — see SHIPPED 2026-06-27
 MODEL NOTE.
 
@@ -504,3 +503,20 @@ State as of 2026-06-24. **50/104** (added COL 1-0 COD, SUI 2-1 CAN, BIH 3-1 QAT 
   removed the `wc2026-ko`/`wc2026-demo`/agent worktrees + deleted `ko-build`/`demo-mid-r32-backup` branches
   (backed up on origin); updated CLAUDE.md + marked the Sunday Obsidian task done + repointed the noon Sports
   calendar event. Sunday = WATCH M73 (RSA-CAN, 3pm EDT); KO auto-deploy runs unattended. 100/100 tests green.
+- 2026-06-28/29 — **KO stage went live; calendar+bracket unified; auto-sync hardened.** (1) 3rd-place OUT badge made
+  TIEBREAKER-AWARE: `thirdPlaceOutlook`'s elimination branch now uses `compareThirdPlace` (points→GD→GF) for done
+  groups, not points-only — caught a real bug where a 3-pt third beaten only on goal difference (Scotland, vs IRN/
+  KOR/SEN) read "<1%" instead of OUT; +regression test. (2) David flagged the calendar R16/KO labels diverged from
+  the bracket ("A2/B2 v BRA (12%)/…") → rewrote `renderKoSide` to MIRROR the bracket (contender pairs, resolve known
+  R32 teams, top-2 + "…") and added a `koLabelMode` toggle preserving the old group-stage highlighted-preview for
+  next tournament. (3) Numbers still differed (calendar MC-occupancy vs bracket analytic chained-H2H) → extracted the
+  chained-H2H into a SHARED `ko-slot-dist.mjs` that BOTH build-html (bracket) and bracket-labels (calendar) import —
+  site == calendar by construction, no drift possible. (4) **M73 RSA 0-1 CAN auto-deployed flawlessly 6-28** (FT
+  4:57 → live 5:02), validating the KO result path + tape-delayed events live. (5) 6-29: pulled David's laptop change
+  (`96e4f3b`) folding events INLINE into the single score deploy (`fetchEventsInline`, 20s-timeboxed + non-fatal, ONE
+  commit/game) — fixes the GitHub-Pages concurrency race my two-push tape-delay had caused (a "deploy failed" email
+  per game); standalone catch-up demoted to a quiet-tick-only fallback. Reviewed + verified + on origin. (6)
+  De-brittled the espn-poll KO-deployable test (no hardcoded M73; picks any pollable resolved KO match) → 106/106
+  (`c7b3905`). (7) Throwaway scenario worktree (ENG/CRO what-if) used + removed — clean isolation (own port + own
+  manual-results, never touches live). ⚠️ FIFA numbers matches by BRACKET POSITION, not kickoff order (M76 BRA-JPN
+  1pm ET is today's first KO game, NOT M74 Germany 4:30pm).
