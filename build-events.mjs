@@ -99,7 +99,16 @@ async function main() {
   }
 
   const cache = existsSync(CACHE) ? await loadJSON('data/match-events.json') : {};
-  const todo = work.filter((w) => all || !cache[w.key]);
+  // Re-fetch a KO PENS result whose cached entry has no takers yet. ESPN's
+  // summary.shootout block can lag full time, so the FT fetch often caches the goals
+  // with an empty pens[] — and the incremental skip would otherwise never fill it.
+  // Bounded + harmless: stops re-fetching the moment pens land (content stops changing
+  // -> the autosync catch-up's content gate won't re-push a no-op).
+  const pensPending = (w) => {
+    const r = koResults[Number(w.key)];
+    return r && r.decider === 'pens' && cache[w.key] && !(cache[w.key].pens && cache[w.key].pens.length);
+  };
+  const todo = work.filter((w) => all || !cache[w.key] || pensPending(w));
   console.log(`${work.length} played match(es); ${todo.length} to fetch${all ? ' (--all)' : ''}.`);
 
   // Group the work by date so we hit each scoreboard once, then a summary per match.

@@ -259,23 +259,30 @@ async function deployLiveKo(d, now, log) {
  *  runs ONLY on a QUIET tick (no new score this tick), to backfill the rare game
  *  whose ESPN summary wasn't ready at score-deploy time — it gets picked up on a
  *  later tick (true tape-delay). Fully best-effort + non-fatal: it rebuilds + pushes
- *  a SEPARATE commit ONLY if NEW matches were actually cached. When the cache is
- *  already complete it does nothing (build-events makes zero network calls and the
- *  key-count is unchanged -> no rebuild/push). Gating it to quiet ticks also avoids
- *  a same-tick second deploy (which would re-create the Pages concurrency race). */
+ *  a SEPARATE commit ONLY if the cache CONTENT actually changed — a NEW match OR a
+ *  detail fill (e.g. a pens result whose shootout takers lagged FT and only landed
+ *  now; build-events re-fetches a pens-empty pens game). Gating on file content (not
+ *  just key count) is what lets a same-key pens-fill deploy. When nothing changed it
+ *  does nothing (build-events makes zero network calls -> identical file -> no push).
+ *  Quiet-tick-only also avoids a same-tick second deploy (the Pages concurrency race). */
 function deployEventsCatchUp(log) {
-  const before = eventCacheKeyCount();
+  let beforeTxt = '';
+  try { beforeTxt = readFileSync(EVENTS_CACHE, 'utf8'); } catch { /* no cache yet */ }
+  const beforeKeys = eventCacheKeyCount();
   try { sh('node', ['build-events.mjs']); }
   catch (e) { log(`  events: backfill skipped (non-fatal): ${e.message || e}`); return; }
-  const after = eventCacheKeyCount();
-  if (after <= before) { log('  events: cache up to date.'); return; }
+  let afterTxt = '';
+  try { afterTxt = readFileSync(EVENTS_CACHE, 'utf8'); } catch { /* unreadable */ }
+  if (afterTxt === beforeTxt) { log('  events: cache up to date.'); return; }
+  const newKeys = Math.max(0, eventCacheKeyCount() - beforeKeys);
+  const what = newKeys ? `+${newKeys} match${newKeys > 1 ? 'es' : ''}` : 'detail filled (e.g. shootout takers)';
   try {
     sh('node', ['build-html.mjs']);   // no --refresh: the score path already pulled the feed
     copyFileSync(join(__dirname, 'dist', 'index.html'), join(__dirname, 'docs', 'index.html'));
     sh('git', ['add', 'data/match-events.json', 'docs/index.html', 'dist/index.html']);
-    sh('git', ['commit', '-m', `Auto-sync: match-event popovers (+${after - before})`]);
+    sh('git', ['commit', '-m', `Auto-sync: match-event popovers (${what})`]);
     sh('git', ['push', 'origin', 'main']);
-    log(`  events: popovers deployed (+${after - before} match${after - before > 1 ? 'es' : ''}).`);
+    log(`  events: popovers deployed (${what}).`);
   } catch (e) { log(`  events: deploy failed (non-fatal): ${e.message || e}`); }
 }
 
