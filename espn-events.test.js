@@ -56,7 +56,7 @@ test('parseSummaryEvents: keeps goals + reds (drops kickoff/yellow), oriented ho
   assert.equal(og.team, 'home');
 });
 
-test('parseSummaryEvents: shootout takers captured with scored/missed', () => {
+test('parseSummaryEvents: shootout takers from inline keyEvents flag (fallback path)', () => {
   const s = {
     header: { competitions: [{ competitors: [
       { homeAway: 'home', team: { id: '1', abbreviation: 'USA' } },
@@ -72,5 +72,41 @@ test('parseSummaryEvents: shootout takers captured with scored/missed', () => {
   assert.deepEqual(r.pens, [
     { team: 'home', who: 'Pulisic', ok: true },
     { team: 'away', who: 'Havertz', ok: false },
+  ]);
+});
+
+test('parseSummaryEvents: shootout from the dedicated summary.shootout block (real fifa.world shape)', () => {
+  // fifa.world puts NO taker events in keyEvents (only a "Start Shootout" marker);
+  // the taker list is a top-level `summary.shootout`, keyed by team NAME, with
+  // per-shot {player, shotNumber, didScore, id}. Mirrors the live GER 1-1 PAR (pens).
+  const s = {
+    header: { competitions: [{ competitors: [
+      { homeAway: 'home', team: { id: '481', abbreviation: 'GER', displayName: 'Germany', name: 'Germany' } },
+      { homeAway: 'away', team: { id: '210', abbreviation: 'PAR', displayName: 'Paraguay', name: 'Paraguay' } },
+    ] }] },
+    keyEvents: [
+      { type: { type: 'start-shootout', text: 'Start Shootout' }, text: '', clock: { displayValue: '' } },
+      // a stray inline flag must be IGNORED when the dedicated block is present:
+      { type: { type: 'penalty' }, text: 'Ignored (Germany) converts.', shootout: true, team: { id: '481' } },
+    ],
+    shootout: [
+      { team: 'Germany', shots: [
+        { id: '49663249', player: 'Kai Havertz', shotNumber: 1, didScore: false },
+        { id: '49663251', player: 'Joshua Kimmich', shotNumber: 2, didScore: true },
+      ] },
+      { team: 'Paraguay', shots: [
+        { id: '49663250', player: 'Maurício', shotNumber: 1, didScore: true },
+        { id: '49663252', player: 'Gustavo Gómez', shotNumber: 2, didScore: true },
+      ] },
+    ],
+  };
+  const r = parseSummaryEvents(s);
+  assert.equal(r.events.length, 0, 'a Start Shootout marker is not a field event');
+  // ordered by shot id (ESPN firing order: home shoots first each round), name->side
+  assert.deepEqual(r.pens, [
+    { team: 'home', who: 'Kai Havertz', ok: false },
+    { team: 'away', who: 'Maurício', ok: true },
+    { team: 'home', who: 'Joshua Kimmich', ok: true },
+    { team: 'away', who: 'Gustavo Gómez', ok: true },
   ]);
 });
