@@ -94,6 +94,21 @@ async function appendKnockoutResult(d, now) {
 const sh = (cmd, args) =>
   execFileSync(cmd, args, { cwd: __dirname, stdio: 'inherit', shell: false });
 
+/** Re-bake the site. Tries a feed `--refresh` first, but a TRANSIENT feed-pull (or
+ *  bake) failure must NEVER abort a deploy whose result is already in
+ *  manual-{ko-}results.json — fall back to a plain cached-feed bake so the result
+ *  still ships (the manual result is applied either way; any feed-only result is
+ *  picked up on the next good --refresh tick). A transient `build-html --refresh`
+ *  failure is exactly what stranded M78 NOR-CIV on 6-30. */
+function bake() {
+  try {
+    sh('node', ['build-html.mjs', '--refresh']);
+  } catch (e) {
+    console.log(`  bake: --refresh failed (${e.message || e}); falling back to cached-feed bake.`);
+    sh('node', ['build-html.mjs']);   // throws only on a REAL bake error -> caller handles
+  }
+}
+
 /** Push to origin, RECONCILING first so a remote that moved (a stray push from
  *  another machine) can NEVER strand a finished result behind a non-fast-forward
  *  reject — the exact failure that stranded GER-PAR on 6-29. `pull --rebase
@@ -241,7 +256,7 @@ async function verifyPagesPublished(log) {
 async function deployLive(matches, now, log) {
   await appendManualResults(matches, now);
   const got = fetchEventsInline(log);
-  sh('node', ['build-html.mjs', '--refresh']);
+  bake();
   copyFileSync(join(__dirname, 'dist', 'index.html'), join(__dirname, 'docs', 'index.html'));
   // Stage ONLY the score-deploy files (incl. the events cache) — never `git add -A`
   // (which would sweep the unpushed auto-sync feature code + log + state into a live
@@ -261,7 +276,7 @@ async function deployLive(matches, now, log) {
 async function deployLiveKo(d, now, log) {
   await appendKnockoutResult(d, now);
   const got = fetchEventsInline(log);
-  sh('node', ['build-html.mjs', '--refresh']);
+  bake();
   copyFileSync(join(__dirname, 'dist', 'index.html'), join(__dirname, 'docs', 'index.html'));
   sh('git', ['add', 'manual-ko-results.json', 'data/match-events.json', 'docs/index.html', 'dist/index.html']);
   sh('git', ['commit', '-m', `Auto-sync KO: ${koLine(d)}${got ? ` (+${got} popover${got > 1 ? 's' : ''})` : ''}`]);
@@ -317,6 +332,38 @@ function describeDryRun(set, log) {
   log('    WOULD: notify David — failure-only, so SILENT on this success (no spoiler)');
 }
 
+/** START-OF-TICK SELF-HEAL for an INTERRUPTED deploy. A tick can die (machine sleep,
+ *  RDP drop, kill) AFTER appending a result to manual-{ko-}results.json but BEFORE the
+ *  commit+push — and since the poller then sees that result as already-recorded, it's
+ *  dedup-skipped forever while never reaching the live site (this stranded M78 NOR-CIV
+ *  on 6-30). So before the normal deploy loops, if a RESULT file differs from HEAD,
+ *  finish the deploy (rebuild + commit + reconciled push + calendar + verify).
+ *  Returns { did, problem }. */
+async function recoverInterruptedDeploy(log) {
+  let dirty = false;
+  try {
+    execFileSync('git', ['diff', '--quiet', 'HEAD', '--', 'manual-results.json', 'manual-ko-results.json'],
+      { cwd: __dirname, stdio: 'ignore' });
+  } catch { dirty = true; }   // non-zero exit = uncommitted result(s) vs HEAD
+  if (!dirty) return { did: false, problem: null };
+  log('  RECOVERY: uncommitted result(s) from an interrupted deploy — finishing build + push.');
+  try {
+    fetchEventsInline(log);   // fill any popover the interrupted run hadn't cached yet
+    bake();
+    copyFileSync(join(__dirname, 'dist', 'index.html'), join(__dirname, 'docs', 'index.html'));
+    sh('git', ['add', 'manual-results.json', 'manual-ko-results.json', 'data/match-events.json', 'docs/index.html', 'dist/index.html']);
+    sh('git', ['commit', '-m', 'Auto-sync (recovery): finish an interrupted deploy']);
+    gitPushReconciled();
+    sh('node', ['sync-calendar.mjs']);
+    sh('node', ['calendar-apply.mjs', '--apply']);
+    const verifyError = await verifyPagesPublished(log);
+    log('  RECOVERY: completed.');
+    return { did: true, problem: verifyError ? `recovery: ${verifyError}` : null };
+  } catch (e) {
+    return { did: true, problem: `recovery deploy failed: ${e.message || e}` };
+  }
+}
+
 function describeDryRunKo(d, log) {
   log(`  NEW KO RESULT READY: ${koLine(d)}${d.partial ? `   [PARTIAL — ${d.flag}]` : ''}`);
   log('    WOULD: append above to manual-ko-results.json');
@@ -362,6 +409,13 @@ async function main() {
 
   let failure = null;
   let didDeploy = false;   // a score shipped this tick -> events were folded in inline
+
+  // --- recover an interrupted prior deploy BEFORE polling-driven deploys ----
+  if (live) {
+    const rec = await recoverInterruptedDeploy(log);
+    if (rec.did) didDeploy = true;          // shipped this tick -> skip the events catch-up
+    if (rec.problem) failure = rec.problem;
+  }
 
   // --- group sets ----------------------------------------------------------
   const fresh = deployable.filter((d) => !processed.has(d.key));
