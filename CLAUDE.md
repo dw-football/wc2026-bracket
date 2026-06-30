@@ -74,6 +74,26 @@ advance p≥5%). 74/74 tests green. NOTE: the live auto-sync rebuilt with this w
 deployed the feature inside score commit `c5652bc` BEFORE the source was committed — this commit just
 makes git source-of-truth match the already-live artifacts (no rebuild needed; dist == HEAD == live).
 
+## SHIPPED 2026-06-29 (eve) — M74 GER-PAR (first live shootout): divergence saga + Umbrella block + guard fix
+M74 GER 1-1 PAR went to PENALTIES (PAR 4-3) — the autosync's NEVER-RUN-LIVE pens path. THREE findings:
+- **Pens detection WORKED PERFECTLY.** Log: `DEPLOYING KO: M74 GER 1-1 PAR (3-4 pens) -> PAR`, events fetched,
+  committed `20c565e`. The scary first-live-shootout passed. NOT the bug.
+- **Root cause = git DIVERGENCE blocked the push.** A 2nd machine had pushed a doc commit (`dd45d5d`) to origin, so
+  520's commit became a non-fast-forward → `git push` correctly REJECTED it (`! [rejected] (fetch first)`; did NOT
+  clobber the other commit). The PAR result sat committed LOCALLY on 520, unpushed → site showed nothing. Fix:
+  `git stash` (uncommitted wrap edits) → `git rebase origin/main` (clean, zero overlap: dd45d5d=CLAUDE.md only,
+  20c565e=data/docs/dist/manual-ko) → push (`38cbb74`) → stash pop. **DECISION (David): WORK ONLY ON 520** — the
+  autosync has no pull-before-push, and single-machine eliminates the divergence class entirely (chose process over
+  a riskier auto-pull-rebase on the live job).
+- **DWP Cisco-Umbrella started 403-blocking `github.io`** (was reachable earlier today). So 520 — and any tool
+  egressing through it, incl. WebFetch — gets a block page, NOT the site. Can't verify live from 520; `github.com`
+  (push) unaffected. This also DEFEATED the new `verifyPagesPublished` guard: a 403 read as "stale" → would fire
+  bogus empty-commit re-triggers + a FALSE failure email per deploy. **FIX (`0b9cb97`):** `liveHasStamp` returns
+  null (can't tell → assume ok, no re-trigger) for any non-200 / non-app-body / network throw; only a real 200 of
+  OUR page missing the stamp is a genuine "stale". `awaitPublish` bails early on a sustained-unreachable streak.
+  Strictly more conservative — can never cause a bad deploy. 106/106 green. (Verify all deploys from phone until IT
+  unblocks github.io.) ⏳ STILL PENDING: M75 NED-MAR (FT ~11pm) — should deploy clean now (single-machine + guard fix).
+
 ## SHIPPED 2026-06-29 (pm) — Two autosync edge-bug fixes (M76 BRA 2-1 JPN post-mortem)
 First R32 game watched in real time exposed TWO narrow edge bugs (core pipeline — detection/model/calendar —
 worked perfectly; the score commit `a1eced2` + calendar were correct). THREE symptoms, TWO root causes:
@@ -104,9 +124,15 @@ for matches played within the last ~2-3 days each run) to catch corrections, whi
 **KO stage is LIVE and auto-deploying — NOTHING TO DO MANUALLY.** The `WC2026-autosync` task on 520 deploys each
 R32/KO result UNATTENDED ~5 min after full time: score + winner slotted by name + calendar labels + goal-scorer
 popover, in ONE clean commit/push per game. First KO (M73 **RSA 0-1 CAN**) deployed flawlessly 2026-06-28
-(FT 4:57 → live 5:02). Group stage complete (72/72); 1 KO recorded. Today **6-29 R32 (kickoff order, ET):**
-M76 BRA-JPN (Houston 1pm), M74 GER-PAR (Boston 4:30pm), M75 NED-MAR (Monterrey 9pm) — ⚠️ FIFA numbers matches by
-bracket position, NOT kickoff order. Autosync OFF 4-11am ET; per-match poll opens at KO+115.
+(FT 4:57 → live 5:02). Group stage complete (72/72). **6-29 R32 status:** M76 **BRA 2-1 JPN** DONE (popover live,
+after a Pages-flake + feed-gated-events recovery — see SHIPPED 6-29 pm). M74 **GER 1-1 PAR (PAR 4-3 pens)** DONE —
+**first live shootout, pens detection worked PERFECTLY** (`38cbb74`); see SHIPPED 6-29 eve for the divergence saga.
+⏳ STILL TONIGHT: **M75 NED-MAR** (FT ~11pm ET) auto-deploys unattended.
+⚠️ **TWO ACTIVE NETWORK/OPS CONSTRAINTS (6-29 eve):** (1) **DWP Cisco-Umbrella now 403-blocks `github.io`** on the
+corp network → CANNOT verify the live site from 520 (push via `github.com` still works fine). **Verify deploys from
+phone/cellular, not 520.** David to complain to DWP IT. (2) **WORK ONLY ON 520** — a 2nd machine pushing to origin
+is what stranded GER-PAR (non-FF push reject); single-machine = no divergence. ⚠️ FIFA numbers matches by bracket
+position, NOT kickoff order. Autosync OFF 4-11am ET; poll opens at KO+115. 520 must stay AWAKE + logged in for M75.
 **Auto-sync design (current, `96e4f3b` 6-29):** events folded INLINE into the single score deploy
 (`fetchEventsInline`, 20s-timeboxed + non-fatal → a slow ESPN never blocks the score), so ONE push per game —
 this killed the GitHub-Pages concurrency race that had fired a "deploy failed" email per game (my earlier
@@ -556,3 +582,25 @@ State as of 2026-06-24. **50/104** (added COL 1-0 COD, SUI 2-1 CAN, BIH 3-1 QAT 
   (`c7b3905`). (7) Throwaway scenario worktree (ENG/CRO what-if) used + removed — clean isolation (own port + own
   manual-results, never touches live). ⚠️ FIFA numbers matches by BRACKET POSITION, not kickoff order (M76 BRA-JPN
   1pm ET is today's first KO game, NOT M74 Germany 4:30pm).
+- 2026-06-29 (pm) — **First real autosync failure on M76 BRA 2-1 JPN — post-mortem + two hardening fixes.** David
+  got a GitHub "Run failed" email; calendar had updated but the site hadn't ("calendar knows, site doesn't"). TWO
+  root causes, THREE symptoms: (#1) GitHub Pages *deploy* job flaked (build OK, deploy failed 23s) → site served
+  yesterday's artifact while the calendar (separate REST sink) was correct; our autosync never knew (push returned
+  0). (#2) the KO goal popover was FEED-GATED — `build-events.mjs` built its worklist from the ~day-late
+  openfootball feed, so M76's scorers weren't even REQUESTED from ESPN (quiet ticks logged "73 played; 0 to
+  fetch") — would've lagged a full day. Manually re-published the score (empty-commit re-trigger), then shipped
+  both fixes (`0eeb240`): `verifyPagesPublished` self-heals a flaked Pages deploy by polling the live `builtAtISO`
+  + re-triggering (escalates to the failure email on exhaustion); build-events KO worklist now drives off
+  `koResults`. Backfilled + deployed M76 popover (Sano/Casemiro/Martinelli), verified live. Corrected my own bad
+  diagnoses twice (ESPN-was-slow → actually never-asked; "live=goal-by-goal was wrong" → David's ESPN-builds-it
+  model was right). Parked a future LIVE in-match popover idea (David: maybe later). 106/106 green throughout.
+- 2026-06-29 (eve) — **M74 GER 1-1 PAR (PAR 4-3 pens) — first live shootout; alarming on the surface, benign at root.**
+  David: "GER PAR went to extra time and STILL no score!!!" Diagnosis: (1) pens detection WORKED (committed `20c565e`
+  locally) — not the bug; (2) a 2nd machine's push (`dd45d5d`) had moved origin, so 520's push was correctly rejected
+  as non-fast-forward → result stranded LOCALLY, unpushed. Reconciled via stash→rebase→push (`38cbb74`); GER-PAR now
+  on GitHub. (3) Couldn't VERIFY the live site because **DWP Cisco-Umbrella now 403-blocks github.io** from 520 (new
+  tonight; `github.com`/push unaffected) — that block also broke the day's new verify-guard (403 read as "stale" →
+  would spam re-triggers + a false failure email), so shipped `0b9cb97` making the guard degrade to "assume ok" on
+  any unreachable/blocked/non-app response. **DECISIONS:** WORK ONLY ON 520 (kills the divergence class; chose process
+  over auto-pull-rebase on the live job); David to complain to DWP IT re the github.io block; verify all deploys from
+  phone/cellular until unblocked. Finished /wrap. ⏳ M75 NED-MAR (FT ~11pm) still to auto-deploy. 106/106 green.
