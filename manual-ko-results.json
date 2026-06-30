@@ -64,5 +64,17 @@
     "decider": "reg",
     "pens": null,
     "note": "M78 CIV 1-2 NOR -> NOR, auto-synced from ESPN fifa.world FT on 2026-06-30."
+  },
+  {
+    "match": 77,
+    "home": "FRA",
+    "away": "SWE",
+    "score": [
+      3,
+      0
+    ],
+    "decider": "reg",
+    "pens": null,
+    "note": "M77 FRA 3-0 SWE -> FRA, auto-synced from ESPN fifa.world FT on 2026-06-30."
   }
 ]

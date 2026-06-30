@@ -195,6 +195,34 @@
   ],
   "pens": []
  },
+ "77": {
+  "home": "FRA",
+  "away": "SWE",
+  "events": [
+   {
+    "min": 2684,
+    "minLabel": "45",
+    "type": "goal",
+    "team": "home",
+    "who": "Kylian Mbappé"
+   },
+   {
+    "min": 3127,
+    "minLabel": "53",
+    "type": "goal",
+    "team": "home",
+    "who": "Bradley Barcola"
+   },
+   {
+    "min": 4397,
+    "minLabel": "74",
+    "type": "goal",
+    "team": "home",
+    "who": "Kylian Mbappé"
+   }
+  ],
+  "pens": []
+ },
  "78": {
   "home": "CIV",
   "away": "NOR",
