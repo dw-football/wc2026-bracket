@@ -52,5 +52,17 @@
       3
     ],
     "note": "M75 NED 1-1 MAR (2-3 pens) -> MAR, auto-synced from ESPN fifa.world FT on 2026-06-30."
+  },
+  {
+    "match": 78,
+    "home": "CIV",
+    "away": "NOR",
+    "score": [
+      1,
+      2
+    ],
+    "decider": "reg",
+    "pens": null,
+    "note": "M78 CIV 1-2 NOR -> NOR, auto-synced from ESPN fifa.world FT on 2026-06-30."
   }
 ]

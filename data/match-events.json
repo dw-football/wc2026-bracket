@@ -195,6 +195,34 @@
   ],
   "pens": []
  },
+ "78": {
+  "home": "CIV",
+  "away": "NOR",
+  "events": [
+   {
+    "min": 2327,
+    "minLabel": "39",
+    "type": "goal",
+    "team": "away",
+    "who": "Antonio Nusa"
+   },
+   {
+    "min": 4411,
+    "minLabel": "74",
+    "type": "goal",
+    "team": "home",
+    "who": "Amad Diallo"
+   },
+   {
+    "min": 5122,
+    "minLabel": "86",
+    "type": "goal",
+    "team": "away",
+    "who": "Erling Haaland"
+   }
+  ],
+  "pens": []
+ },
  "g:MEX-RSA": {
   "home": "MEX",
   "away": "RSA",
