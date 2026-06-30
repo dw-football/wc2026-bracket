@@ -25,14 +25,75 @@
     "who": "Julio Enciso"
    },
    {
-    "min": 3223,
+    "min": 3222,
     "minLabel": "54",
     "type": "goal",
     "team": "home",
     "who": "Kai Havertz"
    }
   ],
-  "pens": []
+  "pens": [
+   {
+    "team": "home",
+    "who": "Kai Havertz",
+    "ok": false
+   },
+   {
+    "team": "away",
+    "who": "Maurício",
+    "ok": true
+   },
+   {
+    "team": "home",
+    "who": "Joshua Kimmich",
+    "ok": true
+   },
+   {
+    "team": "away",
+    "who": "Gustavo Gómez",
+    "ok": true
+   },
+   {
+    "team": "home",
+    "who": "Jamal Musiala",
+    "ok": true
+   },
+   {
+    "team": "away",
+    "who": "Matías Galarza",
+    "ok": true
+   },
+   {
+    "team": "home",
+    "who": "Nick Woltemade",
+    "ok": false
+   },
+   {
+    "team": "away",
+    "who": "Antonio Sanabria",
+    "ok": false
+   },
+   {
+    "team": "home",
+    "who": "Nadiem Amiri",
+    "ok": true
+   },
+   {
+    "team": "away",
+    "who": "Fabián Balbuena",
+    "ok": false
+   },
+   {
+    "team": "home",
+    "who": "Jonathan Tah",
+    "ok": false
+   },
+   {
+    "team": "away",
+    "who": "José Canale",
+    "ok": true
+   }
+  ]
  },
  "76": {
   "home": "BRA",

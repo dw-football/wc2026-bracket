@@ -51,15 +51,19 @@ export function playerFromText(text) {
 export function parseSummaryEvents(summary) {
   const comp = summary?.header?.competitions?.[0];
   const comps = comp?.competitors || [];
-  const sideById = {};
+  const sideById = {}, sideByName = {};
   let home = null, away = null;
   for (const c of comps) {
     const id = String(c.team?.id ?? '');
     if (id) sideById[id] = c.homeAway;
+    // The shootout block keys takers by full team NAME ("Germany"), not id — map
+    // every name variant to the side so we can orient them.
+    for (const nm of [c.team?.displayName, c.team?.name, c.team?.location, c.team?.shortDisplayName])
+      if (nm) sideByName[String(nm).toLowerCase()] = c.homeAway;
     if (c.homeAway === 'home') home = c.team?.abbreviation || null;
     else if (c.homeAway === 'away') away = c.team?.abbreviation || null;
   }
-  const events = [], pens = [];
+  const events = [], pens = [], kePens = [];
   for (const e of summary?.keyEvents || []) {
     const t = String(e.type?.type || e.type?.text || '').toLowerCase();
     // ESPN nests these: team = {id}, clock = {displayValue:"45'+7'", value:45}.
@@ -67,10 +71,11 @@ export function parseSummaryEvents(summary) {
     const side = sideById[teamId] || null;
     const who = playerFromText(e.text);
     if (e.shootout) {
-      // Penalty-shootout taker. ESPN flags these with shootout:true; the text says
-      // scored vs missed/saved.
+      // Fallback only: some feeds MIGHT flag takers inline in keyEvents. In practice
+      // fifa.world does NOT (keyEvents carries only a "Start Shootout" marker); the
+      // real taker list is the dedicated summary.shootout block parsed below.
       const ok = !/missed|saved|miss\b/i.test(String(e.text || ''));
-      pens.push({ team: side, who, ok });
+      kePens.push({ team: side, who, ok });
       continue;
     }
     const clockStr = e.clock?.displayValue ?? e.clock ?? '';
@@ -83,6 +88,23 @@ export function parseSummaryEvents(summary) {
     }
   }
   events.sort((a, b) => a.min - b.min);
+
+  // Penalty shootout takers live in a DEDICATED top-level `summary.shootout`:
+  //   [{ team:"Germany", shots:[{player, shotNumber, didScore, id}, …] }, …]
+  // Flatten both teams and order by shot id (ESPN numbers them in firing order),
+  // orient to home/away. This is the canonical source; keyEvents pens are a fallback.
+  if (Array.isArray(summary?.shootout) && summary.shootout.length) {
+    const shots = [];
+    for (const entry of summary.shootout) {
+      const side = sideByName[String(entry.team || '').toLowerCase()] || null;
+      for (const sh of entry.shots || [])
+        shots.push({ team: side, who: sh.player || null, ok: !!sh.didScore, ord: Number(sh.id) || sh.shotNumber || 0 });
+    }
+    shots.sort((a, b) => a.ord - b.ord);
+    for (const sh of shots) pens.push({ team: sh.team, who: sh.who, ok: sh.ok });
+  } else {
+    pens.push(...kePens);
+  }
   return { home, away, events, pens };
 }
 
