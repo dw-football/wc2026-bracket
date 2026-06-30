@@ -147,12 +147,14 @@ shootout, takers popover captured live (10) — validates the shootout fix in th
 **ALL 3 of 6-29's R32 KO games now done + live.** Next: **6-30 has 3 more R32 games** — auto-deploy unattended.
 **DIVERGENCE RISK ELIMINATED (`b6b0aa6`):** every autosync push now reconciles first (`gitPushReconciled` =
 `git pull --rebase --autostash` then push), so a stray remote push can NEVER strand a game again (the GER-PAR
-failure mode). Still verify deploys from PHONE (520 can't see github.io).
-⚠️ **TWO ACTIVE NETWORK/OPS CONSTRAINTS (6-29 eve):** (1) **DWP Cisco-Umbrella now 403-blocks `github.io`** on the
-corp network → CANNOT verify the live site from 520 (push via `github.com` still works fine). **Verify deploys from
-phone/cellular, not 520.** David to complain to DWP IT. (2) **WORK ONLY ON 520** — a 2nd machine pushing to origin
-is what stranded GER-PAR (non-FF push reject); single-machine = no divergence. ⚠️ FIFA numbers matches by bracket
-position, NOT kickoff order. Autosync OFF 4-11am ET; poll opens at KO+115. 520 must stay AWAKE + logged in for M75.
+failure mode).
+✅ **github.io block RESOLVED 6-30** — Alfonso (DWP IT) whitelisted github.io; 520 can reach + verify the live site
+again (verified directly 6-30: all 3 KO results + both shootouts' takers live, live builtAtISO == HEAD). The
+verify-and-self-heal guard is now FULLY functional again (real publish confirmation, not the blocked-network "assume
+ok" fallback). ⚠️ **REMAINING OPS RULE: WORK ONLY ON 520** for autosync — though `gitPushReconciled` (`b6b0aa6`)
+now reconciles a moved remote before pushing, so a stray cross-machine push can no longer strand a game either.
+⚠️ FIFA numbers matches by bracket position, NOT kickoff order. Autosync OFF 4-11am ET; poll opens at KO+115.
+520 must stay AWAKE + logged in during games.
 **Auto-sync design (current, `96e4f3b` 6-29):** events folded INLINE into the single score deploy
 (`fetchEventsInline`, 20s-timeboxed + non-fatal → a slow ESPN never blocks the score), so ONE push per game —
 this killed the GitHub-Pages concurrency race that had fired a "deploy failed" email per game (my earlier
