@@ -150,26 +150,40 @@ function builtStamp() {
 }
 
 /** Fetch the live site (cache-busted) and report whether it carries `stamp`.
- *  true=yes, false=reachable but stale, null=network error (can't tell). */
+ *  true=yes (our app, has the stamp), false=our app but stale (genuine flake),
+ *  null=CAN'T TELL — unreachable / blocked / intercepted. A non-200 (e.g. the DW
+ *  Cisco-Umbrella 403 block page that fronts github.io on the corp network), or a
+ *  200 body that isn't even our app (a proxy/block stub), returns null — NOT false —
+ *  so a blocked network never masquerades as a "stale" deploy and triggers a bogus
+ *  re-publish + failure email. Only a real 200 of OUR page that lacks the stamp is
+ *  a true "stale". */
 async function liveHasStamp(stamp) {
   try {
     const res = await fetch(`${LIVE_URL}?cb=${encodeURIComponent(stamp)}`,
       { cache: 'no-store', headers: { 'Cache-Control': 'no-cache' } });
-    if (!res.ok) return false;
-    return (await res.text()).includes(stamp);
-  } catch { return null; }
+    if (!res.ok) return null;                          // 403 block page / 5xx — can't see the real site
+    const body = await res.text();
+    if (!body.includes('builtAtISO')) return null;     // 200 but not our app (intercepted/stub)
+    return body.includes(stamp);
+  } catch { return null; }                             // DNS/TLS/network throw
 }
 
 /** Poll the live site up to VERIFY_WINDOW_MS for `stamp`.
- *  true=published, false=window elapsed while reachable, null=never reachable. */
+ *  true=published, false=window elapsed while reachable-but-stale, null=never
+ *  reachable. Bails early as null after a sustained unreachable streak (so a blocked
+ *  network doesn't burn the whole window before degrading to "assume ok"). */
 async function awaitPublish(stamp) {
   const deadline = Date.now() + VERIFY_WINDOW_MS;
-  let everReachable = false;
+  let everReachable = false, unreachableStreak = 0;
   while (Date.now() < deadline) {
     await sleep(VERIFY_POLL_MS);
     const hit = await liveHasStamp(stamp);
     if (hit === true) return true;
-    if (hit !== null) everReachable = true;
+    if (hit === null) {
+      if (!everReachable && ++unreachableStreak >= 2) return null;  // blocked/down — give up fast, assume ok
+    } else {
+      everReachable = true; unreachableStreak = 0;
+    }
   }
   return everReachable ? false : null;
 }
