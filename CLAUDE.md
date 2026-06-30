@@ -91,8 +91,22 @@ M74 GER 1-1 PAR went to PENALTIES (PAR 4-3) — the autosync's NEVER-RUN-LIVE pe
   bogus empty-commit re-triggers + a FALSE failure email per deploy. **FIX (`0b9cb97`):** `liveHasStamp` returns
   null (can't tell → assume ok, no re-trigger) for any non-200 / non-app-body / network throw; only a real 200 of
   OUR page missing the stamp is a genuine "stale". `awaitPublish` bails early on a sustained-unreachable streak.
-  Strictly more conservative — can never cause a bad deploy. 106/106 green. (Verify all deploys from phone until IT
-  unblocks github.io.) ⏳ STILL PENDING: M75 NED-MAR (FT ~11pm) — should deploy clean now (single-machine + guard fix).
+  Strictly more conservative — can never cause a bad deploy. (Verify all deploys from phone until IT unblocks
+  github.io.)
+- **Shootout POPOVER was empty (parser looked in the wrong place).** The GER-PAR popover showed the 2 goals but no
+  takers. `parseSummaryEvents` only read a `shootout:true` flag on `keyEvents` — but fifa.world puts NO taker events
+  there (just a "Start Shootout" marker); the real list is a DEDICATED top-level `summary.shootout`
+  (`[{team:"Germany", shots:[{player, shotNumber, didScore, id}]}]`). **FIX (`ab01739`):** flatten both teams, order
+  by shot `id` (ESPN's firing order), map team-NAME→side; keyEvents flag kept as fallback. Re-fetched M74 → 12 takers
+  baked + live (PAR 4-3: GER Havertz✗/Kimmich✓/Musiala✓/Woltemade✗/Amiri✓/Tah✗). Renderer (`matchDetailCard pensHtml`)
+  was already correct. Regression test on the real shape (`ab0c375`).
+- **Shootout SELF-HEAL (`0694a13`).** ESPN's `summary.shootout` can lag FT, so the FT fetch caches a pens result with
+  empty takers — and the incremental skip never refilled it (needed the manual re-fetch above). Now build-events
+  re-fetches a KO pens result whose cached `pens[]` is empty (bounded — stops when takers land), and
+  `deployEventsCatchUp` gates the quiet-tick redeploy on cache CONTENT change (not key count) so a same-key pens-fill
+  actually deploys. So a future lagged shootout backfills + deploys automatically. **107/107 green throughout.**
+  ⏳ STILL PENDING (as of ~11pm 6-29): **M75 NED-MAR 1-1 → extra time** in progress; auto-deploys when final
+  (inherits ALL tonight's hardening: pens detect, single-machine no-divergence, Umbrella-safe guard, shootout self-heal).
 
 ## SHIPPED 2026-06-29 (pm) — Two autosync edge-bug fixes (M76 BRA 2-1 JPN post-mortem)
 First R32 game watched in real time exposed TWO narrow edge bugs (core pipeline — detection/model/calendar —
@@ -125,9 +139,11 @@ for matches played within the last ~2-3 days each run) to catch corrections, whi
 R32/KO result UNATTENDED ~5 min after full time: score + winner slotted by name + calendar labels + goal-scorer
 popover, in ONE clean commit/push per game. First KO (M73 **RSA 0-1 CAN**) deployed flawlessly 2026-06-28
 (FT 4:57 → live 5:02). Group stage complete (72/72). **6-29 R32 status:** M76 **BRA 2-1 JPN** DONE (popover live,
-after a Pages-flake + feed-gated-events recovery — see SHIPPED 6-29 pm). M74 **GER 1-1 PAR (PAR 4-3 pens)** DONE —
-**first live shootout, pens detection worked PERFECTLY** (`38cbb74`); see SHIPPED 6-29 eve for the divergence saga.
-⏳ STILL TONIGHT: **M75 NED-MAR** (FT ~11pm ET) auto-deploys unattended.
+after a Pages-flake + feed-gated-events recovery — see SHIPPED 6-29 pm). M74 **GER 1-1 PAR (PAR 4-3 pens)** DONE +
+**shootout takers popover now live** (`ab01739`) — first live shootout; pens detection + popover both fixed; see
+SHIPPED 6-29 eve for the divergence/Umbrella/parser saga.
+⏳ STILL TONIGHT (as of ~11pm): **M75 NED-MAR 1-1 → extra time** in progress; auto-deploys when final (inherits all
+tonight's hardening). Verify it from PHONE (520 can't see github.io).
 ⚠️ **TWO ACTIVE NETWORK/OPS CONSTRAINTS (6-29 eve):** (1) **DWP Cisco-Umbrella now 403-blocks `github.io`** on the
 corp network → CANNOT verify the live site from 520 (push via `github.com` still works fine). **Verify deploys from
 phone/cellular, not 520.** David to complain to DWP IT. (2) **WORK ONLY ON 520** — a 2nd machine pushing to origin
@@ -604,3 +620,12 @@ State as of 2026-06-24. **50/104** (added COL 1-0 COD, SUI 2-1 CAN, BIH 3-1 QAT 
   any unreachable/blocked/non-app response. **DECISIONS:** WORK ONLY ON 520 (kills the divergence class; chose process
   over auto-pull-rebase on the live job); David to complain to DWP IT re the github.io block; verify all deploys from
   phone/cellular until unblocked. Finished /wrap. ⏳ M75 NED-MAR (FT ~11pm) still to auto-deploy. 106/106 green.
+- 2026-06-29 (late eve) — **GER-PAR shootout POPOVER fix + self-heal (continuation).** After the score went live,
+  David caught the popover showing the 2 goals but NO penalty takers. Root cause: `parseSummaryEvents` read a
+  `shootout:true` flag on `keyEvents`, but fifa.world puts the takers in a DEDICATED top-level `summary.shootout`
+  block (keyEvents has only a "Start Shootout" marker) — so pens was always empty (GER-PAR = first shootout to expose
+  it). Fixed the parser to flatten `summary.shootout` ordered by shot id, name→side (`ab01739`); re-fetched M74 → 12
+  takers live (PAR 4-3). Added a regression test on the real shape (`ab0c375`). Then closed the lag gap (`0694a13`):
+  build-events re-fetches a pens result with empty takers + `deployEventsCatchUp` gates on cache CONTENT (not key
+  count), so a shootout whose takers lag FT now self-heals automatically. 107/107. All in sync on GitHub (`0694a13`),
+  tree clean. M75 NED-MAR still in progress (1-1 → ET) at wrap.
