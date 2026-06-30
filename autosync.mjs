@@ -94,6 +94,23 @@ async function appendKnockoutResult(d, now) {
 const sh = (cmd, args) =>
   execFileSync(cmd, args, { cwd: __dirname, stdio: 'inherit', shell: false });
 
+/** Push to origin, RECONCILING first so a remote that moved (a stray push from
+ *  another machine) can NEVER strand a finished result behind a non-fast-forward
+ *  reject — the exact failure that stranded GER-PAR on 6-29. `pull --rebase
+ *  --autostash` replays our just-made commit on top of origin (a harmless no-op when
+ *  already in sync, i.e. the normal single-machine case); a TRUE conflict aborts
+ *  cleanly and throws, so the caller surfaces it via the failure-only email instead
+ *  of silently leaving the site stale. */
+function gitPushReconciled() {
+  try {
+    sh('git', ['pull', '--rebase', '--autostash', 'origin', 'main']);
+  } catch (e) {
+    try { sh('git', ['rebase', '--abort']); } catch { /* nothing to abort */ }
+    throw new Error(`reconcile (pull --rebase) before push failed — remote diverged with a conflict: ${e.message || e}`);
+  }
+  sh('git', ['push', 'origin', 'main']);
+}
+
 /** Number of matches in the events cache (keys); -1 if unreadable. */
 function eventCacheKeyCount() {
   try { return Object.keys(JSON.parse(readFileSync(EVENTS_CACHE, 'utf8'))).length; }
@@ -206,7 +223,7 @@ async function verifyPagesPublished(log) {
       try {
         sh('git', ['commit', '--allow-empty', '-m',
           `Re-trigger Pages deploy: deploy job flaked; artifact ${stamp} is correct, re-publishing`]);
-        sh('git', ['push', 'origin', 'main']);
+        gitPushReconciled();
       } catch (e) {
         return `Pages re-trigger push failed: ${e.message || e} (live site stale on build ${stamp})`;
       }
@@ -231,8 +248,9 @@ async function deployLive(matches, now, log) {
   // public push). An unchanged events cache adds nothing; the commit still proceeds.
   sh('git', ['add', 'manual-results.json', 'data/match-events.json', 'docs/index.html', 'dist/index.html']);
   sh('git', ['commit', '-m', `Auto-sync: ${matches.map((m) => `${m.team1} ${m.ft[0]}-${m.ft[1]} ${m.team2}`).join('; ')}${got ? ` (+${got} popover${got > 1 ? 's' : ''})` : ''}`]);
-  // push uses the headless git credential (Windows Credential Manager / gh auth)
-  sh('git', ['push', 'origin', 'main']);
+  // push uses the headless git credential (Windows Credential Manager / gh auth);
+  // reconcile a moved remote first so a stray divergence can't strand the result
+  gitPushReconciled();
   sh('node', ['sync-calendar.mjs']);
   sh('node', ['calendar-apply.mjs', '--apply']);
   const verifyError = await verifyPagesPublished(log);   // self-heal a flaked Pages deploy
@@ -247,7 +265,7 @@ async function deployLiveKo(d, now, log) {
   copyFileSync(join(__dirname, 'dist', 'index.html'), join(__dirname, 'docs', 'index.html'));
   sh('git', ['add', 'manual-ko-results.json', 'data/match-events.json', 'docs/index.html', 'dist/index.html']);
   sh('git', ['commit', '-m', `Auto-sync KO: ${koLine(d)}${got ? ` (+${got} popover${got > 1 ? 's' : ''})` : ''}`]);
-  sh('git', ['push', 'origin', 'main']);
+  gitPushReconciled();
   sh('node', ['sync-calendar.mjs']);
   sh('node', ['calendar-apply.mjs', '--apply']);
   const verifyError = await verifyPagesPublished(log);   // self-heal a flaked Pages deploy
@@ -281,7 +299,7 @@ function deployEventsCatchUp(log) {
     copyFileSync(join(__dirname, 'dist', 'index.html'), join(__dirname, 'docs', 'index.html'));
     sh('git', ['add', 'data/match-events.json', 'docs/index.html', 'dist/index.html']);
     sh('git', ['commit', '-m', `Auto-sync: match-event popovers (${what})`]);
-    sh('git', ['push', 'origin', 'main']);
+    gitPushReconciled();
     log(`  events: popovers deployed (${what}).`);
   } catch (e) { log(`  events: deploy failed (non-fatal): ${e.message || e}`); }
 }
