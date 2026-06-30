@@ -142,8 +142,12 @@ popover, in ONE clean commit/push per game. First KO (M73 **RSA 0-1 CAN**) deplo
 after a Pages-flake + feed-gated-events recovery — see SHIPPED 6-29 pm). M74 **GER 1-1 PAR (PAR 4-3 pens)** DONE +
 **shootout takers popover now live** (`ab01739`) — first live shootout; pens detection + popover both fixed; see
 SHIPPED 6-29 eve for the divergence/Umbrella/parser saga.
-⏳ STILL TONIGHT (as of ~11pm): **M75 NED-MAR 1-1 → extra time** in progress; auto-deploys when final (inherits all
-tonight's hardening). Verify it from PHONE (520 can't see github.io).
+M75 **NED 1-1 MAR (MAR 3-2 pens)** DONE — **auto-deployed FULLY UNATTENDED** while wrapping (`d7479cd`), 2nd straight
+shootout, takers popover captured live (10) — validates the shootout fix in the live path, no manual touch.
+**ALL 3 of 6-29's R32 KO games now done + live.** Next: **6-30 has 3 more R32 games** — auto-deploy unattended.
+**DIVERGENCE RISK ELIMINATED (`b6b0aa6`):** every autosync push now reconciles first (`gitPushReconciled` =
+`git pull --rebase --autostash` then push), so a stray remote push can NEVER strand a game again (the GER-PAR
+failure mode). Still verify deploys from PHONE (520 can't see github.io).
 ⚠️ **TWO ACTIVE NETWORK/OPS CONSTRAINTS (6-29 eve):** (1) **DWP Cisco-Umbrella now 403-blocks `github.io`** on the
 corp network → CANNOT verify the live site from 520 (push via `github.com` still works fine). **Verify deploys from
 phone/cellular, not 520.** David to complain to DWP IT. (2) **WORK ONLY ON 520** — a 2nd machine pushing to origin
