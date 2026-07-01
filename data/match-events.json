@@ -251,6 +251,34 @@
   ],
   "pens": []
  },
+ "79": {
+  "home": "MEX",
+  "away": "ECU",
+  "events": [
+   {
+    "min": 1275,
+    "minLabel": "22",
+    "type": "goal",
+    "team": "home",
+    "who": "Julián Quiñones"
+   },
+   {
+    "min": 1829,
+    "minLabel": "31",
+    "type": "goal",
+    "team": "home",
+    "who": "Raúl Jiménez"
+   },
+   {
+    "min": 5400,
+    "minLabel": "90'+5",
+    "type": "red",
+    "team": "away",
+    "who": "Piero Hincapié"
+   }
+  ],
+  "pens": []
+ },
  "g:MEX-RSA": {
   "home": "MEX",
   "away": "RSA",
