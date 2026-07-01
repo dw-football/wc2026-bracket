@@ -119,16 +119,62 @@ function isPlayed(m) {
   return !!(m.score && Array.isArray(m.score.ft) && m.score.ft.length === 2);
 }
 
-function computeFreshness(raw) {
-  const played = raw.matches.filter(isPlayed).slice().sort((a, b) => matchEpoch(a) - matchEpoch(b));
-  const last = played[played.length - 1];
-  const dataThrough = last
-    ? `${last.team1} ${last.score.ft[0]}-${last.score.ft[1]} ${last.team2}`
-    : '(no matches played yet)';
+// Knockout kickoffs live in knockout-schedule.json as an EDT label ("9p", "1p",
+// "12:30p") + date, NOT the group feed's "HH:MM UTC-4" form. Convert to a UTC
+// epoch (all KO games are EDT = UTC-4) so KO results can be ordered against group
+// games. Returns -Infinity when the schedule row is missing (sorts it first, never
+// last -> never a bogus "data through").
+function koEpoch(sched) {
+  if (!sched || !sched.date) return -Infinity;
+  const [Y, Mo, D] = sched.date.split('-').map(Number);
+  const t = /(\d{1,2})(?::(\d{2}))?\s*([ap])/i.exec(sched.timeEDT || '');
+  let hh = 12;
+  let mi = 0;
+  if (t) {
+    hh = +t[1];
+    mi = t[2] ? +t[2] : 0;
+    const pm = /p/i.test(t[3]);
+    if (pm && hh !== 12) hh += 12;
+    if (!pm && hh === 12) hh = 0;
+  }
+  return Date.UTC(Y, (Mo || 1) - 1, D || 1, hh + 4, mi); // EDT -> UTC
+}
+
+const GROUP_RE = /^Group [A-L]$/;
+
+// Latest match + played count across BOTH the group stage AND the knockouts.
+// Group-stage games come from the feed (raw.matches). KNOCKOUT games come from
+// `koResults` (manual + feed merged, keyed by matchNo) -- NOT raw.matches, whose
+// KO entries lag the openfootball feed by ~a day, so a just-deployed KO result
+// (e.g. MEX 2-0 ECU) was invisible here and the header stalled on the feed's last
+// KO game (FRA 3-0 SWE). We exclude raw.matches' KO rows (group-field filter) so a
+// KO game present in BOTH the feed and koResults is never double-counted.
+function computeFreshness(raw, koResults = {}, koSchedule = {}) {
+  const groupPlayed = raw.matches
+    .filter((m) => GROUP_RE.test(m.group || '') && isPlayed(m))
+    .map((m) => ({
+      epoch: matchEpoch(m),
+      label: `${m.team1} ${m.score.ft[0]}-${m.score.ft[1]} ${m.team2}`,
+      date: m.date || null,
+    }));
+
+  const koPlayed = Object.entries(koResults)
+    .filter(([, r]) => r && Array.isArray(r.score) && r.score.length === 2)
+    .map(([no, r]) => {
+      const sched = koSchedule[no] || koSchedule[Number(no)] || {};
+      return {
+        epoch: koEpoch(sched),
+        label: `${r.home} ${r.score[0]}-${r.score[1]} ${r.away}`,
+        date: sched.date || null,
+      };
+    });
+
+  const all = [...groupPlayed, ...koPlayed].sort((a, b) => a.epoch - b.epoch);
+  const last = all[all.length - 1];
   return {
-    dataThrough,
+    dataThrough: last ? last.label : '(no matches played yet)',
     lastDate: last ? last.date : null,
-    playedCount: played.length,
+    playedCount: all.length,
     totalCount: 104,
     builtAtISO: new Date().toISOString(),
   };
@@ -214,7 +260,6 @@ async function main() {
 
   const raw = await fetchRaw({ refresh });
   const groups = toGroups(raw, teams);
-  const freshness = computeFreshness(raw);
 
   // Knockout RESULTS, merged into the shared shape and baked for the renderer:
   // manual/auto (manual-ko-results.json) FIRST, the openfootball feed LAST so a
@@ -225,6 +270,7 @@ async function main() {
     knockoutResultsFromManual(manualKo),
     knockoutResultsFromRaw(raw, teams),
   );
+  const freshness = computeFreshness(raw, koResults, koSchedule);
   // Per-match event timeline (goals + scorer/minute, cards, shootout takers) for
   // the completed-KO match-detail popover, baked from the cache that
   // build-events.mjs writes (data/match-events.json). KNOCKOUT entries are keyed by
