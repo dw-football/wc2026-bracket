@@ -307,6 +307,48 @@
   ],
   "pens": []
  },
+ "82": {
+  "home": "BEL",
+  "away": "SEN",
+  "events": [
+   {
+    "min": 1442,
+    "minLabel": "25",
+    "type": "goal",
+    "team": "away",
+    "who": "Habib Diarra"
+   },
+   {
+    "min": 3039,
+    "minLabel": "51",
+    "type": "goal",
+    "team": "away",
+    "who": "Ismaïla Sarr"
+   },
+   {
+    "min": 5134,
+    "minLabel": "86",
+    "type": "goal",
+    "team": "home",
+    "who": "Romelu Lukaku"
+   },
+   {
+    "min": 5293,
+    "minLabel": "89",
+    "type": "goal",
+    "team": "home",
+    "who": "Youri Tielemans"
+   },
+   {
+    "min": 7200,
+    "minLabel": "120'+5",
+    "type": "red",
+    "team": "home",
+    "who": "Youri Tielemans"
+   }
+  ],
+  "pens": []
+ },
  "g:MEX-RSA": {
   "home": "MEX",
   "away": "RSA",
