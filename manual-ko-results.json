@@ -88,5 +88,17 @@
     "decider": "reg",
     "pens": null,
     "note": "M79 MEX 2-0 ECU -> MEX, auto-synced from ESPN fifa.world FT on 2026-07-01."
+  },
+  {
+    "match": 80,
+    "home": "ENG",
+    "away": "COD",
+    "score": [
+      2,
+      1
+    ],
+    "decider": "reg",
+    "pens": null,
+    "note": "M80 ENG 2-1 COD -> ENG, auto-synced from ESPN fifa.world FT on 2026-07-01."
   }
 ]
