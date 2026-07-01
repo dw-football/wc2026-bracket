@@ -74,6 +74,24 @@ advance p≥5%). 74/74 tests green. NOTE: the live auto-sync rebuilt with this w
 deployed the feature inside score commit `c5652bc` BEFORE the source was committed — this commit just
 makes git source-of-truth match the already-live artifacts (no rebuild needed; dist == HEAD == live).
 
+## SHIPPED 2026-06-30 / 07-01 — NOR-CIV strand → 3 autosync hardening fixes; github.io unblocked; freshness header
+**6-30 M78 CIV 1-2 NOR silently didn't post.** Root cause (from the log, NOT a mystery "interruption"): the deploy
+tick ran `build-html.mjs --refresh`, the feed re-pull FAILED transiently, and deployLiveKo threw AFTER appending M78
+to manual-ko-results.json but BEFORE commit → result stranded uncommitted, and the poller's dedup (M78 now "recorded")
+hid it from every later tick. Recovered by hand (finished the build+push, `197d048`). Then shipped THREE fixes so a
+deploy can't silently strand again (`5981e56`): (1) **`bake()`** — the deploy's `--refresh` is non-fatal; a feed-pull
+blip falls back to a plain cached-feed bake (the manual result ships either way), only a real bake error throws;
+(2) **`recoverInterruptedDeploy`** — start-of-tick, if a result file differs from HEAD (a prior deploy died before
+commit), finish it (rebuild + reconciled push + calendar + verify) before polling → self-heals next tick;
+(3) earlier same day, **`gitPushReconciled`** (`b6b0aa6`) — pull --rebase --autostash before every push (divergence
+guard). Also: **github.io block RESOLVED** — Alfonso (DWP IT) whitelisted it; 520 can reach + verify the live site
+again, so the verify-guard is fully functional (not just the blocked-network "assume ok" fallback). 6-30 R32 all
+live (M77 FRA 3-0 SWE, M78 NOR, M79 MEX 2-0 ECU); M75 MAR pens auto-deployed unattended earlier.
+**7-01 freshness header (`3310c16`):** `computeFreshness(raw, koResults, koSchedule)` merges group games (feed) + KO
+games (koResults) on a common UTC epoch (new `koEpoch` parses knockout-schedule EDT labels), feed KO rows excluded so
+no double-count → header tracks the real latest result (MEX 2-0 ECU 79/104), no longer lags the bracket; self-heals
+through the Final. Fix authored in a sibling session, reviewed + verified + deployed here. 107/107 green throughout.
+
 ## SHIPPED 2026-06-29 (eve) — M74 GER-PAR (first live shootout): divergence saga + Umbrella block + guard fix
 M74 GER 1-1 PAR went to PENALTIES (PAR 4-3) — the autosync's NEVER-RUN-LIVE pens path. THREE findings:
 - **Pens detection WORKED PERFECTLY.** Log: `DEPLOYING KO: M74 GER 1-1 PAR (3-4 pens) -> PAR`, events fetched,
@@ -142,12 +160,17 @@ popover, in ONE clean commit/push per game. First KO (M73 **RSA 0-1 CAN**) deplo
 after a Pages-flake + feed-gated-events recovery — see SHIPPED 6-29 pm). M74 **GER 1-1 PAR (PAR 4-3 pens)** DONE +
 **shootout takers popover now live** (`ab01739`) — first live shootout; pens detection + popover both fixed; see
 SHIPPED 6-29 eve for the divergence/Umbrella/parser saga.
-M75 **NED 1-1 MAR (MAR 3-2 pens)** DONE — **auto-deployed FULLY UNATTENDED** while wrapping (`d7479cd`), 2nd straight
-shootout, takers popover captured live (10) — validates the shootout fix in the live path, no manual touch.
-**ALL 3 of 6-29's R32 KO games now done + live.** Next: **6-30 has 3 more R32 games** — auto-deploy unattended.
-**DIVERGENCE RISK ELIMINATED (`b6b0aa6`):** every autosync push now reconciles first (`gitPushReconciled` =
-`git pull --rebase --autostash` then push), so a stray remote push can NEVER strand a game again (the GER-PAR
-failure mode).
+M75 **NED 1-1 MAR (MAR 3-2 pens)** auto-deployed FULLY UNATTENDED (`d7479cd`), 2nd straight shootout, takers live.
+**6-30 R32 done + live:** M77 **FRA 3-0 SWE**, M78 **CIV 1-2 NOR** (stranded then recovered — see SHIPPED 6-30),
+M79 **MEX 2-0 ECU**. **Through M79; 79/104.** R32 continues (M80+); auto-deploys unattended.
+**THREE autosync hardening fixes now in place (deploy can't silently strand a game):**
+(1) `gitPushReconciled` (`b6b0aa6`) — every push does `git pull --rebase --autostash` first, so a stray remote push
+can't cause a non-FF strand (the GER-PAR failure). (2) `bake()` (`5981e56`) — a transient `build-html --refresh`
+feed-pull failure falls back to a cached-feed bake instead of aborting the deploy (the M78 NOR-CIV failure).
+(3) `recoverInterruptedDeploy` (`5981e56`) — start-of-tick check finishes any result left uncommitted by an
+aborted prior tick, so an interrupted deploy self-heals next tick instead of being dedup-hidden forever.
+**Freshness header fixed 7-01 (`3310c16`):** `computeFreshness` now tracks `koResults` (not the day-late feed), so
+the "Data through" header no longer lags the bracket — reads MEX 2-0 ECU 79/104; self-heals through the Final.
 ✅ **github.io block RESOLVED 6-30** — Alfonso (DWP IT) whitelisted github.io; 520 can reach + verify the live site
 again (verified directly 6-30: all 3 KO results + both shootouts' takers live, live builtAtISO == HEAD). The
 verify-and-self-heal guard is now FULLY functional again (real publish confirmation, not the blocked-network "assume
@@ -635,3 +658,18 @@ State as of 2026-06-24. **50/104** (added COL 1-0 COD, SUI 2-1 CAN, BIH 3-1 QAT 
   build-events re-fetches a pens result with empty takers + `deployEventsCatchUp` gates on cache CONTENT (not key
   count), so a shootout whose takers lag FT now self-heals automatically. 107/107. All in sync on GitHub (`0694a13`),
   tree clean. M75 NED-MAR still in progress (1-1 → ET) at wrap.
+- 2026-06-30 — **NOR-CIV strand → autosync hardened; github.io unblocked.** David: "NORWAY IVORY COAST SCORE DIDN'T
+  SAVE!" Diagnosed from the log (correcting my own "mystery interruption" guess): the 3:01pm tick's `build-html.mjs
+  --refresh` FAILED (transient feed re-pull) AFTER appending M78 to manual-ko but before commit → stranded +
+  dedup-hidden. Recovered by hand (`197d048`), then shipped 3 fixes (`5981e56`): `bake()` (feed-refresh non-fatal,
+  cached-feed fallback), `recoverInterruptedDeploy` (start-of-tick self-heal of an interrupted deploy), on top of the
+  same-day `gitPushReconciled` (`b6b0aa6`, pull --rebase before push). Also Alfonso (DWP IT) whitelisted github.io →
+  520 can verify the live site again; verified all 6-29/6-30 results + shootouts live. Task briefly disabled during
+  repair, re-armed (Ready). 107/107.
+- 2026-07-01 — **Reviewed + deployed the freshness-header fix (`3310c16`)** authored by a sibling session: the "Data
+  through" header lagged the bracket for days because `computeFreshness` read the day-late feed, not `koResults`.
+  Reviewed the diff (merge group+KO on a common UTC epoch via new `koEpoch`; feed KO rows excluded → no double-count;
+  call moved after koResults built), verified (header now MEX 2-0 ECU 79/104, live confirmed) + 107/107, deployed on
+  David's GO. Self-heals through the Final. David confirmed it working on his other computer (view-only, no push —
+  single-machine push rule intact). Also: renamed his terminal tab via Windows Terminal right-click Rename Tab (no
+  Claude Code setting exists to lock the auto-title; WT-side is the only lever).
