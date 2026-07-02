@@ -112,5 +112,17 @@
     "decider": "aet",
     "pens": null,
     "note": "M82 BEL 3-2 SEN AET -> BEL, auto-synced from ESPN fifa.world FT on 2026-07-01."
+  },
+  {
+    "match": 81,
+    "home": "USA",
+    "away": "BIH",
+    "score": [
+      2,
+      0
+    ],
+    "decider": "reg",
+    "pens": null,
+    "note": "M81 USA 2-0 BIH -> USA, auto-synced from ESPN fifa.world FT on 2026-07-02."
   }
 ]
