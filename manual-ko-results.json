@@ -124,5 +124,17 @@
     "decider": "reg",
     "pens": null,
     "note": "M81 USA 2-0 BIH -> USA, auto-synced from ESPN fifa.world FT on 2026-07-02."
+  },
+  {
+    "match": 84,
+    "home": "ESP",
+    "away": "AUT",
+    "score": [
+      3,
+      0
+    ],
+    "decider": "reg",
+    "pens": null,
+    "note": "M84 ESP 3-0 AUT -> ESP, auto-synced from ESPN fifa.world FT on 2026-07-02."
   }
 ]
