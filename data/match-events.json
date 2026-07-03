@@ -473,7 +473,48 @@
     "who": "Mohamed Hany (OG)"
    }
   ],
-  "pens": []
+  "pens": [
+   {
+    "team": "home",
+    "who": "Harry Souttar",
+    "ok": false
+   },
+   {
+    "team": "away",
+    "who": "Mahmoud Saber",
+    "ok": true
+   },
+   {
+    "team": "home",
+    "who": "Jackson Irvine",
+    "ok": true
+   },
+   {
+    "team": "away",
+    "who": "Ramy Rabia",
+    "ok": true
+   },
+   {
+    "team": "home",
+    "who": "Awer Mabil",
+    "ok": true
+   },
+   {
+    "team": "away",
+    "who": "Mohamed Salah",
+    "ok": true
+   },
+   {
+    "team": "home",
+    "who": "Lucas Herrington",
+    "ok": false
+   },
+   {
+    "team": "away",
+    "who": "Hossam Abdelmaguid",
+    "ok": true
+   }
+  ]
  },
  "g:MEX-RSA": {
   "home": "MEX",
