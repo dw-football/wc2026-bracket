@@ -433,6 +433,27 @@
   ],
   "pens": []
  },
+ "85": {
+  "home": "SUI",
+  "away": "ALG",
+  "events": [
+   {
+    "min": 599,
+    "minLabel": "10",
+    "type": "goal",
+    "team": "home",
+    "who": "Breel Embolo"
+   },
+   {
+    "min": 2746,
+    "minLabel": "46",
+    "type": "goal",
+    "team": "home",
+    "who": "Dan Ndoye"
+   }
+  ],
+  "pens": []
+ },
  "g:MEX-RSA": {
   "home": "MEX",
   "away": "RSA",

@@ -148,5 +148,17 @@
     "decider": "reg",
     "pens": null,
     "note": "M83 POR 2-1 CRO -> POR, auto-synced from ESPN fifa.world FT on 2026-07-03."
+  },
+  {
+    "match": 85,
+    "home": "SUI",
+    "away": "ALG",
+    "score": [
+      2,
+      0
+    ],
+    "decider": "reg",
+    "pens": null,
+    "note": "M85 SUI 2-0 ALG -> SUI, auto-synced from ESPN fifa.world FT on 2026-07-03."
   }
 ]
