@@ -74,6 +74,26 @@ advance p≥5%). 74/74 tests green. NOTE: the live auto-sync rebuilt with this w
 deployed the feature inside score commit `c5652bc` BEFORE the source was committed — this commit just
 makes git source-of-truth match the already-live artifacts (no rebuild needed; dist == HEAD == live).
 
+## SHIPPED 2026-07-03 — Popover parser bug: in-play "Penalty - Scored" misread as a RED CARD (+ reconciliation gate)
+David caught the M83 **POR 2-1 CRO** popover reading 1-1 with a phantom **Cristiano Ronaldo red card at 68'**. Root
+cause = a substring collision in `espn-events.mjs parseSummaryEvents`: ESPN labels a converted in-play penalty
+`type.text = "Penalty - Scored"`. The classifier did `if t.includes('goal') … else if t.includes('red')` — "penalty
+- scored" has no "goal", but "sco**red**" contains "red" → the goal became a sending-off AND a goal was dropped. The
+SCORE (2-1) was always right (different path), which is exactly why it shipped silently. **Fixes (`1e0a52e`, pushed):**
+(1) goals now trust ESPN's own `scoringPlay===true` flag (covers Goal / Goal-Header / Own Goal / Penalty-Scored;
+excludes a `scoringPlay:false` disallowed/VAR goal), text `'goal'` kept only as a fallback when the flag is absent;
+reds match `/\bred\b/` (word boundary — matches "Red Card", NOT "Scored"). (2) **Reconciliation guardrail David asked
+for** in `build-events.mjs`: the popover goal count MUST equal the actual score; any cached entry that disagrees is
+force-re-fetched (so a parser fix self-heals the cache), and any surviving mismatch prints a loud `SCORE
+RECONCILIATION` warning instead of baking silently. (3) regression tests (penalty-scored + disallowed-goal), 109/109.
+**Blast radius was 11 matches, not 1** — every game with a penalty scored in open play: KO **M82 BEL-SEN** (Tielemans'
+120'+5 AET winner; had shown 2-2 vs real 3-2) + M83, plus 8 group games (ENG-CRO, GER-CUW, AUT-JOR, JOR-ARG, COD-UZB,
+SUI-BIH, QAT-SUI, CZE-RSA). The reconciliation gate caught + healed all 11. **Also 7-03:** M88 **AUS 1-1 EGY (2-4
+pens)** popover had no takers — NOT a bug, just ESPN's `summary.shootout` block trailing FT (block was entirely
+absent, not misparsed). Polled ESPN directly; takers landed ~5 min post-FT (EGY 4-2: Souttar✗/Irvine✓/Mabil✓/
+Herrington✗ vs Saber✓/Rabia✓/Salah✓/Abdelmaguid✓), backfilled + pushed (`aad75f5`). The self-heal (`0694a13`) is the
+standing backstop for this. 86/104.
+
 ## SHIPPED 2026-06-30 / 07-01 — NOR-CIV strand → 3 autosync hardening fixes; github.io unblocked; freshness header
 **6-30 M78 CIV 1-2 NOR silently didn't post.** Root cause (from the log, NOT a mystery "interruption"): the deploy
 tick ran `build-html.mjs --refresh`, the feed re-pull FAILED transiently, and deployLiveKo threw AFTER appending M78
@@ -153,6 +173,10 @@ next day" — true for scores, false for popovers.) Parked fix if ever wanted: a
 for matches played within the last ~2-3 days each run) to catch corrections, while still skipping the settled backlog.
 
 ## RESUME
+Next action: NOTHING PENDING — R32 auto-deploys unattended. **Through M88; 86/104** (R32 nearly complete — M86/M87
+remain). If a new pens game's popover shows no takers, that's ESPN lag (their `summary.shootout` block trails FT by
+~5 min); the self-heal + the poll pattern used 7-03 backfill it — do NOT treat empty pens as a bug.
+Then read: SHIPPED 2026-07-03 (popover penalty-as-red-card fix + reconciliation gate), Session Notes.
 **KO stage is LIVE and auto-deploying — NOTHING TO DO MANUALLY.** The `WC2026-autosync` task on 520 deploys each
 R32/KO result UNATTENDED ~5 min after full time: score + winner slotted by name + calendar labels + goal-scorer
 popover, in ONE clean commit/push per game. First KO (M73 **RSA 0-1 CAN**) deployed flawlessly 2026-06-28
@@ -673,3 +697,10 @@ State as of 2026-06-24. **50/104** (added COL 1-0 COD, SUI 2-1 CAN, BIH 3-1 QAT 
   David's GO. Self-heals through the Final. David confirmed it working on his other computer (view-only, no push —
   single-machine push rule intact). Also: renamed his terminal tab via Windows Terminal right-click Rename Tab (no
   Claude Code setting exists to lock the auto-title; WT-side is the only lever).
+- 2026-07-03 — **Popover parser bug + reconciliation gate (see SHIPPED 2026-07-03).** David: "see the Portugal win over
+  Croatia last night and check the popover. What happened???" M83 POR-CRO showed a phantom Ronaldo red card + 1-1 vs
+  the real 2-1. Root cause: `t.includes('red')` matched "Sco**red**" in ESPN's "Penalty - Scored" type → converted a
+  penalty goal into a sending-off. Fixed the parser (trust `scoringPlay`; `\bred\b` for reds), added the goal-count-vs-
+  score reconciliation gate David explicitly asked for, +regression tests (109/109). The gate caught 11 corrupted
+  matches (all penalty-in-open-play games), healed all. Pushed `1e0a52e`. Then M88 AUS-EGY pens popover was empty —
+  ESPN lag, not a bug; polled + backfilled takers when they landed (`aad75f5`). 86/104.
