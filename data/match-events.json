@@ -377,6 +377,34 @@
   ],
   "pens": []
  },
+ "83": {
+  "home": "POR",
+  "away": "CRO",
+  "events": [
+   {
+    "min": 3164,
+    "minLabel": "53",
+    "type": "goal",
+    "team": "away",
+    "who": "Ivan Perisic"
+   },
+   {
+    "min": 4025,
+    "minLabel": "68",
+    "type": "red",
+    "team": "home",
+    "who": "Cristiano Ronaldo"
+   },
+   {
+    "min": 5400,
+    "minLabel": "90'+4",
+    "type": "goal",
+    "team": "home",
+    "who": "Gonçalo Ramos"
+   }
+  ],
+  "pens": []
+ },
  "84": {
   "home": "ESP",
   "away": "AUT",

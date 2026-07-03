@@ -136,5 +136,17 @@
     "decider": "reg",
     "pens": null,
     "note": "M84 ESP 3-0 AUT -> ESP, auto-synced from ESPN fifa.world FT on 2026-07-02."
+  },
+  {
+    "match": 83,
+    "home": "POR",
+    "away": "CRO",
+    "score": [
+      2,
+      1
+    ],
+    "decider": "reg",
+    "pens": null,
+    "note": "M83 POR 2-1 CRO -> POR, auto-synced from ESPN fifa.world FT on 2026-07-03."
   }
 ]
