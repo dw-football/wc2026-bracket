@@ -56,6 +56,45 @@ test('parseSummaryEvents: keeps goals + reds (drops kickoff/yellow), oriented ho
   assert.equal(og.team, 'home');
 });
 
+test('parseSummaryEvents: in-play "Penalty - Scored" is a GOAL, not a phantom red card (M83 POR-CRO regression)', () => {
+  // ESPN labels a converted in-play penalty type.text "Penalty - Scored" with
+  // scoringPlay:true. A loose t.includes('red') matched the "red" inside "Sco[red]"
+  // and turned Ronaldo's 68' equalizer into a sending-off, dropping the goal — the
+  // M83 popover shipped 1-1 against a 2-1 scoreline. Trust scoringPlay; \bred\b for reds.
+  const s = {
+    header: { competitions: [{ competitors: [
+      { homeAway: 'home', team: { id: '482', abbreviation: 'POR' } },
+      { homeAway: 'away', team: { id: '499', abbreviation: 'CRO' } },
+    ] }] },
+    keyEvents: [
+      { type: { type: 'goal', text: 'Goal' }, text: 'Goal! Portugal 0, Croatia 1. Ivan Perisic (Croatia) left footed shot.', clock: { displayValue: "53'", value: 53 }, team: { id: '499' }, scoringPlay: true },
+      { type: { text: 'Penalty - Scored' }, text: 'Goal! Portugal 1, Croatia 1. Cristiano Ronaldo (Portugal) converts the penalty with a right footed shot.', clock: { displayValue: "68'", value: 68 }, team: { id: '482' }, scoringPlay: true },
+      { type: { text: 'Goal - Header' }, text: 'Goal! Portugal 2, Croatia 1. Gonçalo Ramos (Portugal) header from the centre of the box.', clock: { displayValue: "90'+4'", value: 90 }, team: { id: '482' }, scoringPlay: true },
+    ],
+  };
+  const r = parseSummaryEvents(s);
+  assert.equal(r.events.length, 3, 'three goals, zero red cards');
+  assert.equal(r.events.filter((e) => e.type === 'red').length, 0);
+  const pen = r.events.find((e) => e.who === 'Cristiano Ronaldo');
+  assert.deepEqual({ type: pen.type, team: pen.team }, { type: 'goal', team: 'home' });
+  // reconciles to the 2-1 scoreline
+  const [h, a] = r.events.reduce((c, e) => (e.type === 'goal' && (e.team === 'home' ? c[0]++ : c[1]++), c), [0, 0]);
+  assert.deepEqual([h, a], [2, 1]);
+});
+
+test('parseSummaryEvents: a disallowed goal (scoringPlay:false) is NOT counted', () => {
+  const s = {
+    header: { competitions: [{ competitors: [
+      { homeAway: 'home', team: { id: '1', abbreviation: 'AAA' } },
+      { homeAway: 'away', team: { id: '2', abbreviation: 'BBB' } },
+    ] }] },
+    keyEvents: [
+      { type: { text: 'Goal Disallowed' }, text: 'Goal disallowed for offside. Someone (AAA).', clock: { displayValue: "40'", value: 40 }, team: { id: '1' }, scoringPlay: false },
+    ],
+  };
+  assert.equal(parseSummaryEvents(s).events.length, 0);
+});
+
 test('parseSummaryEvents: shootout takers from inline keyEvents flag (fallback path)', () => {
   const s = {
     header: { competitions: [{ competitors: [

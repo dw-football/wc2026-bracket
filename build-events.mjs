@@ -70,12 +70,14 @@ async function main() {
     if (!played) continue;
     if (/^Group [A-L]$/.test(m.group || '')) {
       const home = n2c.get(m.team1), away = n2c.get(m.team2);
-      if (home && away) work.push({ key: `g:${home}-${away}`, date: m.date, home, away });
+      if (home && away) work.push({ key: `g:${home}-${away}`, date: m.date, home, away, score: m.score.ft });
     } else {
       const num = m.num ?? m.match;
       const fx = fixtures[num] || (koResults[num] && { home: koResults[num].home, away: koResults[num].away });
       const date = (koSchedule[num] && koSchedule[num].date) || m.date;
-      if (num != null && fx && fx.home && fx.away) work.push({ key: String(num), date, home: fx.home, away: fx.away });
+      // KO score reflects regulation/AET goals (koResults), NOT a shootout tally.
+      const score = (koResults[num] && koResults[num].score) || m.score.ft;
+      if (num != null && fx && fx.home && fx.away) work.push({ key: String(num), date, home: fx.home, away: fx.away, score });
     }
   }
 
@@ -93,7 +95,7 @@ async function main() {
     const fx = fixtures[num] || { home: koResults[num].home, away: koResults[num].away };
     const date = koSchedule[num] && koSchedule[num].date;
     if (fx && fx.home && fx.away && date) {
-      work.push({ key, date, home: fx.home, away: fx.away });
+      work.push({ key, date, home: fx.home, away: fx.away, score: koResults[num].score });
       seenKeys.add(key);
     }
   }
@@ -108,7 +110,25 @@ async function main() {
     const r = koResults[Number(w.key)];
     return r && r.decider === 'pens' && cache[w.key] && !(cache[w.key].pens && cache[w.key].pens.length);
   };
-  const todo = work.filter((w) => all || !cache[w.key] || pensPending(w));
+  // Reconciliation: the popover's goal count MUST equal the actual score. A mismatch
+  // means the timeline was mis-parsed (e.g. an in-play "Penalty - Scored" that a stale
+  // parser turned into a phantom red card, dropping the goal). Count goals per side in
+  // a cached entry and compare to the known score; force a re-fetch of any that disagree
+  // so a parser fix self-heals the cache instead of leaving corrupt data baked.
+  const goalTally = (entry) => {
+    let h = 0, a = 0;
+    for (const e of (entry && entry.events) || []) {
+      if (e.type !== 'goal') continue;
+      if (e.team === 'home') h++; else if (e.team === 'away') a++;
+    }
+    return [h, a];
+  };
+  const scoreMismatch = (w) => {
+    if (!w.score || !cache[w.key]) return false;
+    const [h, a] = goalTally(cache[w.key]);
+    return h !== w.score[0] || a !== w.score[1];
+  };
+  const todo = work.filter((w) => all || !cache[w.key] || pensPending(w) || scoreMismatch(w));
   console.log(`${work.length} played match(es); ${todo.length} to fetch${all ? ' (--all)' : ''}.`);
 
   // Group the work by date so we hit each scoreboard once, then a summary per match.
@@ -144,6 +164,22 @@ async function main() {
         process.stdout.write(`  ${w.key} ${w.home} v ${w.away}: ${parsed.events.length} ev${parsed.pens.length ? ` +${parsed.pens.length} pens` : ''}\n`);
       } catch (e) { console.warn(`  summary ${w.key}: ${e.message}`); missed++; }
     }
+  }
+
+  // Final reconciliation: warn on any cached entry whose popover goal count still
+  // disagrees with the known score (a mis-parse we couldn't heal, or a genuine ESPN
+  // data gap). Silent corruption — a missing goal, a phantom red card — is exactly
+  // what let the M83 POR-CRO popover ship 1-1 against a 2-1 scoreline.
+  const mismatches = [];
+  for (const w of work) {
+    if (!w.score || !cache[w.key]) continue;
+    const [h, a] = goalTally(cache[w.key]);
+    if (h !== w.score[0] || a !== w.score[1])
+      mismatches.push(`  ⚠ ${w.key} ${w.home} v ${w.away}: popover ${h}-${a} but score ${w.score[0]}-${w.score[1]}`);
+  }
+  if (mismatches.length) {
+    console.warn(`\nSCORE RECONCILIATION — ${mismatches.length} popover(s) disagree with the score:`);
+    for (const m of mismatches) console.warn(m);
   }
 
   await mkdir(join(__dirname, 'data'), { recursive: true });

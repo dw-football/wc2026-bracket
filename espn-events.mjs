@@ -81,9 +81,18 @@ export function parseSummaryEvents(summary) {
     const clockStr = e.clock?.displayValue ?? e.clock ?? '';
     const min = Number.isFinite(e.clock?.value) ? e.clock.value : clockToMin(clockStr);
     const minLabel = String(clockStr).replace(/'+$/, '') || String(min);
-    if (t.includes('goal')) {
+    // Goal detection: trust ESPN's own `scoringPlay` flag when present — it is true
+    // for "Goal", "Goal - Header", "Own Goal", AND "Penalty - Scored" (an in-play
+    // penalty converted), false for a disallowed/VAR-cancelled goal. Fall back to the
+    // type text only when the flag is absent.
+    // Red-card detection MUST use a word boundary: a loose t.includes('red') matches
+    // the "red" inside "Penalty - Sco[red]" and turns a scored penalty into a phantom
+    // sending-off (dropping the goal). \bred\b matches "Red Card" but not "Scored".
+    const isGoal = e.scoringPlay === true || (e.scoringPlay == null && t.includes('goal'));
+    const isRed = /\bred\b/.test(t);
+    if (isGoal) {
       events.push({ min, minLabel, type: 'goal', team: side, who });
-    } else if (t.includes('red')) {
+    } else if (isRed) {
       events.push({ min, minLabel, type: 'red', team: side, who });
     }
   }

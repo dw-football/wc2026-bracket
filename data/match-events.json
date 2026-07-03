@@ -340,8 +340,8 @@
   "away": "SEN",
   "events": [
    {
-    "min": 1442,
-    "minLabel": "25",
+    "min": 1440,
+    "minLabel": "24",
     "type": "goal",
     "team": "away",
     "who": "Habib Diarra"
@@ -361,7 +361,7 @@
     "who": "Romelu Lukaku"
    },
    {
-    "min": 5293,
+    "min": 5292,
     "minLabel": "89",
     "type": "goal",
     "team": "home",
@@ -370,7 +370,7 @@
    {
     "min": 7200,
     "minLabel": "120'+5",
-    "type": "red",
+    "type": "goal",
     "team": "home",
     "who": "Youri Tielemans"
    }
@@ -391,7 +391,7 @@
    {
     "min": 4025,
     "minLabel": "68",
-    "type": "red",
+    "type": "goal",
     "team": "home",
     "who": "Cristiano Ronaldo"
    },
@@ -559,7 +559,7 @@
    {
     "min": 4968,
     "minLabel": "83",
-    "type": "red",
+    "type": "goal",
     "team": "away",
     "who": "Teboho Mokoena"
    }
@@ -622,7 +622,7 @@
    {
     "min": 5400,
     "minLabel": "90'+7",
-    "type": "red",
+    "type": "goal",
     "team": "home",
     "who": "Granit Xhaka"
    }
@@ -951,7 +951,7 @@
    {
     "min": 992,
     "minLabel": "17",
-    "type": "red",
+    "type": "goal",
     "team": "away",
     "who": "Breel Embolo"
    },
@@ -1112,7 +1112,7 @@
    {
     "min": 2700,
     "minLabel": "45'+5",
-    "type": "red",
+    "type": "goal",
     "team": "home",
     "who": "Kai Havertz"
    },
@@ -1817,7 +1817,7 @@
    {
     "min": 677,
     "minLabel": "12",
-    "type": "red",
+    "type": "goal",
     "team": "home",
     "who": "Harry Kane"
    },
@@ -2033,7 +2033,7 @@
    {
     "min": 5400,
     "minLabel": "90'+12",
-    "type": "red",
+    "type": "goal",
     "team": "home",
     "who": "Marko Arnautovic"
    }
@@ -2450,7 +2450,7 @@
    {
     "min": 4055,
     "minLabel": "68",
-    "type": "red",
+    "type": "goal",
     "team": "home",
     "who": "Yoane Wissa"
    },
@@ -2534,7 +2534,7 @@
    {
     "min": 1810,
     "minLabel": "31",
-    "type": "red",
+    "type": "goal",
     "team": "away",
     "who": "Lautaro Martínez"
    },
