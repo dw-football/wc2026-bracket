@@ -160,5 +160,20 @@
     "decider": "reg",
     "pens": null,
     "note": "M85 SUI 2-0 ALG -> SUI, auto-synced from ESPN fifa.world FT on 2026-07-03."
+  },
+  {
+    "match": 88,
+    "home": "AUS",
+    "away": "EGY",
+    "score": [
+      1,
+      1
+    ],
+    "decider": "pens",
+    "pens": [
+      2,
+      4
+    ],
+    "note": "M88 AUS 1-1 EGY (2-4 pens) -> EGY, auto-synced from ESPN fifa.world FT on 2026-07-03."
   }
 ]

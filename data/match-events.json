@@ -454,6 +454,27 @@
   ],
   "pens": []
  },
+ "88": {
+  "home": "AUS",
+  "away": "EGY",
+  "events": [
+   {
+    "min": 744,
+    "minLabel": "13",
+    "type": "goal",
+    "team": "away",
+    "who": "Emam Ashour"
+   },
+   {
+    "min": 3249,
+    "minLabel": "55",
+    "type": "goal",
+    "team": "home",
+    "who": "Mohamed Hany (OG)"
+   }
+  ],
+  "pens": []
+ },
  "g:MEX-RSA": {
   "home": "MEX",
   "away": "RSA",
