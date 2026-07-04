@@ -454,6 +454,48 @@
   ],
   "pens": []
  },
+ "86": {
+  "home": "ARG",
+  "away": "CPV",
+  "events": [
+   {
+    "min": 1682,
+    "minLabel": "29",
+    "type": "goal",
+    "team": "home",
+    "who": "Lionel Messi"
+   },
+   {
+    "min": 3518,
+    "minLabel": "59",
+    "type": "goal",
+    "team": "away",
+    "who": "Deroy Duarte"
+   },
+   {
+    "min": 5517,
+    "minLabel": "92",
+    "type": "goal",
+    "team": "home",
+    "who": "Lisandro Martínez"
+   },
+   {
+    "min": 6161,
+    "minLabel": "103",
+    "type": "goal",
+    "team": "away",
+    "who": "Sidny Cabral"
+   },
+   {
+    "min": 6631,
+    "minLabel": "111",
+    "type": "goal",
+    "team": "home",
+    "who": "Diney Borges (OG)"
+   }
+  ],
+  "pens": []
+ },
  "88": {
   "home": "AUS",
   "away": "EGY",

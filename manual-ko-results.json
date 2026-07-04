@@ -175,5 +175,17 @@
       4
     ],
     "note": "M88 AUS 1-1 EGY (2-4 pens) -> EGY, auto-synced from ESPN fifa.world FT on 2026-07-03."
+  },
+  {
+    "match": 86,
+    "home": "ARG",
+    "away": "CPV",
+    "score": [
+      3,
+      2
+    ],
+    "decider": "aet",
+    "pens": null,
+    "note": "M86 ARG 3-2 CPV AET -> ARG, auto-synced from ESPN fifa.world FT on 2026-07-04."
   }
 ]
