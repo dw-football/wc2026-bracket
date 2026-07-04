@@ -1,5 +1,26 @@
 # WC2026 Bracket Projector
 
+## SHIPPED 2026-07-04 — KO winner propagation across ALL rounds (eliminated team in a QF) — LIVE (`a2de4ec`)
+David caught the bracket showing **NED (out in the R32) sitting in the M97 Boston QF**, and **M90 CAN-MAR
+rendering as UNPLAYED** — on the day of the FIRST-EVER R16 result (M90 MAR 3-0 CAN). NOT emotion, a real bug.
+Root cause = **three R32-only assumptions** in build-html's KO overlay that never got exercised until an R16 game
+finished: (1) the played-winner map `koWinnerOf` was built from `BRACKET.rounds.R32` ONLY → a decided R16/QF/SF
+result never propagated into the round it feeds; (2) the "played → score + greyed loser" path was gated
+`rd==='R32'` → M90 showed as an unplayed CAN/MAR matchup; (3) a locked look-ahead slot took its code as
+`code||ncands[0].code`, preferring the **stale pre-tournament MC occupancy modal** (NED was ~61% to reach that
+slot) over the authoritative eliminated-filtered `koDist` candidate. The DATA was always correct (MAR-beat-CAN
+recorded; `ko-slot-dist` knew MAR; M101 look-ahead even read "MAR 40%") — purely a render-resolution fallback.
+**Fix:** new pure module **`ko-resolve.mjs`** (`makeOccupantResolver`/`koWinnersByMatch`) = the all-rounds winner
+map + concrete side-code resolver, inlined into the page (wrapModuleIIFE) and **unit-tested**. build-html now:
+decorates played results + skips the walk for a played match in EVERY round (pinning the two ACTUAL teams from the
+result, never the MC occupancy); sources a non-official look-ahead slot's code from `koDist` (never the stale
+modal); and renders played R16+/QF/SF/Final games with score + greyed loser + AET/pens tag in the non-R32 renderer.
+**Tests:** `ko-resolve.test.js` — 8 new, incl. the exact NED-in-QF reproduction, a full R32→Final play-through
+("every fed slot = its feeder winner"), "a team eliminated in round R appears in NO later round", and koDist
+zero-probability checks. **117/117 green.** Verified headlessly (PNG): M90 = CAN 0 / MAR 3, M97 = MAR (not NED);
+live-published stamp confirmed (`builtAtISO 2026-07-04T20:45`). This fix is round-agnostic → self-applies to every
+future R16/QF/SF/Final result. (David will need a hard-refresh — his browser had the old, buggy artifact cached.)
+
 ## WORKFLOW RULE — localhost first, push only on command
 **NEW FEATURES / code changes: build to `dist/` and let David verify on localhost
 FIRST. Do NOT commit or push to GitHub until David explicitly says to.** Deploying =
@@ -173,8 +194,11 @@ next day" — true for scores, false for popovers.) Parked fix if ever wanted: a
 for matches played within the last ~2-3 days each run) to catch corrections, while still skipping the settled backlog.
 
 ## RESUME
-Next action: NOTHING PENDING — R32 auto-deploys unattended. **Through M88; 86/104** (R32 nearly complete — M86/M87
-remain). If a new pens game's popover shows no takers, that's ESPN lag (their `summary.shootout` block trails FT by
+Next action: NOTHING PENDING — KO auto-deploys unattended. **R32 complete (M73-88); first R16 game M90 MAR 3-0 CAN
+played + LIVE; 89/104.** ⚠️ 2026-07-04: fixed a LIVE render bug the first R16 result exposed — a decided KO game now
+propagates its winner into every downstream round (was R32-only → had shown eliminated NED in the QF). See SHIPPED
+2026-07-04 (`a2de4ec`, 117/117). The KO renderer is now round-agnostic; R16/QF/SF/Final results self-render. M89
+FRA-PAR was scheduled 7-04 5p EDT (auto-deploys at FT). If a new pens game's popover shows no takers, that's ESPN lag (their `summary.shootout` block trails FT by
 ~5 min); the self-heal + the poll pattern used 7-03 backfill it — do NOT treat empty pens as a bug.
 Then read: SHIPPED 2026-07-03 (popover penalty-as-red-card fix + reconciliation gate), Session Notes.
 **KO stage is LIVE and auto-deploying — NOTHING TO DO MANUALLY.** The `WC2026-autosync` task on 520 deploys each
