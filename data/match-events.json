@@ -496,6 +496,20 @@
   ],
   "pens": []
  },
+ "87": {
+  "home": "COL",
+  "away": "GHA",
+  "events": [
+   {
+    "min": 829,
+    "minLabel": "14",
+    "type": "goal",
+    "team": "home",
+    "who": "Jhon Arias"
+   }
+  ],
+  "pens": []
+ },
  "88": {
   "home": "AUS",
   "away": "EGY",

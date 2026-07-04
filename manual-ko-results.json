@@ -187,5 +187,17 @@
     "decider": "aet",
     "pens": null,
     "note": "M86 ARG 3-2 CPV AET -> ARG, auto-synced from ESPN fifa.world FT on 2026-07-04."
+  },
+  {
+    "match": 87,
+    "home": "COL",
+    "away": "GHA",
+    "score": [
+      1,
+      0
+    ],
+    "decider": "reg",
+    "pens": null,
+    "note": "M87 COL 1-0 GHA -> COL, auto-synced from ESPN fifa.world FT on 2026-07-04."
   }
 ]
