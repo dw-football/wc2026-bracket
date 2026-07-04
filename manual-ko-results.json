@@ -199,5 +199,17 @@
     "decider": "reg",
     "pens": null,
     "note": "M87 COL 1-0 GHA -> COL, auto-synced from ESPN fifa.world FT on 2026-07-04."
+  },
+  {
+    "match": 90,
+    "home": "CAN",
+    "away": "MAR",
+    "score": [
+      0,
+      3
+    ],
+    "decider": "reg",
+    "pens": null,
+    "note": "M90 CAN 0-3 MAR -> MAR, auto-synced from ESPN fifa.world FT on 2026-07-04."
   }
 ]

@@ -572,6 +572,34 @@
    }
   ]
  },
+ "90": {
+  "home": "CAN",
+  "away": "MAR",
+  "events": [
+   {
+    "min": 2959,
+    "minLabel": "50",
+    "type": "goal",
+    "team": "away",
+    "who": "Azzedine Ounahi"
+   },
+   {
+    "min": 4880,
+    "minLabel": "82",
+    "type": "goal",
+    "team": "away",
+    "who": "Azzedine Ounahi"
+   },
+   {
+    "min": 5400,
+    "minLabel": "90'+8",
+    "type": "goal",
+    "team": "away",
+    "who": "Soufiane Rahimi"
+   }
+  ],
+  "pens": []
+ },
  "g:MEX-RSA": {
   "home": "MEX",
   "away": "RSA",
