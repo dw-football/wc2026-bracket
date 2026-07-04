@@ -242,13 +242,14 @@ function bakeMonteCarlo(groups, bracket, koVenueCountry) {
 async function main() {
   const refresh = process.argv.includes('--refresh');
 
-  const [engineSrc, allocationSrc, modelSrc, scenarioSummarySrc, groupSituationSrc, koSlotDistSrc] = await Promise.all([
+  const [engineSrc, allocationSrc, modelSrc, scenarioSummarySrc, groupSituationSrc, koSlotDistSrc, koResolveSrc] = await Promise.all([
     readText('engine.js'),
     readText('allocation.js'),
     readText('model.js'),
     readText('scenario-summary.js'),
     readText('group-situation.js'),
     readText('ko-slot-dist.mjs'),
+    readText('ko-resolve.mjs'),
   ]);
 
   const [teams, bracket, allocation, koSchedule] = await Promise.all([
@@ -296,6 +297,7 @@ async function main() {
   const scenarioSummaryBundle = wrapModuleIIFE(scenarioSummarySrc, ['summarizeGroup', '__test'], '__scnSummaryMod');
   const groupSituationBundle = wrapModuleIIFE(groupSituationSrc, ['groupSituation', 'maxThirdPoints', 'minThirdPoints', 'thirdCeilings', 'thirdFloors', 'thirdOnPointsClinches', 'thirdOnPointsEliminated', 'thirdPlaceOutlook'], '__grpSituationMod');
   const koSlotDistBundle = wrapModuleIIFE(koSlotDistSrc, ['makeKoSlotDist'], '__koSlotDistMod');
+  const koResolveBundle = wrapModuleIIFE(koResolveSrc, ['makeOccupantResolver', 'koWinnersByMatch'], '__koResolveMod');
 
   const logicBundle = [
     '/* ===== engine.js ===== */',
@@ -310,6 +312,8 @@ async function main() {
     groupSituationBundle,
     '/* ===== ko-slot-dist.js (makeKoSlotDist; shared KO contender distribution) ===== */',
     koSlotDistBundle,
+    '/* ===== ko-resolve.js (makeOccupantResolver; all-rounds KO occupant resolver) ===== */',
+    koResolveBundle,
   ].join('\n\n');
 
   // Sanity: no leftover module tokens in the bundled LOGIC.
@@ -1097,22 +1101,18 @@ const APP_JS = String.raw`
       //      ARG over BEL/AUS; one further: FRA/GER over NED/KOR).
       //  (d) deeper/uncertain slots keep the Monte-Carlo occupancy top-2 (popover
       //      shows all candidates).
-      var koWinnerOf={};
-      BRACKET.rounds.R32.forEach(function(m){
-        var r=KO_RESULTS[m.match]||KO_RESULTS[String(m.match)]; if(r) koWinnerOf[m.match]=r.winner;
+      // Concrete winner of EVERY decided knockout match (ALL rounds) + the concrete
+      // team on any match/side where it is determined. Delegated to the pure,
+      // unit-tested ko-resolve module (ko-resolve.test.js): a decided R16/QF/SF
+      // result MUST propagate into the round it feeds. The prior R32-only winner map
+      // left an eliminated team (a losing R32 side) sitting in a later-round slot.
+      // R32 group/runner-up/third leaves resolve from the locked MC occupant (100%).
+      var __occ=makeOccupantResolver(BRACKET, KO_RESULTS, function(mNo, side){
+        var arr=(byMatch[mNo]||{})[side]||[]; var c=arr[0]||null;
+        return (c && (c.p||0)>=0.9995)? c.code : null;
       });
-      // concrete two side-codes of any match (R32 occupants are 100% in perSlot).
-      function sideCodesOf(matchNo){
-        var s=byMatch[matchNo]||{home:[],away:[]};
-        function pick(arr){ var c=(arr&&arr[0])||null; return (c && (c.p||0)>=0.9995)? c.code : null; }
-        var idx2={}; Object.keys(BRACKET.rounds).forEach(function(rd){ (BRACKET.rounds[rd]||[]).forEach(function(mm){ idx2[mm.match]=mm; }); });
-        var m=idx2[matchNo];
-        function side(def, arr){
-          if(def && def.type==='winnerOf'){ return koWinnerOf[def.match]||null; }
-          return pick(arr); // R32 group/runnerup/third occupant
-        }
-        return { home: side(m&&m.home, s.home), away: side(m&&m.away, s.away) };
-      }
+      var koWinnerOf=__occ.winners;
+      function sideCodesOf(matchNo){ return __occ.sideCodes(matchNo); }
 
       // EXACT chained head-to-head reach distribution for any knockout slot — the
       // SHARED ko-slot-dist module (the SAME code the calendar resolver uses, so the
@@ -1129,20 +1129,27 @@ const APP_JS = String.raw`
         r32Occupant: function(mNo, side){ return sideCodesOf(mNo)[side]; },
         koWinner: function(mNo){ var r=KO_RESULTS[mNo]||KO_RESULTS[String(mNo)]; return (r && r.winner) || null; }
       });
-      // (a) played R32
-      BRACKET.rounds.R32.forEach(function(m){
-        var r=KO_RESULTS[m.match]||KO_RESULTS[String(m.match)]; if(!r) return;
-        var inf=info[m.match]; if(!inf) return;
-        var hc=inf.home.code, ac=inf.away.code;
-        inf.home.result={ side:'home', score:r.score, decider:r.decider, pens:r.pens, won:r.winner===hc, lost:r.winner!==hc };
-        inf.away.result={ side:'away', score:r.score, decider:r.decider, pens:r.pens, won:r.winner===ac, lost:r.winner!==ac };
+      // (a) played knockout game (ANY round): pin the two ACTUAL teams (from the
+      // result itself, NEVER the stale MC occupancy) + overlay score/decider so the
+      // match renders as played. Round-agnostic — an R16/QF/SF/Final result shows its
+      // score + greyed loser exactly like an R32 game, instead of reading "unplayed".
+      ['R32','R16','QF','SF','ThirdPlace','Final'].forEach(function(rd){
+        (BRACKET.rounds[rd]||[]).forEach(function(m){
+          var r=KO_RESULTS[m.match]||KO_RESULTS[String(m.match)]; if(!r) return;
+          var inf=info[m.match]; if(!inf) return;
+          var hc=r.home||inf.home.code, ac=r.away||inf.away.code;
+          inf.home=Object.assign({}, inf.home, { code:hc, official:true,
+            result:{ side:'home', score:r.score, decider:r.decider, pens:r.pens, won:r.winner===hc, lost:r.winner!==hc } });
+          inf.away=Object.assign({}, inf.away, { code:ac, official:true,
+            result:{ side:'away', score:r.score, decider:r.decider, pens:r.pens, won:r.winner===ac, lost:r.winner!==ac } });
+        });
       });
       // walk every knockout match; decorate sides for (b)(c).
       ['R32','R16','QF','SF','Final'].forEach(function(rd){
         (BRACKET.rounds[rd]||[]).forEach(function(m){
           var inf=info[m.match]; if(!inf) return;
-          var played = rd==='R32' && (KO_RESULTS[m.match]||KO_RESULTS[String(m.match)]);
-          if(played) return; // (a) handled
+          var played = !!(KO_RESULTS[m.match]||KO_RESULTS[String(m.match)]);
+          if(played) return; // (a) handled — score + winner/loser already decorated
           var sc=sideCodesOf(m.match);
           var bothKnown = sc.home && sc.away;
           if(bothKnown){
@@ -1185,7 +1192,11 @@ const APP_JS = String.raw`
             var dist=koDist.slotDist(m.match, sideName);
             if(dist && dist.length){
               s.cands=dist;
-              if(!s.pair && !s.official && !s.h2hLocked){ s.code=(dist[0]||{}).code||null; s.p=(dist[0]||{}).p||0; }
+              // The definite team for any non-official look-ahead slot comes from the
+              // authoritative chained-H2H distribution (eliminated teams already carry
+              // 0), NEVER the stale pre-tournament MC occupancy modal — which is how an
+              // eliminated team (NED) once leaked into a quarterfinal slot.
+              if(!s.official){ s.code=(dist[0]||{}).code||s.code||null; s.p=(dist[0]||{}).p||0; }
             }
           });
         });
@@ -1564,10 +1575,31 @@ const APP_JS = String.raw`
     } else {
       var codeX=x+Math.round(13*_PS), nameX=x+Math.round(44*_PS);
       var ncands=(si.cands||[]).filter(function(c){return c&&c.code;});
+
+      // ---- PLAYED knockout game (R16+): winner dark + goals, loser greyed in
+      //      place, decider tag (AET / x–y pens) on the winner's row — the same
+      //      treatment R32 games get, so a finished R16/QF/SF/Final reads as played
+      //      (not a phantom "unplayed" matchup). ----
+      var R=si.result;
       var nLocked = (si.official && code) || clinched || (ncands.length===1) || (ncands[0]&&ncands[0].p>=0.9995);
-      if(nLocked && (code||(ncands[0]&&ncands[0].code))){
-        // LOCKED: a determined team -> code + full name, NO % ("what it did before").
-        var lc=code||ncands[0].code;
+      if(R){
+        // played game: winner dark + goals, loser greyed, decider tag on the winner.
+        var won=R.won;
+        var lc0=code||((ncands[0]||{}).code)||'—';
+        var myGoals=R.side==='home'? R.score[0] : R.score[1];
+        var pt=svgEl('text',{ x:codeX, y:midY });
+        var ps=function(txt,attrs){ var s=svgEl('tspan',attrs||{}); s.textContent=txt; pt.appendChild(s); };
+        ps(lc0+'  ', { fill: won?'#171a20':'#9aa1ab','font-size':String(FS(12)),'font-weight': won?'700':'600' });
+        ps(truncName(nameByCode[lc0]||'', COL_W-Math.round(96*_PS))+'  ', { fill: won?'#56606e':'#aeb4bd','font-size':String(FS(10)),'font-weight':'400' });
+        ps(String(myGoals), { fill: won?'#0b4fb0':'#5b636e','font-size':String(FS(13)),'font-weight':'800' });
+        if(won && R.decider==='aet') ps('  AET', { fill:'#9a6b00','font-size':String(FS(9)),'font-weight':'700' });
+        else if(won && R.decider==='pens' && R.pens) ps('  '+R.pens[0]+'–'+R.pens[1]+' pens', { fill:'#9a6b00','font-size':String(FS(9)),'font-weight':'700' });
+        g.appendChild(pt);
+      } else if(nLocked && (code||(ncands[0]&&ncands[0].code))){
+        // LOCKED: a determined team -> code + full name, NO %. Prefer the authoritative
+        // chained-H2H candidate (eliminated-filtered) over the slot's modal code so a
+        // stale projection can never override the real occupant.
+        var lc=((ncands[0]||{}).code)||code;
         g.appendChild(svgText(codeX, midY, lc,
           { fill:'#171a20','font-size':String(FS(12)),'font-weight':'700' }));
         g.appendChild(svgText(nameX, midY, truncName(nameByCode[lc]||'', COL_W-(nameX-x)-Math.round(14*_PS)),
