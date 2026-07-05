@@ -1502,28 +1502,30 @@ const APP_JS = String.raw`
       else if(seed) span(seed+' ', { fill:fill,'font-size':String(FS(9.5)),'font-weight':'700' });
     }
 
-    // ---- (a) PLAYED R32 GAME: code + this side's goals (+ decider tag). The
-    //      LOSER is muted in place (grey team text) but its GOAL stays legible;
-    //      never a strikethrough. ----
+    // ---- (a) PLAYED R32 GAME: seed/group chip + full country NAME (bold) + this
+    //      side's goals (+ decider tag). A locked-in team shows its NAME, not the
+    //      3-letter code (which is reserved for the still-contested candidate lists).
+    //      The LOSER is muted in place (grey name) but its GOAL stays legible. ----
     var R=si.result;
     if(R){
       var won=R.won;
       seedSpan(won?'#878f9c':'#aeb4bd');
       var myGoals = R.side==='home'? R.score[0] : R.score[1];
-      span((modal.code||'—')+' ', { fill: won?'#171a20':'#9aa1ab','font-size':String(FS(12)),'font-weight': won?'700':'600' });
+      var pnmW = COL_W-Math.round((R.decider==='pens'?104: R.decider==='aet'?78: 48)*_PS);
+      span(truncName(nameByCode[modal.code]||modal.code||'—', pnmW)+' ', { fill: won?'#171a20':'#9aa1ab','font-size':String(FS(12)),'font-weight': won?'700':'600' });
       span(String(myGoals), { fill: won?'#0b4fb0':'#5b636e','font-size':String(FS(13)),'font-weight':'800' });
       if(won && R.decider==='aet') span('  AET', { fill:'#9a6b00','font-size':String(FS(9)),'font-weight':'700' });
       else if(won && R.decider==='pens' && R.pens) span('  '+R.pens[0]+'–'+R.pens[1]+' pens', { fill:'#9a6b00','font-size':String(FS(9)),'font-weight':'700' });
       g.appendChild(t); return;
     }
 
-    // ---- LOCKED occupant: a single determined team -> seed/group chip + code +
-    //      full name, NO % (covers an official next-up team and a clinched slot). ----
+    // ---- LOCKED occupant: a single determined team -> seed/group chip + full
+    //      country NAME (bold), NO code and NO % (covers an official next-up team
+    //      and a clinched slot). ----
     var lockedTeam = (si.official && si.code) ? si.code : (clinched ? modal.code : null);
     if(lockedTeam){
       seedSpan('#878f9c');
-      span(lockedTeam, { fill:'#171a20','font-size':String(FS(12)),'font-weight':'700' });
-      span('  '+truncName(nameByCode[lockedTeam]||'', COL_W-Math.round(70*_PS)), { fill:'#56606e','font-size':String(FS(10)),'font-weight':'400' });
+      span(truncName(nameByCode[lockedTeam]||lockedTeam, COL_W-Math.round(40*_PS)), { fill:'#171a20','font-size':String(FS(12)),'font-weight':'700' });
       g.appendChild(t); return;
     }
 
@@ -1536,10 +1538,11 @@ const APP_JS = String.raw`
       g.appendChild(t); return;
     }
 
-    // ---- fallback (picks mode / no distribution): single modal code + name ----
+    // ---- fallback (picks mode / no distribution): single determined team -> chip
+    //      + full country NAME (bold), code dropped; em dash when still empty. ----
     seedSpan('#878f9c');
-    span(modal.code||'—', { fill: modal.code?'#171a20':'#878f9c', 'font-size':String(FS(12)),'font-weight':'700' });
-    if(modal.code){ span('  '+truncName(nameByCode[modal.code]||'', COL_W-Math.round(70*_PS)), { fill:'#56606e','font-size':String(FS(10)) }); }
+    if(modal.code) span(truncName(nameByCode[modal.code]||modal.code, COL_W-Math.round(40*_PS)), { fill:'#171a20','font-size':String(FS(12)),'font-weight':'700' });
+    else span('—', { fill:'#878f9c','font-size':String(FS(12)),'font-weight':'700' });
     g.appendChild(t);
   }
 
@@ -1583,27 +1586,26 @@ const APP_JS = String.raw`
       var R=si.result;
       var nLocked = (si.official && code) || clinched || (ncands.length===1) || (ncands[0]&&ncands[0].p>=0.9995);
       if(R){
-        // played game: winner dark + goals, loser greyed, decider tag on the winner.
+        // played game: winner = bold country NAME + goals, loser = greyed name +
+        // goals, decider tag on the winner. Code dropped (team is locked in).
         var won=R.won;
         var lc0=code||((ncands[0]||{}).code)||'—';
         var myGoals=R.side==='home'? R.score[0] : R.score[1];
         var pt=svgEl('text',{ x:codeX, y:midY });
         var ps=function(txt,attrs){ var s=svgEl('tspan',attrs||{}); s.textContent=txt; pt.appendChild(s); };
-        ps(lc0+'  ', { fill: won?'#171a20':'#9aa1ab','font-size':String(FS(12)),'font-weight': won?'700':'600' });
-        ps(truncName(nameByCode[lc0]||'', COL_W-Math.round(96*_PS))+'  ', { fill: won?'#56606e':'#aeb4bd','font-size':String(FS(10)),'font-weight':'400' });
+        var pnmW=COL_W-Math.round((R.decider==='pens'?92: R.decider==='aet'?66: 36)*_PS);
+        ps(truncName(nameByCode[lc0]||lc0||'—', pnmW)+' ', { fill: won?'#171a20':'#9aa1ab','font-size':String(FS(12)),'font-weight': won?'700':'600' });
         ps(String(myGoals), { fill: won?'#0b4fb0':'#5b636e','font-size':String(FS(13)),'font-weight':'800' });
         if(won && R.decider==='aet') ps('  AET', { fill:'#9a6b00','font-size':String(FS(9)),'font-weight':'700' });
         else if(won && R.decider==='pens' && R.pens) ps('  '+R.pens[0]+'–'+R.pens[1]+' pens', { fill:'#9a6b00','font-size':String(FS(9)),'font-weight':'700' });
         g.appendChild(pt);
       } else if(nLocked && (code||(ncands[0]&&ncands[0].code))){
-        // LOCKED: a determined team -> code + full name, NO %. Prefer the authoritative
-        // chained-H2H candidate (eliminated-filtered) over the slot's modal code so a
-        // stale projection can never override the real occupant.
+        // LOCKED: a determined team -> full country NAME (bold), NO code and NO %.
+        // Prefer the authoritative chained-H2H candidate (eliminated-filtered) over
+        // the slot's modal code so a stale projection can never override the occupant.
         var lc=((ncands[0]||{}).code)||code;
-        g.appendChild(svgText(codeX, midY, lc,
+        g.appendChild(svgText(codeX, midY, truncName(nameByCode[lc]||lc, COL_W-Math.round(28*_PS)),
           { fill:'#171a20','font-size':String(FS(12)),'font-weight':'700' }));
-        g.appendChild(svgText(nameX, midY, truncName(nameByCode[lc]||'', COL_W-(nameX-x)-Math.round(14*_PS)),
-          { fill:'#56606e','font-size':String(FS(10)),'font-weight':'400' }));
       } else if(state.mode==='projected' && ncands.length){
         // UNLOCKED look-ahead: candidate list "C1 p1% / C2 p2% …".
         var tt=svgEl('text',{ x:codeX, y:midY });
@@ -1611,11 +1613,10 @@ const APP_JS = String.raw`
         renderCandSpans(nspan, ncands, COL_W-Math.round(22*_PS));
         g.appendChild(tt);
       } else {
-        // fallback: TBD / picks-mode single picked code + name
-        g.appendChild(svgText(codeX, midY, code||'—',
+        // fallback: TBD / picks-mode single picked team -> bold country NAME (code
+        // dropped); em dash when the slot is still empty.
+        g.appendChild(svgText(codeX, midY, code? truncName(nameByCode[code]||code, COL_W-Math.round(28*_PS)) : '—',
           { fill: code? '#171a20':'#878f9c', 'font-size':String(FS(12)),'font-weight':'700' }));
-        if(code){ g.appendChild(svgText(nameX, midY, truncName(nameByCode[code]||'', COL_W-(nameX-x)-Math.round(14*_PS)),
-          { fill:'#56606e','font-size':String(FS(10)),'font-weight':'400' })); }
       }
     }
 
