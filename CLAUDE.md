@@ -456,6 +456,13 @@ Per-group "what each result means" prose. TWO renderers by # unplayed in the gro
 - (The claude.ai Artifact path was abandoned — kept failing for David.)
 
 ## OPEN / PARKED
+- [ ] (FORK-FORWARD, next tournament — David 2026-07-05) Long-name + decider-tag overflow in the compact
+      R32 column. Locked-in teams now render the full country NAME (bold, code dropped); the tightest layout
+      is a long name in a PENS/AET R32 row ("3B Bosnia & Herzegovina 2  3–4 pens"). Current field fits (it
+      truncates with "…" rather than breaking), so no action this cup. PLAN: when a team wins on penalties/AET
+      such that name + score + tag would overflow, shorten the DISPLAY name (e.g. "Bosnia & Herzegovina" →
+      "Bosnia") — a render-only display-name override keyed off the width-would-overflow condition, leaving
+      teams.json canonical (so standings/scenario/calendar are unaffected). Only the R32 pens/AET rows need it.
 - [x] Update the test suite to the rewritten scenario text — DONE 2026-06-22 (47/47 green).
 - [x] Knockout match venue/date/time on bracket headers (EDT) — DONE/deployed 2026-06-22.
 - [ ] (Parked, revisit ~late June once more games played) Third-place points-distribution
