@@ -21,6 +21,20 @@ zero-probability checks. **117/117 green.** Verified headlessly (PNG): M90 = CAN
 live-published stamp confirmed (`builtAtISO 2026-07-04T20:45`). This fix is round-agnostic → self-applies to every
 future R16/QF/SF/Final result. (David will need a hard-refresh — his browser had the old, buggy artifact cached.)
 
+## SHIPPED 2026-07-05 — Locked-in teams show full country NAME (bold), 3-letter code dropped — LIVE (`3118592`)
+David noticed the completed-portion inconsistency (R32 played rows showed `NOR 2` while R16+ showed `NOR
+Norway 2`). Root = two renderers: `renderR32Inline` prepends the structural group/seed chip (`3E`, `K2`, `A2`)
+and dropped the name for space; the R16+ else-branch had room and showed code+name. David's call: **once a team
+is LOCKED IN, show the full country name in BOLD and drop the code** — applies to played games AND official/
+clinched occupants; the R32 seed chip is RETAINED (`3E Ecuador 0`); a played LOSER stays greyed (winner-bold/
+loser-muted preserved, David 100% confirmed). Still-CONTESTED look-ahead slots keep the compact code+% form
+(`FRA 67% / MAR 33%`). Changed all locked-render sites in both renderers (R32 played/locked/fallback + R16+
+played/locked/fallback); names width-budgeted per decider (reg/AET/pens) and truncate with `…` rather than
+overflow. Render-only, no logic/data change. Verified localhost side-by-side + headless PNG, pushed on GO, Pages
+publish confirmed. **Longest surviving name = Switzerland (11), fits even with a pens tag → the long-name+tag
+overflow case is MOOT this cup**; filed as a fork-forward note (see OPEN/PARKED: shorten display name only when a
+pens/AET R32 row would overflow, via a render-only display-name override leaving teams.json canonical).
+
 ## WORKFLOW RULE — localhost first, push only on command
 **NEW FEATURES / code changes: build to `dist/` and let David verify on localhost
 FIRST. Do NOT commit or push to GitHub until David explicitly says to.** Deploying =
@@ -194,11 +208,12 @@ next day" — true for scores, false for popovers.) Parked fix if ever wanted: a
 for matches played within the last ~2-3 days each run) to catch corrections, while still skipping the settled backlog.
 
 ## RESUME
-Next action: NOTHING PENDING — KO auto-deploys unattended. **R32 complete (M73-88); first R16 game M90 MAR 3-0 CAN
-played + LIVE; 89/104.** ⚠️ 2026-07-04: fixed a LIVE render bug the first R16 result exposed — a decided KO game now
-propagates its winner into every downstream round (was R32-only → had shown eliminated NED in the QF). See SHIPPED
-2026-07-04 (`a2de4ec`, 117/117). The KO renderer is now round-agnostic; R16/QF/SF/Final results self-render. M89
-FRA-PAR was scheduled 7-04 5p EDT (auto-deploys at FT). If a new pens game's popover shows no takers, that's ESPN lag (their `summary.shootout` block trails FT by
+Next action: NOTHING PENDING — KO auto-deploys unattended; tree clean, all pushed (`3118592`+doc `ad850be`), Pages
+verified live. **R16 underway: M90 MAR, M89 FRA (beat PAR), M91 NOR (beat BRA) into QFs; through M91, 91/104.**
+Two fixes shipped LIVE this session, both round-agnostic + self-applying: (1) 2026-07-04 `a2de4ec` — KO winner
+propagation across ALL rounds (was R32-only → had shown eliminated NED in the QF; new pure `ko-resolve.mjs` + 8
+tests, 117/117); (2) 2026-07-05 `3118592` — locked-in teams show full country NAME (bold), code dropped, R32 chip
+kept, loser greyed. Then read: SHIPPED 2026-07-05 + 2026-07-04, and OPEN/PARKED (fork-forward name-shorten note). If a new pens game's popover shows no takers, that's ESPN lag (their `summary.shootout` block trails FT by
 ~5 min); the self-heal + the poll pattern used 7-03 backfill it — do NOT treat empty pens as a bug.
 Then read: SHIPPED 2026-07-03 (popover penalty-as-red-card fix + reconciliation gate), Session Notes.
 **KO stage is LIVE and auto-deploying — NOTHING TO DO MANUALLY.** The `WC2026-autosync` task on 520 deploys each
@@ -735,3 +750,15 @@ State as of 2026-06-24. **50/104** (added COL 1-0 COD, SUI 2-1 CAN, BIH 3-1 QAT 
   score reconciliation gate David explicitly asked for, +regression tests (109/109). The gate caught 11 corrupted
   matches (all penalty-in-open-play games), healed all. Pushed `1e0a52e`. Then M88 AUS-EGY pens popover was empty —
   ESPN lag, not a bug; polled + backfilled takers when they landed (`aad75f5`). 86/104.
+- 2026-07-04/05 — **Two LIVE bracket fixes David caught.** (1) "Who did you claim is first quarterfinalist?! OH NO!!"
+  → the first-ever R16 result (M90 MAR 3-0 CAN) had put ELIMINATED Netherlands in the Boston QF, and M90 rendered
+  as unplayed. Diagnosed (not emotion): three R32-ONLY assumptions in build-html's KO overlay (winner map, played-
+  gate, stale-MC-modal preference) that never got exercised until an R16 game finished. Extracted the all-rounds
+  winner/occupant resolution into a pure `ko-resolve.mjs` (unit-tested), generalized played-result decoration +
+  koDist-sourced locked team + R16+ played rendering across every round. New `ko-resolve.test.js` (8 tests: exact
+  NED-in-QF repro, full R32→Final play-through, "eliminated team appears in no later round"), 117/117. Verified
+  headless PNG + live stamp. Shipped `a2de4ec`. (2) David then flagged a completed-bracket inconsistency (`NOR 2`
+  in R32 vs `NOR Norway 2` in R16) → decided locked-in teams show full country NAME (bold), drop the code, keep the
+  R32 chip, loser stays greyed. Built + compared on localhost side-by-side per his request, shipped `3118592`.
+  Filed a fork-forward note (name-shorten on pens/AET overflow — moot this cup, Switzerland fits). Long-name+tag
+  overflow confirmed impossible this tournament. Both fixes round-agnostic. Through M91 (91/104).
