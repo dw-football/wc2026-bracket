@@ -614,6 +614,34 @@
   ],
   "pens": []
  },
+ "91": {
+  "home": "BRA",
+  "away": "NOR",
+  "events": [
+   {
+    "min": 4738,
+    "minLabel": "79",
+    "type": "goal",
+    "team": "away",
+    "who": "Erling Haaland"
+   },
+   {
+    "min": 5349,
+    "minLabel": "90",
+    "type": "goal",
+    "team": "away",
+    "who": "Erling Haaland"
+   },
+   {
+    "min": 5400,
+    "minLabel": "90'+10",
+    "type": "goal",
+    "team": "home",
+    "who": "Neymar"
+   }
+  ],
+  "pens": []
+ },
  "g:MEX-RSA": {
   "home": "MEX",
   "away": "RSA",
