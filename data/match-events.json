@@ -691,6 +691,20 @@
   ],
   "pens": []
  },
+ "93": {
+  "home": "POR",
+  "away": "ESP",
+  "events": [
+   {
+    "min": 5400,
+    "minLabel": "90'+1",
+    "type": "goal",
+    "team": "away",
+    "who": "Mikel Merino"
+   }
+  ],
+  "pens": []
+ },
  "g:MEX-RSA": {
   "home": "MEX",
   "away": "RSA",

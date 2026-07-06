@@ -247,5 +247,17 @@
     "decider": "reg",
     "pens": null,
     "note": "M92 MEX 2-3 ENG -> ENG, auto-synced from ESPN fifa.world FT on 2026-07-06."
+  },
+  {
+    "match": 93,
+    "home": "POR",
+    "away": "ESP",
+    "score": [
+      0,
+      1
+    ],
+    "decider": "reg",
+    "pens": null,
+    "note": "M93 POR 0-1 ESP -> ESP, auto-synced from ESPN fifa.world FT on 2026-07-06."
   }
 ]
