@@ -1388,29 +1388,53 @@ const APP_JS = String.raw`
     return svg;
   }
 
-  // " venue · date · time" for a knockout match (no EDT suffix — the stamp line
-  // carries a single "all times EDT" note). Empty string if no schedule entry.
-  function koLabel(matchNo){
-    var k=KOSCHED[matchNo]||KOSCHED[String(matchNo)]; if(!k) return '';
-    return [k.venue, k.dateLabel, k.timeEDT? k.timeEDT+' EDT':''].filter(Boolean).join(' · ');
+  // Is every match in this knockout round already played? Used to retire the "FT"
+  // tag once a WHOLE round is done — a fully-completed round is obvious from its
+  // shaded tiles, so "FT" on every game is redundant; it stays only on finished
+  // games in the round still in progress (the round that also has unplayed games).
+  function roundFullyPlayed(round){
+    var ms=BRACKET.rounds[round]||[];
+    return ms.length>0 && ms.every(function(mm){ return !!(KO_RESULTS[mm.match]||KO_RESULTS[String(mm.match)]); });
   }
-  // Append the schedule line to the right of the "M##" header.
-  function matchHeader(g, matchNo, x, top){
+
+  // Header line to the right of the "M##" label. Three states:
+  //  - UPCOMING            -> venue · date · TIME, kickoff time popped (bold amber)
+  //                           so "when/where next" stands out.
+  //  - CURRENT round, done -> venue · date · FT   (round still has unplayed games)
+  //  - FULLY-done round    -> venue · date        (the shaded tiles already say done)
+  function matchHeader(g, matchNo, x, top, played, roundDone){
     g.appendChild(svgText(x+Math.round(4*_PS), top-Math.round(3*_PS), 'M'+matchNo, { fill:'#878f9c','font-size':String(FS(9)) }));
-    var lbl=koLabel(matchNo);
-    if(lbl) g.appendChild(svgText(x+Math.round(28*_PS), top-Math.round(3*_PS), lbl, { fill:'#6b7480','font-size':String(FS(8.5)) }));
+    var k=KOSCHED[matchNo]||KOSCHED[String(matchNo)]; if(!k) return;
+    var base=[k.venue, k.dateLabel].filter(Boolean).join(' · ');
+    var tx=svgEl('text',{ x:x+Math.round(28*_PS), y:top-Math.round(3*_PS) });
+    function seg(txt, attrs){ var s=svgEl('tspan', attrs||{}); s.textContent=txt; tx.appendChild(s); }
+    if(!played){
+      // UPCOMING: pop the whole schedule line — venue + date bold/dark, kickoff time
+      // bold amber — so "where + when next" reads at a glance.
+      seg(base+(k.timeEDT?' · ':''), { fill:'#2f3a49','font-size':String(FS(9)),'font-weight':'700' });
+      if(k.timeEDT) seg(k.timeEDT+' EDT', { fill:'#b45309','font-size':String(FS(9.5)),'font-weight':'800' });
+    } else if(!roundDone){
+      seg(base+' · ', { fill:'#6b7480','font-size':String(FS(8.5)) });
+      seg('FT', { fill:'#3a7a52','font-size':String(FS(8.5)),'font-weight':'700' });
+    } else {
+      seg(base, { fill:'#6b7480','font-size':String(FS(8.5)) });
+    }
+    g.appendChild(tx);
   }
 
   function matchGroup(round, m, x, top, info){
     var g=svgEl('g',{});
-    // header (match number + venue/date/time) above the box
-    matchHeader(g, m.match, x, top);
-    // outer box
+    // A COMPLETED match (either side carries a result) reads as done: shaded tile,
+    // "FT" header, and a green check on the winner (rendered in the slot). An
+    // upcoming match stays an open white card. So done-vs-next is legible at a glance.
+    var played = !!(info && info.home && info.home.result);
+    matchHeader(g, m.match, x, top, played, roundFullyPlayed(round));
+    // outer box (shaded when the game is finished)
     g.appendChild(svgEl('rect',{ x:x, y:top, width:COL_W, height:MATCH_H, rx:Math.round(6*_PS),
-      fill:'#ffffff', stroke:'#d3d8e0','stroke-width':String(_PS) }));
+      fill: played?'#e9edf2':'#ffffff', stroke: played?'#c7cfd9':'#d3d8e0','stroke-width':String(_PS) }));
     // divider between the two slots
     g.appendChild(svgEl('line',{ x1:x, y1:top+SLOT_H, x2:x+COL_W, y2:top+SLOT_H,
-      stroke:'#d3d8e0','stroke-width':'1' }));
+      stroke: played?'#c7cfd9':'#d3d8e0','stroke-width':'1' }));
     g.appendChild(slotGroup(round, m, 'home', info.home||{code:null,p:0}, x, top));
     g.appendChild(slotGroup(round, m, 'away', info.away||{code:null,p:0}, x, top+SLOT_H));
     return g;
@@ -1420,9 +1444,10 @@ const APP_JS = String.raw`
   // muted (dashed border) so it reads as an aside, not part of the main tree.
   function thirdPlaceGroup(m, x, top, info){
     var g=svgEl('g',{});
-    matchHeader(g, m.match, x, top);
+    var played = !!(info && info.home && info.home.result);
+    matchHeader(g, m.match, x, top, played, roundFullyPlayed('ThirdPlace'));
     g.appendChild(svgEl('rect',{ x:x, y:top, width:COL_W, height:MATCH_H, rx:Math.round(6*_PS),
-      fill:'#f7f8fa', stroke:'#d3d8e0','stroke-width':String(_PS),'stroke-dasharray':Math.round(4*_PS)+' '+Math.round(3*_PS) }));
+      fill: played?'#e9edf2':'#f7f8fa', stroke:'#d3d8e0','stroke-width':String(_PS),'stroke-dasharray':Math.round(4*_PS)+' '+Math.round(3*_PS) }));
     g.appendChild(svgEl('line',{ x1:x, y1:top+SLOT_H, x2:x+COL_W, y2:top+SLOT_H,
       stroke:'#d3d8e0','stroke-width':'1' }));
     g.appendChild(slotGroup('ThirdPlace', m, 'home', info.home||{code:null,p:0}, x, top));
@@ -1511,7 +1536,8 @@ const APP_JS = String.raw`
       var won=R.won;
       seedSpan(won?'#878f9c':'#aeb4bd');
       var myGoals = R.side==='home'? R.score[0] : R.score[1];
-      var pnmW = COL_W-Math.round((R.decider==='pens'?104: R.decider==='aet'?78: 48)*_PS);
+      var tagW = won ? (R.decider==='pens'?56: R.decider==='aet'?30: 0) : 0;
+      var pnmW = COL_W-Math.round((44 + tagW)*_PS);
       span(truncName(nameByCode[modal.code]||modal.code||'—', pnmW)+' ', { fill: won?'#171a20':'#9aa1ab','font-size':String(FS(12)),'font-weight': won?'700':'600' });
       span(String(myGoals), { fill: won?'#0b4fb0':'#5b636e','font-size':String(FS(13)),'font-weight':'800' });
       if(won && R.decider==='aet') span('  AET', { fill:'#9a6b00','font-size':String(FS(9)),'font-weight':'700' });
@@ -1593,7 +1619,8 @@ const APP_JS = String.raw`
         var myGoals=R.side==='home'? R.score[0] : R.score[1];
         var pt=svgEl('text',{ x:codeX, y:midY });
         var ps=function(txt,attrs){ var s=svgEl('tspan',attrs||{}); s.textContent=txt; pt.appendChild(s); };
-        var pnmW=COL_W-Math.round((R.decider==='pens'?92: R.decider==='aet'?66: 36)*_PS);
+        var tagW = won ? (R.decider==='pens'?56: R.decider==='aet'?30: 0) : 0;
+        var pnmW=COL_W-Math.round((28 + tagW)*_PS);
         ps(truncName(nameByCode[lc0]||lc0||'—', pnmW)+' ', { fill: won?'#171a20':'#9aa1ab','font-size':String(FS(12)),'font-weight': won?'700':'600' });
         ps(String(myGoals), { fill: won?'#0b4fb0':'#5b636e','font-size':String(FS(13)),'font-weight':'800' });
         if(won && R.decider==='aet') ps('  AET', { fill:'#9a6b00','font-size':String(FS(9)),'font-weight':'700' });
