@@ -642,6 +642,55 @@
   ],
   "pens": []
  },
+ "92": {
+  "home": "MEX",
+  "away": "ENG",
+  "events": [
+   {
+    "min": 2155,
+    "minLabel": "36",
+    "type": "goal",
+    "team": "away",
+    "who": "Jude Bellingham"
+   },
+   {
+    "min": 2253,
+    "minLabel": "38",
+    "type": "goal",
+    "team": "away",
+    "who": "Jude Bellingham"
+   },
+   {
+    "min": 2509,
+    "minLabel": "42",
+    "type": "goal",
+    "team": "home",
+    "who": "Julián Quiñones"
+   },
+   {
+    "min": 3187,
+    "minLabel": "54",
+    "type": "red",
+    "team": "away",
+    "who": "Jarell Quansah"
+   },
+   {
+    "min": 3590,
+    "minLabel": "60",
+    "type": "goal",
+    "team": "away",
+    "who": "Harry Kane"
+   },
+   {
+    "min": 4114,
+    "minLabel": "69",
+    "type": "goal",
+    "team": "home",
+    "who": "Raúl Jiménez"
+   }
+  ],
+  "pens": []
+ },
  "g:MEX-RSA": {
   "home": "MEX",
   "away": "RSA",

@@ -235,5 +235,17 @@
     "decider": "reg",
     "pens": null,
     "note": "M91 BRA 1-2 NOR -> NOR, auto-synced from ESPN fifa.world FT on 2026-07-05."
+  },
+  {
+    "match": 92,
+    "home": "MEX",
+    "away": "ENG",
+    "score": [
+      2,
+      3
+    ],
+    "decider": "reg",
+    "pens": null,
+    "note": "M92 MEX 2-3 ENG -> ENG, auto-synced from ESPN fifa.world FT on 2026-07-06."
   }
 ]
