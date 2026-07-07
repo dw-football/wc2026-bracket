@@ -705,6 +705,48 @@
   ],
   "pens": []
  },
+ "94": {
+  "home": "USA",
+  "away": "BEL",
+  "events": [
+   {
+    "min": 516,
+    "minLabel": "9",
+    "type": "goal",
+    "team": "away",
+    "who": "Charles De Ketelaere"
+   },
+   {
+    "min": 1831,
+    "minLabel": "31",
+    "type": "goal",
+    "team": "home",
+    "who": "Malik Tillman"
+   },
+   {
+    "min": 1947,
+    "minLabel": "33",
+    "type": "goal",
+    "team": "away",
+    "who": "Charles De Ketelaere"
+   },
+   {
+    "min": 3395,
+    "minLabel": "57",
+    "type": "goal",
+    "team": "away",
+    "who": "Hans Vanaken"
+   },
+   {
+    "min": 5400,
+    "minLabel": "90'+3",
+    "type": "goal",
+    "team": "away",
+    "who": "Romelu Lukaku"
+   }
+  ],
+  "pens": []
+ },
  "g:MEX-RSA": {
   "home": "MEX",
   "away": "RSA",

@@ -259,5 +259,17 @@
     "decider": "reg",
     "pens": null,
     "note": "M93 POR 0-1 ESP -> ESP, auto-synced from ESPN fifa.world FT on 2026-07-06."
+  },
+  {
+    "match": 94,
+    "home": "USA",
+    "away": "BEL",
+    "score": [
+      1,
+      4
+    ],
+    "decider": "reg",
+    "pens": null,
+    "note": "M94 USA 1-4 BEL -> BEL, auto-synced from ESPN fifa.world FT on 2026-07-07."
   }
 ]
