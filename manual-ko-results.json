@@ -271,5 +271,17 @@
     "decider": "reg",
     "pens": null,
     "note": "M94 USA 1-4 BEL -> BEL, auto-synced from ESPN fifa.world FT on 2026-07-07."
+  },
+  {
+    "match": 95,
+    "home": "ARG",
+    "away": "EGY",
+    "score": [
+      3,
+      2
+    ],
+    "decider": "reg",
+    "pens": null,
+    "note": "M95 ARG 3-2 EGY -> ARG, auto-synced from ESPN fifa.world FT on 2026-07-07."
   }
 ]

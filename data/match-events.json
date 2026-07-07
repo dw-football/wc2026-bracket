@@ -747,6 +747,48 @@
   ],
   "pens": []
  },
+ "95": {
+  "home": "ARG",
+  "away": "EGY",
+  "events": [
+   {
+    "min": 843,
+    "minLabel": "15",
+    "type": "goal",
+    "team": "away",
+    "who": "Yasser Ibrahim"
+   },
+   {
+    "min": 4006,
+    "minLabel": "67",
+    "type": "goal",
+    "team": "away",
+    "who": "Mostafa Zico"
+   },
+   {
+    "min": 4720,
+    "minLabel": "79",
+    "type": "goal",
+    "team": "home",
+    "who": "Cristian Romero"
+   },
+   {
+    "min": 4979,
+    "minLabel": "83",
+    "type": "goal",
+    "team": "home",
+    "who": "Lionel Messi"
+   },
+   {
+    "min": 5400,
+    "minLabel": "90'+2",
+    "type": "goal",
+    "team": "home",
+    "who": "Enzo Fernández"
+   }
+  ],
+  "pens": []
+ },
  "g:MEX-RSA": {
   "home": "MEX",
   "away": "RSA",
