@@ -283,5 +283,20 @@
     "decider": "reg",
     "pens": null,
     "note": "M95 ARG 3-2 EGY -> ARG, auto-synced from ESPN fifa.world FT on 2026-07-07."
+  },
+  {
+    "match": 96,
+    "home": "SUI",
+    "away": "COL",
+    "score": [
+      0,
+      0
+    ],
+    "decider": "pens",
+    "pens": [
+      4,
+      3
+    ],
+    "note": "M96 SUI 0-0 COL (4-3 pens) -> SUI, auto-synced from ESPN fifa.world FT on 2026-07-07."
   }
 ]

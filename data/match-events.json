@@ -789,6 +789,63 @@
   ],
   "pens": []
  },
+ "96": {
+  "home": "SUI",
+  "away": "COL",
+  "events": [],
+  "pens": [
+   {
+    "team": "away",
+    "who": "Juan Fernando Quintero",
+    "ok": true
+   },
+   {
+    "team": "home",
+    "who": "Granit Xhaka",
+    "ok": true
+   },
+   {
+    "team": "away",
+    "who": "Davinson Sánchez",
+    "ok": false
+   },
+   {
+    "team": "home",
+    "who": "Zeki Amdouni",
+    "ok": true
+   },
+   {
+    "team": "away",
+    "who": "Jáminton Campaz",
+    "ok": true
+   },
+   {
+    "team": "home",
+    "who": "Manuel Akanji",
+    "ok": false
+   },
+   {
+    "team": "away",
+    "who": "Cucho Hernández",
+    "ok": false
+   },
+   {
+    "team": "home",
+    "who": "Cedric Itten",
+    "ok": true
+   },
+   {
+    "team": "away",
+    "who": "Luis Díaz",
+    "ok": true
+   },
+   {
+    "team": "home",
+    "who": "Rubén Vargas",
+    "ok": true
+   }
+  ]
+ },
  "g:MEX-RSA": {
   "home": "MEX",
   "away": "RSA",
