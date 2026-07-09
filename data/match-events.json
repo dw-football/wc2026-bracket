@@ -846,6 +846,27 @@
    }
   ]
  },
+ "97": {
+  "home": "FRA",
+  "away": "MAR",
+  "events": [
+   {
+    "min": 3558,
+    "minLabel": "60",
+    "type": "goal",
+    "team": "home",
+    "who": "Kylian Mbappé"
+   },
+   {
+    "min": 3921,
+    "minLabel": "66",
+    "type": "goal",
+    "team": "home",
+    "who": "Ousmane Dembélé"
+   }
+  ],
+  "pens": []
+ },
  "g:MEX-RSA": {
   "home": "MEX",
   "away": "RSA",

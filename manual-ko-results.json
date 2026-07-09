@@ -298,5 +298,17 @@
       3
     ],
     "note": "M96 SUI 0-0 COL (4-3 pens) -> SUI, auto-synced from ESPN fifa.world FT on 2026-07-07."
+  },
+  {
+    "match": 97,
+    "home": "FRA",
+    "away": "MAR",
+    "score": [
+      2,
+      0
+    ],
+    "decider": "reg",
+    "pens": null,
+    "note": "M97 FRA 2-0 MAR -> FRA, auto-synced from ESPN fifa.world FT on 2026-07-09."
   }
 ]
