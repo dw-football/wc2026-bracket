@@ -867,6 +867,34 @@
   ],
   "pens": []
  },
+ "98": {
+  "home": "ESP",
+  "away": "BEL",
+  "events": [
+   {
+    "min": 1761,
+    "minLabel": "30",
+    "type": "goal",
+    "team": "home",
+    "who": "Fabián Ruiz"
+   },
+   {
+    "min": 2411,
+    "minLabel": "41",
+    "type": "goal",
+    "team": "away",
+    "who": "Charles De Ketelaere"
+   },
+   {
+    "min": 5242,
+    "minLabel": "88",
+    "type": "goal",
+    "team": "home",
+    "who": "Mikel Merino"
+   }
+  ],
+  "pens": []
+ },
  "g:MEX-RSA": {
   "home": "MEX",
   "away": "RSA",

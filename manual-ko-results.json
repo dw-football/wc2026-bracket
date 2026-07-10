@@ -310,5 +310,17 @@
     "decider": "reg",
     "pens": null,
     "note": "M97 FRA 2-0 MAR -> FRA, auto-synced from ESPN fifa.world FT on 2026-07-09."
+  },
+  {
+    "match": 98,
+    "home": "ESP",
+    "away": "BEL",
+    "score": [
+      2,
+      1
+    ],
+    "decider": "reg",
+    "pens": null,
+    "note": "M98 ESP 2-1 BEL -> ESP, auto-synced from ESPN fifa.world FT on 2026-07-10."
   }
 ]
