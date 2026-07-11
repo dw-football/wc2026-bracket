@@ -895,6 +895,34 @@
   ],
   "pens": []
  },
+ "99": {
+  "home": "NOR",
+  "away": "ENG",
+  "events": [
+   {
+    "min": 2101,
+    "minLabel": "36",
+    "type": "goal",
+    "team": "home",
+    "who": "Andreas Schjelderup"
+   },
+   {
+    "min": 2700,
+    "minLabel": "45'+2",
+    "type": "goal",
+    "team": "away",
+    "who": "Jude Bellingham"
+   },
+   {
+    "min": 5554,
+    "minLabel": "93",
+    "type": "goal",
+    "team": "away",
+    "who": "Jude Bellingham"
+   }
+  ],
+  "pens": []
+ },
  "g:MEX-RSA": {
   "home": "MEX",
   "away": "RSA",
