@@ -923,6 +923,48 @@
   ],
   "pens": []
  },
+ "100": {
+  "home": "ARG",
+  "away": "SUI",
+  "events": [
+   {
+    "min": 576,
+    "minLabel": "10",
+    "type": "goal",
+    "team": "home",
+    "who": "Alexis Mac Allister"
+   },
+   {
+    "min": 4015,
+    "minLabel": "67",
+    "type": "goal",
+    "team": "away",
+    "who": "Dan Ndoye"
+   },
+   {
+    "min": 4278,
+    "minLabel": "72",
+    "type": "red",
+    "team": "away",
+    "who": "Second yellow card to Breel Embolo"
+   },
+   {
+    "min": 6701,
+    "minLabel": "112",
+    "type": "goal",
+    "team": "home",
+    "who": "Julián Alvarez"
+   },
+   {
+    "min": 7200,
+    "minLabel": "120'+1",
+    "type": "goal",
+    "team": "home",
+    "who": "Lautaro Martínez"
+   }
+  ],
+  "pens": []
+ },
  "g:MEX-RSA": {
   "home": "MEX",
   "away": "RSA",

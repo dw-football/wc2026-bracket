@@ -334,5 +334,17 @@
     "decider": "aet",
     "pens": null,
     "note": "M99 NOR 1-2 ENG AET -> ENG, auto-synced from ESPN fifa.world FT on 2026-07-11."
+  },
+  {
+    "match": 100,
+    "home": "ARG",
+    "away": "SUI",
+    "score": [
+      3,
+      1
+    ],
+    "decider": "aet",
+    "pens": null,
+    "note": "M100 ARG 3-1 SUI AET -> ARG, auto-synced from ESPN fifa.world FT on 2026-07-12."
   }
 ]
