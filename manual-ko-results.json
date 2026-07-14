@@ -346,5 +346,17 @@
     "decider": "aet",
     "pens": null,
     "note": "M100 ARG 3-1 SUI AET -> ARG, auto-synced from ESPN fifa.world FT on 2026-07-12."
+  },
+  {
+    "match": 101,
+    "home": "FRA",
+    "away": "ESP",
+    "score": [
+      0,
+      2
+    ],
+    "decider": "reg",
+    "pens": null,
+    "note": "M101 FRA 0-2 ESP -> ESP, auto-synced from ESPN fifa.world FT on 2026-07-14."
   }
 ]
