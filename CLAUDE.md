@@ -35,6 +35,44 @@ publish confirmed. **Longest surviving name = Switzerland (11), fits even with a
 overflow case is MOOT this cup**; filed as a fork-forward note (see OPEN/PARKED: shorten display name only when a
 pens/AET R32 row would overflow, via a render-only display-name override leaving teams.json canonical).
 
+## SHIPPED 2026-07-05 (pm) — Completed vs. upcoming legibility: shaded tiles + round-aware FT + popped schedule — LIVE (`f33e3d6`)
+David: "it's still too difficult to see the difference between a completed game and a live game" (both rendered bold
+dark; only a score distinguished them, and a completed game still showed its future kickoff time → read as upcoming).
+Built a mockup (`_mockup-completed-vs-upcoming.html`, 6 treatments, opened locally — artifacts don't work for David)
+→ he chose **B** (rejected the green-✓ combo E as too cluttered). Shipped in `matchGroup`/`matchHeader` (build-html):
+(1) **completed match → shaded tile** (`#e9edf2` fill vs white `#ffffff` for upcoming; keyed on `info.home.result`);
+(2) **round-aware FT** — `roundFullyPlayed(round)` gates it: `FT` shows ONLY on finished games in the round STILL IN
+PROGRESS; a fully-played round drops FT + the time and shows just `venue · date` (shading already says done), so a
+done round isn't cluttered with FT on every game (self-advances R16→QF→…); (3) **upcoming schedule line POPPED** —
+`matchHeader` rebuilt with tspans: venue+date bold dark `#2f3a49` FS9 + kickoff time bold amber `#b45309` FS9.5, so
+"where + when next" reads at a glance. `koLabel` removed (matchHeader reads KOSCHED directly). Render-only, no logic/
+data change. Iterated live on localhost (David: pop the time → then pop location+date too). Mockup file deleted.
+
+## SHIPPED 2026-07-14 — 3rd-place game (M103) contenders/%s fixed + Final & 3rd auto-sync to Sports calendar — LIVE
+David caught the bracket's **3rd-place game showing ELIMINATED teams** as contenders (NED/USA/GER/COL/BRA/NOR at
+~9-14%) with bogus %s. Root = **`loserOf` was unhandled everywhere**. The 3rd-place match (M103) is the ONLY slot fed
+by `loserOf` (the two SF losers); `ko-slot-dist.mjs` and `ko-resolve.mjs` only understood `winnerOf`, so M103 fell
+through to the raw Monte-Carlo per-slot occupancy — which is NOT conditioned on played KO results → it listed teams
+knocked out rounds ago. **Fix:** added `loserDist(matchNo)` (the per-match COMPLEMENT of `winnerDist`) + a `loserOf`
+branch to `slotDist`, and `koLosersByMatch`/`loserOf` to the occupant resolver; wired a new `koLoser` callback through
+both callers (build-html + bracket-labels). Now M103 carries ONLY the four semifinalists at their P(reach-and-lose),
+and — per David's own framing — **the 3rd-place probs are the exact INVERSE of the finalist probs** (P(final)+P(3rd)=1
+per team). A played semi collapses each slot to the beaten team. Round-agnostic. Shared module → fixes bracket AND
+calendar in one shot. Tests: `ko-resolve.test.js` +5 (inverse invariant, "no eliminated team in the 3rd-place box",
+loserDist-collapses-when-played, 3rd-place-is-the-two-SF-losers; refined the too-strong "loser in no later round" to
+allow the legitimate loserOf feed). 121/121 green.
+**ALSO 2026-07-14 — killed two bogus "long-standing rules" David never asked for.** The calendar tooling had been
+(a) NEVER touching the Final (it lived only on Family shared) and (b) refusing to preview the 3rd-place match until
+both semis played. David: neither was ever his instruction. Removed both special-cases — **M103 and M104 now
+auto-update on the Sports calendar exactly like every other KO game** (contender previews that resolve as feeders
+decide): dropped the `match===104` skip in sync-calendar, dropped the ThirdPlace `sfDone` gate + added the Final to
+the resolve loop in bracket-labels (new `Final: ' Final'` suffix). **Created a Sports Final event** (`ji0clj9i…`, Jul
+19 3p MetLife) — none existed — and added `104` to `calendar-map.local.json`. Applied both labels live NOW: M103 =
+"FRA 54%/ESP 46% v ENG 56%/ARG 44% 3rd place", M104 = "ESP 54%/FRA 46% v ARG 56%/ENG 44% Final". Copying to
+Family/elsewhere stays David's MANUAL call (not the tool's job). Calendar-label tests updated (M103/M104 now carry
+previews, loops extended to 104). Left the existing Family "World Cup Final [Fox]" event untouched.
+⚠️ **SFs upcoming: M101 FRA-ESP Jul 14 3p (Dallas), M102 ENG-ARG Jul 15 3p (Atlanta).** 100/104.
+
 ## WORKFLOW RULE — localhost first, push only on command
 **NEW FEATURES / code changes: build to `dist/` and let David verify on localhost
 FIRST. Do NOT commit or push to GitHub until David explicitly says to.** Deploying =
@@ -208,12 +246,14 @@ next day" — true for scores, false for popovers.) Parked fix if ever wanted: a
 for matches played within the last ~2-3 days each run) to catch corrections, while still skipping the settled backlog.
 
 ## RESUME
-Next action: NOTHING PENDING — KO auto-deploys unattended; tree clean, all pushed (`3118592`+doc `ad850be`), Pages
+Next action: NOTHING PENDING — KO auto-deploys unattended; tree clean, all pushed (latest UI `f33e3d6`), Pages
 verified live. **R16 underway: M90 MAR, M89 FRA (beat PAR), M91 NOR (beat BRA) into QFs; through M91, 91/104.**
-Two fixes shipped LIVE this session, both round-agnostic + self-applying: (1) 2026-07-04 `a2de4ec` — KO winner
+THREE UI/logic fixes shipped LIVE recently, all round-agnostic + self-applying: (1) 2026-07-04 `a2de4ec` — KO winner
 propagation across ALL rounds (was R32-only → had shown eliminated NED in the QF; new pure `ko-resolve.mjs` + 8
 tests, 117/117); (2) 2026-07-05 `3118592` — locked-in teams show full country NAME (bold), code dropped, R32 chip
-kept, loser greyed. Then read: SHIPPED 2026-07-05 + 2026-07-04, and OPEN/PARKED (fork-forward name-shorten note). If a new pens game's popover shows no takers, that's ESPN lag (their `summary.shootout` block trails FT by
+kept, loser greyed; (3) 2026-07-05 `f33e3d6` — completed-vs-upcoming legibility: shaded done-tiles, FT only in the
+in-progress round, popped upcoming schedule line (venue+date bold dark, time bold amber). Then read: SHIPPED
+2026-07-05 (pm) + (name) + 2026-07-04, and OPEN/PARKED (fork-forward name-shorten note). If a new pens game's popover shows no takers, that's ESPN lag (their `summary.shootout` block trails FT by
 ~5 min); the self-heal + the poll pattern used 7-03 backfill it — do NOT treat empty pens as a bug.
 Then read: SHIPPED 2026-07-03 (popover penalty-as-red-card fix + reconciliation gate), Session Notes.
 **KO stage is LIVE and auto-deploying — NOTHING TO DO MANUALLY.** The `WC2026-autosync` task on 520 deploys each
@@ -762,3 +802,11 @@ State as of 2026-06-24. **50/104** (added COL 1-0 COD, SUI 2-1 CAN, BIH 3-1 QAT 
   R32 chip, loser stays greyed. Built + compared on localhost side-by-side per his request, shipped `3118592`.
   Filed a fork-forward note (name-shorten on pens/AET overflow — moot this cup, Switzerland fits). Long-name+tag
   overflow confirmed impossible this tournament. Both fixes round-agnostic. Through M91 (91/104).
+- 2026-07-05 (pm) — **Completed-vs-upcoming bracket legibility (`f33e3d6`, LIVE).** David: hard to tell a finished game
+  from an upcoming one (both bold; completed still showed its future kickoff time). Built a 6-option local mockup,
+  he picked B (shaded tile + FT header) and explicitly rejected the green-✓ combo as cluttered. Shipped: completed
+  matches get a shaded tile; "FT" shows only in the round still in progress (`roundFullyPlayed` — a fully-done round
+  drops FT + time, shows just venue·date, since the shading conveys done); upcoming games pop their whole schedule
+  line (venue+date bold dark + kickoff time bold amber). Iterated live on localhost through two "pop it more" rounds
+  (time, then location+date). Render-only. Mockup deleted, localhost killed. All three of the day's UI changes are
+  round-agnostic and self-apply as the tournament advances.

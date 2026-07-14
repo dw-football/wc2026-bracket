@@ -1127,7 +1127,8 @@ const APP_JS = String.raw`
         hosts: new Set(HOSTS),
         koVenueCountry: KO_VC,
         r32Occupant: function(mNo, side){ return sideCodesOf(mNo)[side]; },
-        koWinner: function(mNo){ var r=KO_RESULTS[mNo]||KO_RESULTS[String(mNo)]; return (r && r.winner) || null; }
+        koWinner: function(mNo){ var r=KO_RESULTS[mNo]||KO_RESULTS[String(mNo)]; return (r && r.winner) || null; },
+        koLoser: function(mNo){ var r=KO_RESULTS[mNo]||KO_RESULTS[String(mNo)]; return (r && r.loser) || null; }
       });
       // (a) played knockout game (ANY round): pin the two ACTUAL teams (from the
       // result itself, NEVER the stale MC occupancy) + overlay score/decider so the

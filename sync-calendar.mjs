@@ -9,10 +9,12 @@
 //   node sync-calendar.mjs --dry-run  # same (explicit; there is no apply mode)
 //   node sync-calendar.mjs --refresh  # re-pull the openfootball feed first
 //
-// SCOPE: the 31 knockout events (R32 73-88, R16 89-96, QF 97-100, SF 101-102,
-// 3rd-place 103). The Final (104) lives on a different calendar and is NEVER
-// touched. A knockout event whose feeders aren't ready to reveal is emitted with
-// summary:null + unchanged:true so the apply step LEAVES THAT EVENT AS-IS.
+// SCOPE: all 32 knockout events (R32 73-88, R16 89-96, QF 97-100, SF 101-102,
+// 3rd-place 103, Final 104). Every KO event — including the 3rd-place match and
+// the Final — auto-updates on the Sports calendar the same way. A knockout event
+// whose feeders aren't ready to reveal is emitted with summary:null +
+// unchanged:true so the apply step LEAVES THAT EVENT AS-IS. (Copying an event to
+// another calendar, e.g. Family shared, is a manual choice — not this tool's job.)
 //
 // ALL calendar/personal data lives in calendar-map.local.json (gitignored). The
 // label logic itself is in bracket-labels.mjs (pure, committed, shareable).
@@ -119,7 +121,6 @@ export async function buildPlan(opts = {}) {
   const plan = [];
   for (const [matchStr, ev] of Object.entries(map.events)) {
     const match = Number(matchStr);
-    if (match === 104) continue; // Final is out of scope, defensively skip
     const lab = labels.get(match);
     const venue = ev.venue;
     const description = VENUE_DESCRIPTION[venue] || venue;

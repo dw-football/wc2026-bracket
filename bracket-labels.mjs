@@ -80,6 +80,7 @@ export const ROUND_SUFFIX = {
   QF: ' QF',
   SF: ' SF',
   ThirdPlace: ' 3rd place',
+  Final: ' Final',
 };
 
 // ----------------------------------------------------------------------------
@@ -362,8 +363,9 @@ function buildKnockoutCandidateSets(bracket, r32AliveByMatch, koResults) {
 // ----------------------------------------------------------------------------
 
 /**
- * Compute labels for every knockout match (R32..3rd place; Final included in the
- * map but callers may ignore it).
+ * Compute labels for every knockout match (R32 through the 3rd-place match AND the
+ * Final) — all knockout rounds are treated identically (contender previews that
+ * resolve as the feeders decide).
  *
  * @param {object} engineState
  *   engineState.groups   engine-schema groups (teams carry elo; matches carry played/goals)
@@ -454,6 +456,7 @@ export function computeMatchLabels(engineState, opts = {}) {
       return s && s.size === 1 ? [...s][0] : null;
     },
     koWinner: (matchNo) => (koResults[matchNo] ? koResults[matchNo].winner : null),
+    koLoser: (matchNo) => (koResults[matchNo] ? koResults[matchNo].loser : null),
   });
 
   // Resolve every match.
@@ -473,13 +476,11 @@ export function computeMatchLabels(engineState, opts = {}) {
     const home = homeRes.label;
     const away = awayRes.label;
     const suffix = ROUND_SUFFIX[round] ?? '';
-    // 3rd-place match: like the Final, NEVER previewed — fill only once BOTH
-    // semifinals are played (then it shows the two SF losers). David's rule.
-    if (round === 'ThirdPlace') {
-      const sfDone = [m.home.match, m.away.match].every((fm) => koResults[fm]);
-      out.set(m.match, { home, away, full: sfDone ? `${home} v ${away}${suffix}` : null, round });
-      return;
-    }
+    // 3rd-place (M103) and the Final (M104) are treated EXACTLY like any other
+    // knockout match: previewed with their contender pairs as soon as the feeders
+    // give anything, resolving to the two beaten SF teams (3rd) / SF winners (Final)
+    // once the semifinals are played. (No special-casing — they auto-update on the
+    // Sports calendar like every other KO game.)
     // A KNOCKOUT event stays "unchanged" only when NEITHER side names anything —
     // both are bare structural feeder codes. If even one side names a highlighted
     // team (or locks), emit the full label (the other side shows its feeder code).
@@ -494,6 +495,7 @@ export function computeMatchLabels(engineState, opts = {}) {
   for (const m of bracket.rounds.QF || []) resolveMatch(m, 'QF');
   for (const m of bracket.rounds.SF || []) resolveMatch(m, 'SF');
   for (const m of bracket.rounds.ThirdPlace || []) resolveMatch(m, 'ThirdPlace');
+  for (const m of bracket.rounds.Final || []) resolveMatch(m, 'Final');
 
   return out;
 }

@@ -32,6 +32,21 @@ export function koWinnersByMatch(bracket, koResults) {
   return out;
 }
 
+// Loser CODE of every DECIDED knockout match, keyed by matchNo, across all rounds.
+// Needed by the 3rd-place match (M103), whose two sides are loserOf the semifinals:
+// once a semi is played its beaten team is the concrete occupant of a 3rd-place slot.
+export function koLosersByMatch(bracket, koResults) {
+  const out = {};
+  const kr = koResults || {};
+  for (const rd of Object.keys(bracket.rounds)) {
+    for (const m of bracket.rounds[rd]) {
+      const r = kr[m.match] || kr[String(m.match)];
+      if (r && r.loser) out[m.match] = r.loser;
+    }
+  }
+  return out;
+}
+
 // @param r32Occupant (matchNo, side) => code|null : locked R32 leaf occupant, or
 //        null when the feeding group isn't decided. Only ever consulted for a
 //        non-winnerOf side (R32 group/runner-up/third); winnerOf sides resolve
@@ -42,12 +57,14 @@ export function makeOccupantResolver(bracket, koResults, r32Occupant) {
     for (const m of bracket.rounds[rd]) KOIDX[m.match] = m;
   }
   const winners = koWinnersByMatch(bracket, koResults);
+  const losers = koLosersByMatch(bracket, koResults);
 
   function sideCode(matchNo, sideName) {
     const m = KOIDX[matchNo];
     if (!m) return null;
     const def = m[sideName];
     if (def && def.type === 'winnerOf') return winners[def.match] || null;
+    if (def && def.type === 'loserOf') return losers[def.match] || null;
     return (r32Occupant ? r32Occupant(matchNo, sideName) : null) || null;
   }
 
@@ -55,5 +72,5 @@ export function makeOccupantResolver(bracket, koResults, r32Occupant) {
     return { home: sideCode(matchNo, 'home'), away: sideCode(matchNo, 'away') };
   }
 
-  return { sideCode, sideCodes, winners, KOIDX };
+  return { sideCode, sideCodes, winners, losers, KOIDX };
 }

@@ -139,19 +139,41 @@ test('synthetic: a team eliminated in round R never appears in ANY later round',
   const roundOf = {};
   roundOrder.forEach((rd, i) => (BRACKET.rounds[rd] || []).forEach((m) => (roundOf[m.match] = i)));
 
+  const idxAll = {};
+  for (const later of everyMatch(BRACKET)) idxAll[later.match] = later;
   for (const m of everyMatch(BRACKET)) {
     const r = koResults[m.match];
     if (!r) continue;
     const loser = r.loser;
-    // the loser of match m must not occupy any slot in a strictly later round
+    // the loser of match m must not occupy any WINNER-FED slot in a strictly later
+    // round (the main single-elimination tree). The ONE legitimate exception is a
+    // loserOf(m) slot — the 3rd-place match (M103) is fed by the two SF losers by
+    // design — so a slot whose definition is loserOf THIS match is allowed to hold it.
     for (const later of everyMatch(BRACKET)) {
       if (roundOf[later.match] <= roundOf[m.match]) continue;
       for (const side of ['home', 'away']) {
+        const def = idxAll[later.match][side];
+        if (def && def.type === 'loserOf' && def.match === m.match) continue; // 3rd-place feed
         assert.notEqual(occ.sideCode(later.match, side), loser,
-          `loser of M${m.match} (${loser}) must not occupy later M${later.match} ${side}`);
+          `loser of M${m.match} (${loser}) must not occupy later winner-fed M${later.match} ${side}`);
       }
     }
   }
+});
+
+test('synthetic: the 3rd-place match (M103) is filled by the two SEMIFINAL LOSERS', () => {
+  const { r32Occ, koResults } = syntheticPlaythrough();
+  const occ = makeOccupantResolver(BRACKET, koResults, r32Occ);
+  const tp = BRACKET.rounds.ThirdPlace[0];
+  assert.equal(tp.home.type, 'loserOf');
+  assert.equal(tp.away.type, 'loserOf');
+  assert.equal(occ.sideCode(103, 'home'), koResults[tp.home.match].loser,
+    'M103 home = loser of the first semifinal');
+  assert.equal(occ.sideCode(103, 'away'), koResults[tp.away.match].loser,
+    'M103 away = loser of the second semifinal');
+  // and the Final (M104) holds the two semifinal WINNERS (not the losers)
+  assert.equal(occ.sideCode(104, 'home'), koResults[tp.home.match].winner);
+  assert.equal(occ.sideCode(104, 'away'), koResults[tp.away.match].winner);
 });
 
 test('koWinnersByMatch spans all rounds (not just the R32)', () => {
@@ -176,6 +198,7 @@ function koDistWith(koResults) {
     koVenueCountry: {},
     r32Occupant: (no, side) => (R32_TEAMS[no] ? R32_TEAMS[no][side] : null),
     koWinner: (no) => (koResults[no] ? koResults[no].winner : null),
+    koLoser: (no) => (koResults[no] ? koResults[no].loser : null),
   });
 }
 
@@ -194,4 +217,83 @@ test('ko-slot-dist: after M90, the QF slot collapses to MAR at p=1 (NED still ab
   assert.equal(dist.length, 1);
   assert.equal(dist[0].code, 'MAR');
   assert.ok(Math.abs(dist[0].p - 1) < 1e-9);
+});
+
+// ---------------------------------------------------------------------------
+// 3rd-place match distribution (loserOf feeds). Regression for the live bug
+// (2026-07-14): the 3rd-place slots (M103, both sides loserOf a semifinal) fell
+// through to the raw Monte-Carlo occupancy, which was NOT conditioned on the
+// played KO results — so it listed already-eliminated teams (NED/USA/GER/COL/
+// BRA/NOR) as 3rd-place contenders. loserDist must carry ONLY the reachable
+// semifinalists, and collapse to the beaten team once a semi is played.
+// ---------------------------------------------------------------------------
+test('ko-slot-dist: 3rd-place slots carry ONLY the four semifinalists (no eliminated team)', () => {
+  // Real tournament state: QFs done (M97-100), semis (M101,M102) NOT yet played.
+  const koResults = knockoutResultsFromManual(MANUAL_KO);
+  const teams = JSON.parse(readFileSync(new URL('./teams.json', import.meta.url), 'utf8'));
+  const eloByCode = {};
+  for (const t of teams) eloByCode[t.code] = t.elo;
+  const occ = makeOccupantResolver(BRACKET, koResults, () => null);
+  const koDist = makeKoSlotDist({
+    bracket: BRACKET, eloByCode, koLambda: 0.6, hosts: new Set(['USA', 'MEX', 'CAN']),
+    koVenueCountry: {},
+    r32Occupant: (no, side) => occ.sideCodes(no)[side],
+    koWinner: (no) => (koResults[no] ? koResults[no].winner : null),
+    koLoser: (no) => (koResults[no] ? koResults[no].loser : null),
+  });
+  const home = koDist.slotDist(103, 'home').map((d) => d.code).sort();
+  const away = koDist.slotDist(103, 'away').map((d) => d.code).sort();
+  // home = losers of M101 (FRA/ESP); away = losers of M102 (ENG/ARG).
+  assert.deepEqual(home, ['ESP', 'FRA']);
+  assert.deepEqual(away, ['ARG', 'ENG']);
+  // none of the teams eliminated before the semis can appear
+  const all = [...home, ...away];
+  for (const gone of ['NED', 'USA', 'GER', 'COL', 'BRA', 'NOR', 'MAR', 'BEL', 'SUI']) {
+    assert.ok(!all.includes(gone), `${gone} (eliminated) must not be a 3rd-place contender`);
+  }
+  // each side is a proper distribution (sums to 1)
+  const sum = (a) => a.reduce((s, d) => s + d.p, 0);
+  assert.ok(Math.abs(sum(koDist.slotDist(103, 'home')) - 1) < 1e-9);
+  assert.ok(Math.abs(sum(koDist.slotDist(103, 'away')) - 1) < 1e-9);
+});
+
+test('ko-slot-dist: a team\'s 3rd-place probability is the INVERSE of its finalist probability', () => {
+  // Per semifinal, reaching the FINAL (winnerOf the semi) and reaching the 3RD-PLACE
+  // match (loserOf the same semi) are complementary events -> the two probabilities
+  // must sum to that team's P(reach the semi) (= 1 for a locked semifinalist). David's
+  // invariant: "the probs of the 3rd place game should be the inverse of the finalists".
+  const koResults = knockoutResultsFromManual(MANUAL_KO);
+  const teams = JSON.parse(readFileSync(new URL('./teams.json', import.meta.url), 'utf8'));
+  const eloByCode = {};
+  for (const t of teams) eloByCode[t.code] = t.elo;
+  const occ = makeOccupantResolver(BRACKET, koResults, () => null);
+  const koDist = makeKoSlotDist({
+    bracket: BRACKET, eloByCode, koLambda: 0.6, hosts: new Set(['USA', 'MEX', 'CAN']),
+    koVenueCountry: {},
+    r32Occupant: (no, side) => occ.sideCodes(no)[side],
+    koWinner: (no) => (koResults[no] ? koResults[no].winner : null),
+    koLoser: (no) => (koResults[no] ? koResults[no].loser : null),
+  });
+  const tp = BRACKET.rounds.ThirdPlace[0];
+  for (const side of ['home', 'away']) {
+    const fin = Object.fromEntries(koDist.slotDist(104, side).map((c) => [c.code, c.p]));  // finalist
+    const third = Object.fromEntries(koDist.slotDist(103, side).map((c) => [c.code, c.p])); // 3rd place
+    const codes = new Set([...Object.keys(fin), ...Object.keys(third)]);
+    for (const c of codes) {
+      assert.ok(Math.abs((fin[c] || 0) + (third[c] || 0) - 1) < 1e-9,
+        `${c}: P(final)+P(3rd) must equal 1, got ${(fin[c] || 0) + (third[c] || 0)}`);
+    }
+  }
+});
+
+test('ko-slot-dist: loserDist collapses to the beaten team once the match is played', () => {
+  const koResults = knockoutResultsFromManual(MANUAL_KO);
+  // M100 ARG 3-1 SUI (AET) -> SUI lost.
+  const ld = koDistWith(koResults).loserDist(100);
+  assert.equal(ld.length, 1);
+  assert.equal(ld[0].code, 'SUI');
+  assert.ok(Math.abs(ld[0].p - 1) < 1e-9);
+  // and winnerDist gives the complement winner
+  const wd = koDistWith(koResults).winnerDist(100);
+  assert.equal(wd[0].code, 'ARG');
 });

@@ -208,7 +208,7 @@ test('computeMatchLabels (live data): R32 fully labeled, knockout obeys the rule
   // lists teams shows "CODE NN%" segments, favorite-first, capped at 2 with a trailing
   // "/…" if more contenders exist. (A locked side is a full name; a never-ready side
   // is a structural feeder code.) No bare "(NN%)" parens, no name walls.
-  for (let m = 89; m <= 103; m++) {
+  for (let m = 89; m <= 104; m++) {
     const lab = labels.get(m);
     if (!lab || lab.full == null) continue; // unchanged is fine
     for (const side of [lab.home, lab.away]) {
@@ -237,7 +237,7 @@ test('computeMatchLabels: koLabelMode "highlighted" restores the iconic-team pre
   );
   // In highlighted mode a KO side that lists teams uses the "(NN%)" parens format + "/…".
   let sawHi = false;
-  for (let m = 89; m <= 103; m++) {
+  for (let m = 89; m <= 104; m++) {
     const lab = labels.get(m); if (!lab || lab.full == null) continue;
     for (const side of [lab.home, lab.away]) {
       if (side == null || !side.includes('/…')) continue;
@@ -296,7 +296,7 @@ test('groupRankSets: a fully decided group (0 unplayed) uses exact final standin
   assert.equal(K.r3.size, 1, 'one third');
 });
 
-test('computeMatchLabels: KO previews are driven by HIGHLIGHTED teams (not watchedTeams); 3rd place blank until the SFs', async () => {
+test('computeMatchLabels: KO previews are driven by HIGHLIGHTED teams (not watchedTeams); 3rd place AND Final preview like any KO match', async () => {
   const teams = JSON.parse(await readFile(new URL('./teams.json', import.meta.url), 'utf8'));
   const bracket = JSON.parse(await readFile(new URL('./bracket.json', import.meta.url), 'utf8'));
   const raw = await fetchRaw();
@@ -306,14 +306,16 @@ test('computeMatchLabels: KO previews are driven by HIGHLIGHTED teams (not watch
   const base = { groups, bracket, teams, koResults: {}, resolveThirdPlaceSlots, rankThirdPlaceTeams, mcN: 8000 };
   const a = computeMatchLabels(base, { watchedTeams: [] });
   const b = computeMatchLabels(base, { watchedTeams: ['USA'] });
-  for (let m = 89; m <= 103; m++) {
+  for (let m = 89; m <= 104; m++) {
     assert.equal(a.get(m).full, b.get(m).full, `M${m} KO label independent of watchedTeams`);
   }
-  // 3rd-place (103) is blank until BOTH semifinals are played (treated like the Final).
-  assert.equal(a.get(103).full, null, 'M103 (3rd place) blank pre-SF');
+  // 3rd-place (103) and the Final (104) are NO LONGER special-cased — they preview
+  // their contenders just like every other knockout match and resolve as feeders decide.
+  assert.ok(a.get(103) && a.get(103).full, 'M103 (3rd place) carries a contender preview');
+  assert.ok(a.get(104) && a.get(104).full, 'M104 (Final) carries a contender preview');
   // Group stage in progress still surfaces highlighted teams in the knockout rounds.
   let named = 0;
-  for (let m = 89; m <= 102; m++) if (a.get(m).full) named++;
+  for (let m = 89; m <= 104; m++) if (a.get(m).full) named++;
   assert.ok(named > 0, 'highlighted-team previews appear in the knockout rounds');
 });
 
