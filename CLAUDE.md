@@ -1,5 +1,11 @@
 # WC2026 Bracket Projector
 
+> **FORK-FORWARD (Euro 2028 / WC 2030):** the full rebuild playbook — structural deltas (24 teams / 6 groups /
+> 4-of-6 thirds / no 3rd-place / UEFA tiebreakers), the file-by-file change map, and the two landmines (ESPN slug
+> `fifa.world`→`uefa.euro`; the 4-11am-ET dead window breaks for a UK-hosted tournament) — lives in David's vault at
+> `Personal/soccer/Before Euro 2028 - rebuild the bracket projector.md`. A dated task (⏳ 2028-04-03) + a Jul-20-2026
+> task to disable the `WC2026-autosync` scheduler both live in `Personal/tech/Claude setup.md`.
+
 ## SHIPPED 2026-07-04 — KO winner propagation across ALL rounds (eliminated team in a QF) — LIVE (`a2de4ec`)
 David caught the bracket showing **NED (out in the R32) sitting in the M97 Boston QF**, and **M90 CAN-MAR
 rendering as UNPLAYED** — on the day of the FIRST-EVER R16 result (M90 MAR 3-0 CAN). NOT emotion, a real bug.
