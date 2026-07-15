@@ -228,8 +228,12 @@ test('ko-slot-dist: after M90, the QF slot collapses to MAR at p=1 (NED still ab
 // semifinalists, and collapse to the beaten team once a semi is played.
 // ---------------------------------------------------------------------------
 test('ko-slot-dist: 3rd-place slots carry ONLY the four semifinalists (no eliminated team)', () => {
-  // Real tournament state: QFs done (M97-100), semis (M101,M102) NOT yet played.
-  const koResults = knockoutResultsFromManual(MANUAL_KO);
+  // FROZEN pre-semifinal state: QFs done (M97-100), semis (M101,M102) NOT yet
+  // played. We build this from the live results with the semis+ stripped, so the
+  // test keeps asserting the "before the semis" behaviour it was written for even
+  // after the real semis are decided (the live file marches forward; this snapshot
+  // does not). The post-semi collapse is covered by the "loserDist collapses" test.
+  const koResults = knockoutResultsFromManual(MANUAL_KO.filter((r) => r.match < 101));
   const teams = JSON.parse(readFileSync(new URL('./teams.json', import.meta.url), 'utf8'));
   const eloByCode = {};
   for (const t of teams) eloByCode[t.code] = t.elo;

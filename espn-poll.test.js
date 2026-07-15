@@ -82,9 +82,13 @@ test('pollReport (injected event, no network): a completed KO match surfaces as 
   // is no longer pollable). Instead pick WHATEVER KO match is currently pollable with
   // both teams resolved, and assert the poller's match-agnostic logic on it: a
   // resolved, completed KO match must surface as deployable with the right shape. A
-  // late `now` makes the resolved R32 matches "due"; if every resolved KO match has
-  // already been played (end of tournament), there's nothing to assert and we skip.
-  const NOW = '2026-07-15T00:00:00Z';
+  // late `now` makes every scheduled KO match "due" (the clock gate opens at KO+115
+  // min); if every resolved KO match has already been played (end of tournament),
+  // there's nothing to assert and we skip. NOW must sit AFTER the last KO game on the
+  // schedule (the Final, Jul 19) so that whatever resolved-but-unplayed KO match still
+  // remains this late in the tournament — the 3rd-place game / Final — is past its
+  // gate and can surface as deployable, instead of being held "not-due".
+  const NOW = '2026-07-25T00:00:00Z';
   const fix = await pollReport({ now: NOW, espnEvents: [] });
   const target = (fix.koSets || []).find((s) => s.home && s.away);
   if (!target) return; // no pollable, resolved, unplayed KO match in the cached feed

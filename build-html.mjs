@@ -1202,6 +1202,28 @@ const APP_JS = String.raw`
           });
         });
       });
+      // TERMINAL matches (Final + 3rd-place) have NO look-ahead column to their
+      // right, so a DETERMINED-but-unplayed matchup here would otherwise render as
+      // two bare NAMES with no projection at all — every other round shows the
+      // "who wins this game" odds on the slot the winner feeds, but the Final and
+      // the 3rd-place game feed nothing. Attach each locked side's P(WIN THIS
+      // MATCH) = the analytic chained-H2H (same model + venue-aware host bonus as
+      // every reach %, via the shared ko-slot-dist module), so the two finalists
+      // and the 3rd-place pair carry live Elo win odds until the game is played.
+      // (Sums to 100 across the two sides. A played result short-circuits this — the
+      // score + greyed loser decoration above already fired.)
+      ['Final','ThirdPlace'].forEach(function(rd){
+        (BRACKET.rounds[rd]||[]).forEach(function(m){
+          var inf=info[m.match]; if(!inf) return;
+          if(KO_RESULTS[m.match]||KO_RESULTS[String(m.match)]) return; // played -> skip
+          var sc=sideCodesOf(m.match);
+          if(!(sc.home && sc.away)) return;                           // need both teams locked
+          var ph=koDist.h2hAdvanceProb(sc.home, sc.away, m.match);    // P(home beats away)
+          var wd=[{code:sc.home,p:ph},{code:sc.away,p:1-ph}].sort(function(a,b){return b.p-a.p;});
+          inf.home=Object.assign({}, inf.home, { code:sc.home, official:true, winP:ph, winDist:wd });
+          inf.away=Object.assign({}, inf.away, { code:sc.away, official:true, winP:1-ph, winDist:wd });
+        });
+      });
     } else {
       rounds.forEach(function(rd){
         (BRACKET.rounds[rd]||[]).forEach(function(m){
@@ -1632,8 +1654,21 @@ const APP_JS = String.raw`
         // Prefer the authoritative chained-H2H candidate (eliminated-filtered) over
         // the slot's modal code so a stale projection can never override the occupant.
         var lc=((ncands[0]||{}).code)||code;
-        g.appendChild(svgText(codeX, midY, truncName(nameByCode[lc]||lc, COL_W-Math.round(28*_PS)),
-          { fill:'#171a20','font-size':String(FS(12)),'font-weight':'700' }));
+        if(si.winP!=null){
+          // TERMINAL matchup (Final / 3rd-place): the team is locked in but the game
+          // is UNPLAYED -> show the name + its Elo P(win this match) (see the
+          // terminal-match pass in buildSlotInfo). Blue % matches the played-score hue.
+          var wt=svgEl('text',{ x:codeX, y:midY });
+          var wsp=function(txt,attrs){ var s=svgEl('tspan',attrs||{}); s.textContent=txt; wt.appendChild(s); };
+          wsp(truncName(nameByCode[lc]||lc, COL_W-Math.round(52*_PS))+' ',
+            { fill:'#171a20','font-size':String(FS(12)),'font-weight':'700' });
+          wsp(Math.round(si.winP*100)+'%',
+            { fill:'#0b4fb0','font-size':String(FS(11)),'font-weight':'700' });
+          g.appendChild(wt);
+        } else {
+          g.appendChild(svgText(codeX, midY, truncName(nameByCode[lc]||lc, COL_W-Math.round(28*_PS)),
+            { fill:'#171a20','font-size':String(FS(12)),'font-weight':'700' }));
+        }
       } else if(state.mode==='projected' && ncands.length){
         // UNLOCKED look-ahead: candidate list "C1 p1% / C2 p2% …".
         var tt=svgEl('text',{ x:codeX, y:midY });
@@ -1664,6 +1699,10 @@ const APP_JS = String.raw`
         if(hasResult){
           // PLAYED game -> match-detail card (same for either side clicked).
           showMatchDetail(ev, m.match, side, slotKey);
+        } else if(si.winDist){
+          // TERMINAL matchup (Final / 3rd-place), both teams locked but unplayed ->
+          // show the two-team Elo win-odds distribution, NOT a trivial "Locked" label.
+          showCandidates(ev, si.winDist, m.match, side, round, slotDef, false, code, slotKey, true);
         } else {
           // concrete (h2h-locked / official) slots -> trivial "Locked" label.
           var lockPop = clinched || h2hLocked || !!si.official;
@@ -1844,7 +1883,7 @@ const APP_JS = String.raw`
   // For R32 third-place slots each candidate is prefixed with its group tag
   // ("3B"). Locked single-occupant (100%) -> trivial "Locked — <team>".
   // cands = si.cands (perSlot tail, now up to 32 long).
-  function showCandidates(ev, cands, matchNo, side, round, slotDef, clinched, modalCode, slotKey){
+  function showCandidates(ev, cands, matchNo, side, round, slotDef, clinched, modalCode, slotKey, winOdds){
     closePop();
     _popKey=slotKey||(matchNo+':'+side);
     var list=(cands||[]).filter(function(c){ return c&&c.code && (c.p||0)>=0.005; });
@@ -1860,7 +1899,9 @@ const APP_JS = String.raw`
         '<span class="nm">Locked &mdash; '+esc(nameByCode[lc]||lc||'')+'</span></div>';
     } else {
       var sum=0; list.forEach(function(c){ sum+=(c.p||0); });
-      var head='<h4>M'+matchNo+' &middot; '+esc(side)+' slot &mdash; full distribution <span style="color:#878f9c">('+Math.round(sum*100)+'%)</span></h4>';
+      var head=winOdds
+        ? '<h4>M'+matchNo+' &middot; Elo win odds</h4>'
+        : '<h4>M'+matchNo+' &middot; '+esc(side)+' slot &mdash; full distribution <span style="color:#878f9c">('+Math.round(sum*100)+'%)</span></h4>';
       pop.innerHTML='<span class="x">&times;</span>'+head;
       list.forEach(function(c){
         var row=document.createElement('div'); row.className='cand';
