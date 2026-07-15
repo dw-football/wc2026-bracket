@@ -358,5 +358,17 @@
     "decider": "reg",
     "pens": null,
     "note": "M101 FRA 0-2 ESP -> ESP, auto-synced from ESPN fifa.world FT on 2026-07-14."
+  },
+  {
+    "match": 102,
+    "home": "ENG",
+    "away": "ARG",
+    "score": [
+      1,
+      2
+    ],
+    "decider": "reg",
+    "pens": null,
+    "note": "M102 ENG 1-2 ARG -> ARG, auto-synced from ESPN fifa.world FT on 2026-07-15."
   }
 ]

@@ -986,6 +986,34 @@
   ],
   "pens": []
  },
+ "102": {
+  "home": "ENG",
+  "away": "ARG",
+  "events": [
+   {
+    "min": 3264,
+    "minLabel": "55",
+    "type": "goal",
+    "team": "home",
+    "who": "Anthony Gordon"
+   },
+   {
+    "min": 5094,
+    "minLabel": "85",
+    "type": "goal",
+    "team": "away",
+    "who": "Enzo Fernández"
+   },
+   {
+    "min": 5400,
+    "minLabel": "90'+2",
+    "type": "goal",
+    "team": "away",
+    "who": "Lautaro Martínez"
+   }
+  ],
+  "pens": []
+ },
  "g:MEX-RSA": {
   "home": "MEX",
   "away": "RSA",
