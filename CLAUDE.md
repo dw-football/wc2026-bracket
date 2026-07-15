@@ -6,6 +6,26 @@
 > `Personal/soccer/Before Euro 2028 - rebuild the bracket projector.md`. A dated task (⏳ 2028-04-03) + a Jul-20-2026
 > task to disable the `WC2026-autosync` scheduler both live in `Personal/tech/Claude setup.md`.
 
+## SHIPPED 2026-07-15 — Final & 3rd-place show Elo WIN odds on the locked, unplayed matchup — LIVE (`803c45e`)
+Both semis decided (M101 FRA 0-2 ESP, M102 ENG 1-2 ARG) → the Final (M104 = ESP v ARG) and 3rd-place (M103 =
+FRA v ENG) became DETERMINED matchups but UNPLAYED. David: "for the final and 3rd place game I see NO predicted
+elo odds of victory!" Root = the KO renderer showed a locked slot as just the team NAME (no %), on the 6-27 logic
+that "who wins this game" appears one column to the right (the reach-% on the fed slot). But the Final and 3rd-place
+are **TERMINAL** matches — they feed nothing — so their win odds were never shown ANYWHERE. **Fix:** a terminal-match
+pass in `buildSlotInfo` (build-html) attaches each locked side's `winP`/`winDist` = P(win THIS match) via the shared
+`ko-slot-dist` `h2hAdvanceProb` (analytic chained-H2H, same λ=0.6 squeeze + venue-aware host bonus as every reach %),
+sums to 100 across the two sides; the `slotGroup` locked-branch renders "NAME pp%" (blue %, matching the played-score
+hue) and the click popover shows the 2-team win-odds distribution ("Elo win odds") instead of a trivial "Locked"
+label. A played result short-circuits it (score + greyed loser already decorate). Round-agnostic (keys off "no
+look-ahead column"). LIVE: **Final ESP 50% / ARG 50%** (Elo 2129 vs 2128 — dead even), **3rd place FRA 52% / ENG
+48%** (2084 vs 2055). Verified headlessly (tall screenshot — the POSTER PNG export clips M103 off the bottom at
+window-height×2, a pre-existing export-only quirk; the live web page renders it fine at natural height). Also
+de-brittled TWO stale live-data tests the M101/M102 auto-sync had left RED (pre-existing, unrelated): the
+3rd-place-contenders test now runs on a FROZEN pre-semifinal snapshot (`MANUAL_KO.filter(match<101)` = its stated
+intent), and the pollReport KO-deployable test advances `now` to Jul 25 (past the last scheduled KO game) so the
+only resolved-but-unplayed KO match left is DUE. **121/121 green.** Pushed on David's standing GO ("if you get the
+odds right, publish it fully"); Pages stamp `2026-07-15T22:43:58` confirmed live. 102/104.
+
 ## SHIPPED 2026-07-04 — KO winner propagation across ALL rounds (eliminated team in a QF) — LIVE (`a2de4ec`)
 David caught the bracket showing **NED (out in the R32) sitting in the M97 Boston QF**, and **M90 CAN-MAR
 rendering as UNPLAYED** — on the day of the FIRST-EVER R16 result (M90 MAR 3-0 CAN). NOT emotion, a real bug.
