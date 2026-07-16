@@ -97,7 +97,9 @@ the resolve loop in bracket-labels (new `Final: ' Final'` suffix). **Created a S
 "FRA 54%/ESP 46% v ENG 56%/ARG 44% 3rd place", M104 = "ESP 54%/FRA 46% v ARG 56%/ENG 44% Final". Copying to
 Family/elsewhere stays David's MANUAL call (not the tool's job). Calendar-label tests updated (M103/M104 now carry
 previews, loops extended to 104). Left the existing Family "World Cup Final [Fox]" event untouched.
-⚠️ **SFs upcoming: M101 FRA-ESP Jul 14 3p (Dallas), M102 ENG-ARG Jul 15 3p (Atlanta).** 100/104.
+**SFs DONE: M101 FRA 0-2 ESP (Dallas), M102 ENG 1-2 ARG (Atlanta) → ESP & ARG to the Final. 102/104.** Remaining:
+M103 3rd place FRA v ENG (Jul 18), M104 Final ESP v ARG (Jul 19) — both auto-deploy + now carry Elo win odds (see
+SHIPPED 2026-07-15).
 
 ## WORKFLOW RULE — localhost first, push only on command
 **NEW FEATURES / code changes: build to `dist/` and let David verify on localhost
@@ -272,16 +274,19 @@ next day" — true for scores, false for popovers.) Parked fix if ever wanted: a
 for matches played within the last ~2-3 days each run) to catch corrections, while still skipping the settled backlog.
 
 ## RESUME
-Next action: NOTHING PENDING — KO auto-deploys unattended; tree clean, all pushed (latest UI `f33e3d6`), Pages
-verified live. **R16 underway: M90 MAR, M89 FRA (beat PAR), M91 NOR (beat BRA) into QFs; through M91, 91/104.**
-THREE UI/logic fixes shipped LIVE recently, all round-agnostic + self-applying: (1) 2026-07-04 `a2de4ec` — KO winner
-propagation across ALL rounds (was R32-only → had shown eliminated NED in the QF; new pure `ko-resolve.mjs` + 8
-tests, 117/117); (2) 2026-07-05 `3118592` — locked-in teams show full country NAME (bold), code dropped, R32 chip
-kept, loser greyed; (3) 2026-07-05 `f33e3d6` — completed-vs-upcoming legibility: shaded done-tiles, FT only in the
-in-progress round, popped upcoming schedule line (venue+date bold dark, time bold amber). Then read: SHIPPED
-2026-07-05 (pm) + (name) + 2026-07-04, and OPEN/PARKED (fork-forward name-shorten note). If a new pens game's popover shows no takers, that's ESPN lag (their `summary.shootout` block trails FT by
-~5 min); the self-heal + the poll pattern used 7-03 backfill it — do NOT treat empty pens as a bug.
-Then read: SHIPPED 2026-07-03 (popover penalty-as-red-card fix + reconciliation gate), Session Notes.
+Next action: NOTHING PENDING — KO auto-deploys unattended; tree clean, all pushed (latest UI `803c45e`), Pages
+verified live (stamp `2026-07-15T22:43:58`). **Both semis done: M101 FRA 0-2 ESP, M102 ENG 1-2 ARG → 102/104.**
+Only two games left, both auto-deploy: **M103 3rd place FRA v ENG (Jul 18, 5p, Miami)** and **M104 Final ESP v ARG
+(Jul 19, 3p, NY/NJ)**. **Latest fix (2026-07-15 `803c45e`) — the Final & 3rd-place now show Elo WIN odds** (ESP 50%/
+ARG 50%; FRA 52%/ENG 48%) on the locked-but-unplayed matchup; before this a terminal match showed bare NAMES (its
+"who wins" number had nowhere to live — no look-ahead column). Self-triggers on the deploy of the 2nd semi (both
+feeders resolved → win-% replaces reach-%); round-agnostic, carries to future Finals; Euro-safe (no 3rd-place there).
+See SHIPPED 2026-07-15. Recent round-agnostic UI/logic fixes still live: (1) 2026-07-04 `a2de4ec` — KO winner
+propagation across ALL rounds; (2) 2026-07-05 `3118592` — locked teams show full NAME; (3) 2026-07-05 `f33e3d6` —
+completed-vs-upcoming legibility; (4) 2026-07-14 — 3rd-place loserOf contenders/%s + Final/3rd calendar auto-sync.
+If a new pens game's popover shows no takers, that's ESPN lag (their `summary.shootout` block trails FT by ~5 min);
+the self-heal + the poll pattern used 7-03 backfill it — do NOT treat empty pens as a bug.
+Then read: SHIPPED 2026-07-15, 2026-07-14, 2026-07-05 (pm), 2026-07-04, 2026-07-03, Session Notes.
 **KO stage is LIVE and auto-deploying — NOTHING TO DO MANUALLY.** The `WC2026-autosync` task on 520 deploys each
 R32/KO result UNATTENDED ~5 min after full time: score + winner slotted by name + calendar labels + goal-scorer
 popover, in ONE clean commit/push per game. First KO (M73 **RSA 0-1 CAN**) deployed flawlessly 2026-06-28
@@ -836,3 +841,13 @@ State as of 2026-06-24. **50/104** (added COL 1-0 COD, SUI 2-1 CAN, BIH 3-1 QAT 
   line (venue+date bold dark + kickoff time bold amber). Iterated live on localhost through two "pop it more" rounds
   (time, then location+date). Render-only. Mockup deleted, localhost killed. All three of the day's UI changes are
   round-agnostic and self-apply as the tournament advances.
+- 2026-07-15 — **Final & 3rd-place now show Elo WIN odds on the locked, unplayed matchup (`803c45e`, LIVE).** David:
+  "for the final and 3rd place game I see NO predicted elo odds of victory!" Both semis decided → M104 (ESP v ARG) &
+  M103 (FRA v ENG) are determined but unplayed; the renderer showed bare NAMES because "who wins" normally lives on
+  the fed slot one column right — but terminal matches feed nothing. Fix: `buildSlotInfo` terminal pass attaches
+  `winP`/`winDist` = P(win this match) via shared `ko-slot-dist` `h2hAdvanceProb`; renderer shows "NAME pp%", popover
+  shows the 2-team split. LIVE: Final ESP 50%/ARG 50%, 3rd FRA 52%/ENG 48%. Self-triggers on the 2nd-semi deploy
+  (both feeders resolved); round-agnostic + Euro-safe. Also de-brittled 2 stale live-data tests the M101/M102
+  auto-sync had left red (frozen pre-semi snapshot; pollReport `now`→Jul 25). 121/121. Verified headless (poster PNG
+  clips M103 at bottom — export-only quirk, live page fine), pushed on David's standing GO. David then asked whether
+  it'll self-switch next time — yes, confirmed (structural: fires when both terminal feeders resolve).
