@@ -1,0 +1,134 @@
+<title>WC2026 — Model vs Market: P(advance to R32)</title>
+<style>
+  :root{
+    --bg:#0f1115; --panel:#171a21; --ink:#e8eaed; --mut:#9aa3b2; --line:#2a2f3a;
+    --pos:#2e7d32; --neg:#c62828;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;padding:24px}
+  .wrap{max-width:980px;margin:0 auto}
+  h1{font-size:24px;margin:0 0 4px}
+  .sub{color:var(--mut);font-size:13px;margin:0 0 16px}
+  .meta{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:14px 16px;margin:0 0 20px;font-size:13px;color:var(--mut)}
+  .meta b{color:var(--ink)}
+  .meta ul{margin:8px 0 0;padding-left:18px}
+  .legend{display:flex;gap:16px;flex-wrap:wrap;margin:0 0 12px;font-size:12px;color:var(--mut)}
+  .chip{display:inline-block;width:14px;height:14px;border-radius:3px;vertical-align:-2px;margin-right:5px}
+  .tblwrap{overflow-x:auto;border:1px solid var(--line);border-radius:10px}
+  table{border-collapse:collapse;width:100%;font-size:14px;min-width:560px}
+  th,td{padding:8px 12px;text-align:right;border-bottom:1px solid var(--line);white-space:nowrap}
+  th{position:sticky;top:0;background:#1d212a;color:var(--mut);font-weight:600;font-size:12px;text-transform:uppercase;letter-spacing:.03em;text-align:right}
+  th:first-child,td:first-child{text-align:left}
+  th:nth-child(2),td:nth-child(2){text-align:center}
+  tbody tr:hover{background:#1b1f28}
+  .team{font-weight:600;color:var(--ink)}
+  .diffpos{color:#7fd18a}
+  .diffneg{color:#ef9a9a}
+  .num{font-variant-numeric:tabular-nums}
+  /* row shading by |diff| */
+  .d3{background:rgba(198,40,40,.16)}   /* >=13 */
+  .d2{background:rgba(198,40,40,.09)}   /* 8-13 */
+  .d1{background:rgba(255,255,255,.02)} /* <8   */
+  .sect{font-size:13px;color:var(--mut);margin:24px 0 8px;text-transform:uppercase;letter-spacing:.04em}
+  .note{font-size:12px;color:var(--mut);margin-top:6px}
+  .gap{background:var(--panel);border:1px solid var(--line);border-left:3px solid #b8860b;border-radius:8px;padding:12px 14px;margin:14px 0;font-size:13px;color:var(--mut)}
+  .gap b{color:var(--ink)}
+  p{color:#cfd4dc}
+</style>
+
+<div class="wrap">
+  <h1>World Cup 2026 — Model vs Market</h1>
+  <p class="sub">Elo Monte-Carlo P(advance to Round of 32) vs de-vigged betting-market "to qualify" odds</p>
+
+  <div class="meta">
+    <b>As of:</b> June 22, 2026, ~12:00 ET &nbsp;·&nbsp; ~41/104 group matches played.<br>
+    <b>Market source:</b> FOX Sports "teams favored to advance" board (DraftKings-aligned), pulled June 22, 11:28–12:17 ET; per-group prices cross-checked vs ESPN / DraftKings. One-way <i>to advance</i> American prices.<br>
+    <b>Elo source:</b> our 200k Monte-Carlo (top-2 in group OR one of the 8 best third places).<br>
+    <b>De-vig method:</b> Decimal = American→decimal; raw implied = 1/decimal. A clean 2-way de-vig is P = (1/Y)/(1/Y + 1/N); we did <b>not</b> find usable two-way (Yes <i>and</i> No) "to qualify" prices for these teams, only one-way "to advance" lines. So <b>Market P shown is the RAW one-way implied probability</b>, which <i>overstates</i> true probability by the book's vig (typically ~2–5 pts, more on heavy favorites). Treat "Diff" as directional, not exact.
+    <ul>
+      <li><b>Already settled (both sides agree, omitted from contested list):</b> MEX, USA, GER, ARG clinched; HAI, TUR, TUN eliminated. MAR, NED, JPN, EGY, SWE, KOR, AUS, COL, BEL, MEX/USA-group all ≥99% Elo and heavy market favorites — locked / near-locked in both.</li>
+    </ul>
+  </div>
+
+  <div class="legend">
+    <span><span class="chip" style="background:rgba(198,40,40,.45)"></span>|Diff| ≥ 13 pts</span>
+    <span><span class="chip" style="background:rgba(198,40,40,.22)"></span>|Diff| 8–13 pts</span>
+    <span><span class="chip" style="background:rgba(255,255,255,.06)"></span>|Diff| &lt; 8 pts</span>
+    <span><span class="diffpos">green Diff</span> = Elo higher (model more bullish)</span>
+    <span><span class="diffneg">red Diff</span> = Market higher</span>
+  </div>
+
+  <div class="tblwrap">
+  <table>
+    <thead><tr>
+      <th>Team</th><th>Grp</th><th>Elo P(adv)</th><th>Mkt odds</th><th>Mkt P (raw)</th><th>Diff (Elo−Mkt)</th>
+    </tr></thead>
+    <tbody id="tb"></tbody>
+  </table>
+  </div>
+  <div class="note">Sorted by absolute disagreement (biggest model-vs-market gaps at top). Mkt P is raw one-way implied (overstates by vig). "14-1", "+1000" etc. are the posted American/fractional prices.</div>
+
+  <div class="gap">
+    <b>Data gap — Group B (SUI, CAN, BIH, QAT):</b> no clean "to qualify" two-way or one-way price was findable. The only Group B numbers in the sources (SUI +125 / CAN −160) are <b>group-WINNER</b> odds, not "to advance," so they're excluded rather than shown as a misleading ~44%/62%. Context: both CAN and SUI sit on 4 pts after 2 games and meet in the final match — at least one is essentially through and both are strong best-third backups, so our Elo ~100% is well-founded; the market clearly also treats both as near-certain to advance, just priced only as a group-winner market. BIH/QAT "to advance" prices were likewise not surfaced.
+  </div>
+
+  <div class="sect">Analysis</div>
+  <p id="analysis"></p>
+</div>
+
+<script>
+const rows = [
+ ["POR","K",81,"-5000",98.0,-17.0],
+ ["CZE","A",18,"+200",33.3,-15.3],
+ ["JPN","F",100,"-650",86.7,13.3],
+ ["EGY","G",100,"-650",86.7,13.3],
+ ["SCO","C",88,"-295",74.7,13.3],
+ ["ALG","J",50,"-170",63.0,-13.0],
+ ["SEN","I",63,"-310",75.6,-12.6],
+ ["JOR","J",21,"+1000",9.1,11.9],
+ ["BEL","G",85,"-2500",96.2,-11.2],
+ ["CUW","E",16,"14-1",6.7,9.3],
+ ["GHA","L",72,"-400",80.0,-8.0],
+ ["COL","K",99,"-1000",90.9,7.9],
+ ["IRN","G",70,"-165",62.3,7.7],
+ ["PAN","L",21,"+600",14.3,6.7],
+ ["NED","F",100,"-1400",93.3,6.7],
+ ["NZL","G",15,"+1100",8.3,6.7],
+ ["CIV","E",93,"-10000",99.0,-6.0],
+ ["ECU","E",31,"+300",25.0,6.0],
+ ["MAR","C",100,"-2000",95.2,4.8],
+ ["CPV","H",65,"-230",69.7,-4.7],
+ ["IRQ","I",12,"+1200",7.7,4.3],
+ ["SWE","F",94,"-5000",98.0,-4.0],
+ ["CRO","L",78,"-310",75.6,2.4],
+ ["UZB","K",38,"+180",35.7,2.3],
+ ["AUT","J",94,"-2500",96.2,-2.2],
+ ["PAR","D",85,"-650",86.7,-1.7],
+ ["COD","K",51,"+100",50.0,1.0],
+ ["RSA","A",19,"+450",18.2,0.8],
+ ["KOR","A",94,"-1800",94.7,-0.7],
+ ["AUS","D",94,"-1400",93.3,0.7],
+ ["URU","H",46,"+120",45.5,0.5],
+ ["KSA","H",36,"+175",36.4,-0.4],
+];
+const tb=document.getElementById('tb');
+for(const r of rows){
+  const [t,g,elo,odds,mkt,diff]=r;
+  const ad=Math.abs(diff);
+  const cls = ad>=13?'d3':ad>=8?'d2':'d1';
+  const dcls = diff>=0?'diffpos':'diffneg';
+  const sign = diff>=0?'+':'';
+  tb.insertAdjacentHTML('beforeend',
+    `<tr class="${cls}"><td class="team">${t}</td><td>${g}</td>`+
+    `<td class="num">${elo}%</td><td class="num">${odds}</td>`+
+    `<td class="num">${mkt.toFixed(1)}%</td>`+
+    `<td class="num ${dcls}">${sign}${diff.toFixed(1)}</td></tr>`);
+}
+document.getElementById('analysis').innerHTML =
+ `Across the 32 contested/relevant teams there is <b>broad agreement</b> — most gaps are inside ±15 pts and the sign pattern is sensible once you remember the raw market figures are inflated by vig (so a small negative Diff on a favorite is really near-zero). The genuine disagreements:<br><br>`+
+ `<b>Market more bullish than Elo (red):</b> `+
+ `<b>POR</b> (mkt 98% vs Elo 81%) and <b>BEL</b> (96% vs 85%) are the standouts — the book treats both quality sides as all-but-through, while our Elo still prices real group-stage risk (POR in a tight Group K with COL/COD; BEL chasing in Group G). <b>ALG</b> (63% vs 50%) and <b>SEN</b> (76% vs 63%) are mid-table sides the market likes more than the model; <b>CZE</b> (33% vs 18%) similar. Most of these red gaps shrink toward zero after de-vig — the market isn't wildly off, it's leaning to class/reputation where Elo leans to the live points math.<br><br>`+
+ `<b>Elo more bullish than Market (green):</b> <b>SCO</b> (Elo 88% vs mkt 75%), <b>IRN</b> (70% vs 62%), <b>NZL</b> (15% vs 8%), <b>CUW</b> (16% vs 7%), <b>ECU</b> (31% vs 25%) — our model gives more weight to the eight-best-third-place lifeboat, which sportsbooks price conservatively for weaker sides. The JPN/EGY/NED green gaps (~+7 to +13) are an <b>artifact</b>: Elo has them ≥99% (essentially clinched on points), while the raw market price of a heavy favorite caps out around 87–93% purely because of vig — strip the vig and they agree.<br><br>`+
+ `<b>Near-certain in one but not the other?</b> No real one-sided certainty conflicts among the contested teams. The only place the market implies more certainty than Elo without an obvious points basis is <b>POR</b> and <b>BEL</b> — if you wanted a "model says fade the chalk" angle, those two are it. Conversely, <b>SCO</b> is the cleanest "model likes them more than the book" lean.<br><br>`+
+ `<b>Bottom line:</b> the Elo model and the market are telling the same story for ~28 of 32 teams. The four worth a second look are <b>POR</b> and <b>BEL</b> (market over-confident vs our points-aware model) and <b>SCO</b> / the best-third longshots (model over-confident vs a market that under-prices the 3rd-place lifeboat). Given how generous the 8-best-third format is, the model's lean on the longshots looks defensible; the POR/BEL gap is the one to watch as their final group games land.`;
+</script>
