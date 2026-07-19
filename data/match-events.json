@@ -1091,6 +1091,34 @@
   ],
   "pens": []
  },
+ "104": {
+  "home": "ESP",
+  "away": "ARG",
+  "events": [
+   {
+    "min": 5400,
+    "minLabel": "90'+3",
+    "type": "red",
+    "team": "away",
+    "who": "Second yellow card to Enzo Fernández"
+   },
+   {
+    "min": 6337,
+    "minLabel": "106",
+    "type": "goal",
+    "team": "home",
+    "who": "Ferran Torres"
+   },
+   {
+    "min": 7200,
+    "minLabel": "120'+6",
+    "type": "red",
+    "team": "away",
+    "who": "Leandro Paredes"
+   }
+  ],
+  "pens": []
+ },
  "g:MEX-RSA": {
   "home": "MEX",
   "away": "RSA",
