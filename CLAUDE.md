@@ -21,15 +21,29 @@ result vs. swap in Mark2), ASSUME ROUTINE and confirm before the huge thing.
 (2026-06-23: misread "push out the new model with ALG's win" as deploy-Mark2; David
 halted it. Mark2 stays parked on its `model-mark2` branch until explicit go-ahead.)
 
-## RESUME
-Next action: NOTHING PENDING — KO auto-deploys unattended; tree clean, all pushed (latest UI `803c45e`), Pages
-verified live (stamp `2026-07-15T22:43:58`). **Both semis done: M101 FRA 0-2 ESP, M102 ENG 1-2 ARG → 102/104.**
-Only two games left, both auto-deploy: **M103 3rd place FRA v ENG (Jul 18, 5p, Miami)** and **M104 Final ESP v ARG
-(Jul 19, 3p, NY/NJ)**. **Latest fix (2026-07-15 `803c45e`) — the Final & 3rd-place now show Elo WIN odds** (ESP 50%/
-ARG 50%; FRA 52%/ENG 48%) on the locked-but-unplayed matchup; before this a terminal match showed bare NAMES (its
-"who wins" number had nowhere to live — no look-ahead column). Self-triggers on the deploy of the 2nd semi (both
-feeders resolved → win-% replaces reach-%); round-agnostic, carries to future Finals; Euro-safe (no 3rd-place there).
-See SHIPPED 2026-07-15. Recent round-agnostic UI/logic fixes still live: (1) 2026-07-04 `a2de4ec` — KO winner
+## 🛑 DORMANT — TOURNAMENT OVER, PROJECT PARKED (2026-07-21)
+**The 2026 World Cup is complete (104/104). This project is DORMANT until the next tournament (Euro 2028 / WC
+2030 rebuild — see the FORK-FORWARD banner at the top of this file).**
+- **Autosync is OFF.** The `WC2026-autosync` Task Scheduler task on **520 (NYWDWARREN2)** was set to **Disabled**
+  on 2026-07-21. Nothing polls, builds, pushes, or writes the calendar anymore. To wake it for a future cup you'd
+  re-enable/recreate it via `run-autosync.cmd` (gitignored launcher).
+- **Live site STAYS UP, FROZEN.** `https://dw-football.github.io/wc2026-bracket/` remains live as the final
+  bracket at `8c75869` (ESP champions, M104). **No further changes / pushes** — leave it as the finished record.
+- **Repo:** tree clean, HEAD == origin/main == `8c75869`, all pushed. No cloud routines exist for this project.
+- **Final results (all deployed):** SF M101 FRA 0-2 ESP, M102 ENG 1-2 ARG; 3rd place M103 FRA 4-6 ENG → ENG;
+  Final M104 ESP 1-0 ARG (AET) → **ESP champions**.
+- **To resume for a future tournament:** read the FORK-FORWARD banner (top of file) + the vault rebuild playbook,
+  NOT this RESUME block. Everything below the divider is frozen tournament-history/ops detail, kept for reference.
+
+<details><summary>Frozen end-of-tournament ops notes (pre-dormancy — reference only)</summary>
+
+Prior "Next action" (superseded 2026-07-21): NOTHING PENDING — KO auto-deploys unattended; tree clean, all pushed
+(latest UI `803c45e`), Pages verified live (stamp `2026-07-15T22:43:58`). Both semis done: M101 FRA 0-2 ESP,
+M102 ENG 1-2 ARG → 102/104. **Latest fix (2026-07-15 `803c45e`) — the Final & 3rd-place now show Elo WIN odds**
+(ESP 50%/ARG 50%; FRA 52%/ENG 48%) on the locked-but-unplayed matchup; before this a terminal match showed bare
+NAMES (its "who wins" number had nowhere to live — no look-ahead column). Self-triggers on the deploy of the 2nd
+semi (both feeders resolved → win-% replaces reach-%); round-agnostic, carries to future Finals; Euro-safe (no
+3rd-place there). See SHIPPED 2026-07-15. Recent round-agnostic UI/logic fixes still live: (1) 2026-07-04 `a2de4ec` — KO winner
 propagation across ALL rounds; (2) 2026-07-05 `3118592` — locked teams show full NAME; (3) 2026-07-05 `f33e3d6` —
 completed-vs-upcoming legibility; (4) 2026-07-14 — 3rd-place loserOf contenders/%s + Final/3rd calendar auto-sync.
 If a new pens game's popover shows no takers, that's ESPN lag (their `summary.shootout` block trails FT by ~5 min);
@@ -98,6 +112,8 @@ Remaining open (parked): **market blend** (Elo\* soft shrink k≈0.35) — confi
 
 ⚠️ **CROSS-MACHINE / TOKEN-FREE DEPLOY:** repo is local+GitHub only (not Drive-synced). On any machine: `git clone https://github.com/dw-football/wc2026-bracket.git` → `gh auth login` (GitHub.com/HTTPS/"Authenticate Git: Yes", log in as **dw-football**) → plain **`git push origin main`**. No `.env` token needed.
 NEW feature/edit → WORKFLOW RULE (localhost first, push on "go"). Routine scores → "Find new scores and GO" (now also auto-updates the calendar).
+
+</details>
 
 ## OPEN — #4: UNATTENDED AUTO-SYNC (full plan; awaiting David's 3 decisions, 2026-06-24)
 Goal: a timer job that, with NO human in the loop, detects a finished score → updates the live site AND David's Sports calendar → notifies him. TODAY both need an interactive Claude session (calendar writes go through the gcal MCP authed in-session; that's the gap).
